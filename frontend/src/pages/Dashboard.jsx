@@ -44,8 +44,8 @@ export default function Dashboard() {
         <AdminLayout>
             <div className="section-header-admin">
                 <div>
-                    <h1>Dashboard</h1>
-                    <p className="text-secondary">Visão geral do seu dia</p>
+                    <h1>Agenda de Hoje</h1>
+                    <p className="text-secondary">Visão geral da sua agenda do dia</p>
                 </div>
                 <div className="admin-header-actions">
                     <span className="text-secondary" style={{ fontSize: '0.9rem' }}>
