@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
-import { publicApi } from '../api';
+import { publicApi, BASE_URL } from '../api';
 import { useToast } from '../components/Toast';
 import { Calendar, Clock, User, Phone, CheckCircle, Instagram, MapPin, ChevronRight, Menu, X, Scissors, Star, Trash2 } from 'lucide-react';
 import WhatsAppButton from '../components/WhatsAppButton';
 
-const API_BASE = 'http://localhost:3001';
 
 export default function Home() {
     const [services, setServices] = useState([]);
@@ -118,7 +117,7 @@ export default function Home() {
                     <div className="container navbar-inner">
                         <div className="navbar-logo" onClick={() => window.scrollTo(0, 0)} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 15 }}>
                             {siteConfig.site_logo && (
-                                <img src={`${API_BASE}${siteConfig.site_logo}`} alt={siteConfig.site_name} style={{ height: scrolled ? 52 : 70, width: scrolled ? 52 : 70, borderRadius: '50%', objectFit: 'cover', transition: 'all 0.3s ease' }} />
+                                <img src={`${BASE_URL}${siteConfig.site_logo}`} alt={siteConfig.site_name} style={{ height: scrolled ? 52 : 70, width: scrolled ? 52 : 70, borderRadius: '50%', objectFit: 'cover', transition: 'all 0.3s ease' }} />
                             )}
                             <div className="logo-text" style={{ display: 'flex', flexDirection: 'column' }}>
                                 <span style={{ fontSize: scrolled ? '1.2rem' : '1.5rem', fontWeight: 900, lineHeight: 1, letterSpacing: '0.5px', textTransform: 'uppercase', transition: 'all 0.3s ease' }}>
@@ -170,7 +169,7 @@ export default function Home() {
                     }
 
                     return (
-                        <div key={i} className={`hero-slide ${activeBanner === i ? 'active' : ''}`} style={banner.image ? { backgroundImage: `url(${API_BASE}${banner.image})` } : {}}>
+                        <div key={i} className={`hero-slide ${activeBanner === i ? 'active' : ''}`} style={banner.image ? { backgroundImage: `url(${BASE_URL}${banner.image})` } : {}}>
                             <div className={`container hero-content ${activeBanner === i ? 'animate-fade' : ''}`}>
                                 <span className="hero-badge">{siteConfig.site_slogan || 'Estilo e atitude em cada corte'}</span>
                                 <h1>{banner.title}</h1>
@@ -199,7 +198,7 @@ export default function Home() {
                         <div key={svc.id} className="card card-glass service-card fade-up" style={{ padding: 0, overflow: 'hidden' }}>
                             {svc.image_url ? (
                                 <div style={{ height: 200, overflow: 'hidden' }}>
-                                    <img src={`${API_BASE}${svc.image_url}`} alt={svc.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                    <img src={`${BASE_URL}${svc.image_url}`} alt={svc.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                 </div>
                             ) : (
                                 <div style={{ height: 120, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--color-bg-secondary)' }}>

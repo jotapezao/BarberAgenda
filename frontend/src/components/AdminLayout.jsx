@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, Calendar, Scissors, Settings, LogOut, Users, Package, Palette, Menu, DollarSign } from 'lucide-react';
-import { publicApi } from '../api';
-
-const API_BASE = 'http://localhost:3001';
+import { publicApi, BASE_URL } from '../api';
 
 export default function AdminLayout({ children }) {
     const navigate = useNavigate();
@@ -33,7 +31,7 @@ export default function AdminLayout({ children }) {
             <aside className={`admin-sidebar ${isSidebarOpen ? 'open' : ''}`}>
                 <div className="admin-logo">
                     {siteConfig.site_logo ? (
-                        <img src={`${API_BASE}${siteConfig.site_logo}`} alt="Logo" style={{ maxHeight: 50, width: 'auto', display: 'block' }} />
+                        <img src={`${BASE_URL}${siteConfig.site_logo}`} alt="Logo" style={{ maxHeight: 50, width: 'auto', display: 'block' }} />
                     ) : (
                         <>{siteConfig.site_name || 'Admin'}</>
                     )}

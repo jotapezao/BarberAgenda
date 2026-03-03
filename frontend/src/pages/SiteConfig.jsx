@@ -1,11 +1,9 @@
 import { useState, useEffect } from 'react';
-import { adminApi } from '../api';
+import { adminApi, BASE_URL } from '../api';
 import { useToast } from '../components/Toast';
 import AdminLayout from '../components/AdminLayout';
 import { Save, Upload, Info, Image as ImageIcon, Layout, Palette, Mail, MapPin, Globe, Shield, Trash2 } from 'lucide-react';
 
-
-const API_BASE = 'http://localhost:3001';
 
 // Stable Input Component to fix focus bug
 const FormField = ({ label, value, onChange, type = 'text', placeholder, info }) => {
@@ -53,7 +51,7 @@ export default function SiteConfig() {
             if (config.site_theme) document.body.classList.add(config.site_theme);
 
             if (config.site_background) {
-                document.body.style.backgroundImage = `url(${API_BASE}${config.site_background})`;
+                document.body.style.backgroundImage = `url(${BASE_URL}${config.site_background})`;
                 document.body.style.backgroundAttachment = 'fixed';
                 document.body.style.backgroundSize = 'cover';
                 document.body.style.backgroundPosition = 'center';
@@ -119,7 +117,7 @@ export default function SiteConfig() {
                                         <label className="form-label">Logotipo da Empresa</label>
                                         <div className="logo-upload-preview" style={{ marginBottom: 12, border: '1.5px dashed var(--color-border)', borderRadius: 8, padding: 20, textAlign: 'center', background: 'var(--color-bg-secondary)' }}>
                                             {config.site_logo ? (
-                                                <img src={`${API_BASE}${config.site_logo}`} alt="Logo Preview" style={{ maxHeight: 80, marginBottom: 16 }} />
+                                                <img src={`${BASE_URL}${config.site_logo}`} alt="Logo Preview" style={{ maxHeight: 80, marginBottom: 16 }} />
                                             ) : (
                                                 <div className="text-muted" style={{ marginBottom: 16 }}>Nenhum logo carregado</div>
                                             )}
@@ -188,7 +186,7 @@ export default function SiteConfig() {
                                         <div style={{ textAlign: 'center' }}>
                                             <div style={{ height: 120, background: '#000', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 12, overflow: 'hidden' }}>
                                                 {config[`banner_image_${num}`] ? (
-                                                    <img src={`${API_BASE}${config[`banner_image_${num}`]}`} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                    <img src={`${BASE_URL}${config[`banner_image_${num}`]}`} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                                 ) : (
                                                     <ImageIcon size={32} className="text-muted" />
                                                 )}

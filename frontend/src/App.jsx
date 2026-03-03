@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ToastProvider } from './components/Toast';
 import { useEffect } from 'react';
-import { publicApi } from './api';
+import { publicApi, BASE_URL } from './api';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
@@ -34,7 +34,7 @@ function App() {
 
       // Aplicar Background Fixo
       if (config.site_background) {
-        document.body.style.backgroundImage = `url(http://localhost:3001${config.site_background})`;
+        document.body.style.backgroundImage = `url(${BASE_URL}${config.site_background})`;
         document.body.style.backgroundAttachment = 'fixed';
         document.body.style.backgroundSize = 'cover';
         document.body.style.backgroundPosition = 'center';
