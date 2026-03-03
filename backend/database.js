@@ -1,200 +1,248 @@
+const { Pool } = require('pg');
 const Database = require('better-sqlite3');
 const bcrypt = require('bcryptjs');
 const path = require('path');
+const fs = require('fs');
 
-const db = new Database(path.join(__dirname, 'barbearia.db'));
+let db;
+let isPostgres = false;
 
-db.pragma('journal_mode = WAL');
-db.pragma('foreign_keys = ON');
-
-// ===== CREATE TABLES =====
-db.exec(`
-  CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    username TEXT UNIQUE NOT NULL,
-    password TEXT NOT NULL,
-    name TEXT NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  );
-
-  CREATE TABLE IF NOT EXISTS services (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    price REAL NOT NULL,
-    duration INTEGER NOT NULL DEFAULT 30,
-    active INTEGER NOT NULL DEFAULT 1,
-    sort_order INTEGER DEFAULT 0,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  );
-
-  CREATE TABLE IF NOT EXISTS clients (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    whatsapp TEXT UNIQUE NOT NULL,
-    email TEXT,
-    notes TEXT,
-    total_visits INTEGER DEFAULT 0,
-    total_spent REAL DEFAULT 0,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    last_visit TEXT
-  );
-
-  CREATE TABLE IF NOT EXISTS appointments (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    client_id INTEGER,
-    client_name TEXT NOT NULL,
-    client_whatsapp TEXT NOT NULL,
-    service_id INTEGER NOT NULL,
-    date TEXT NOT NULL,
-    time TEXT NOT NULL,
-    end_time TEXT,
-    status TEXT NOT NULL DEFAULT 'confirmed',
-    notes TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (service_id) REFERENCES services(id),
-    FOREIGN KEY (client_id) REFERENCES clients(id)
-  );
-
-  CREATE TABLE IF NOT EXISTS settings (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    key TEXT UNIQUE NOT NULL,
-    value TEXT NOT NULL
-  );
-
-  CREATE TABLE IF NOT EXISTS blocked_times (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    date TEXT NOT NULL,
-    time TEXT NOT NULL,
-    reason TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  );
-
-  CREATE TABLE IF NOT EXISTS products (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    description TEXT,
-    price REAL NOT NULL,
-    cost_price REAL DEFAULT 0,
-    stock_quantity INTEGER DEFAULT 0,
-    min_stock INTEGER DEFAULT 5,
-    category TEXT DEFAULT 'Geral',
-    image TEXT,
-    active INTEGER DEFAULT 1,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  );
-
-  CREATE TABLE IF NOT EXISTS product_sales (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    product_id INTEGER NOT NULL,
-    client_id INTEGER,
-    client_name TEXT,
-    quantity INTEGER NOT NULL DEFAULT 1,
-    unit_price REAL NOT NULL,
-    total_price REAL NOT NULL,
-    date TEXT NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (product_id) REFERENCES products(id),
-    FOREIGN KEY (client_id) REFERENCES clients(id)
-  );
-
-  CREATE TABLE IF NOT EXISTS site_config (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    key TEXT UNIQUE NOT NULL,
-    value TEXT,
-    type TEXT DEFAULT 'text'
-  );
-`);
-
-// Add new columns to existing tables (with safety check)
-try { db.exec("ALTER TABLE clients ADD COLUMN birth_date TEXT;"); } catch (e) { }
-try { db.exec("ALTER TABLE services ADD COLUMN show_on_home INTEGER DEFAULT 1;"); } catch (e) { }
-try { db.exec("ALTER TABLE services ADD COLUMN image_url TEXT;"); } catch (e) { }
-try { db.exec("ALTER TABLE products ADD COLUMN sku TEXT;"); } catch (e) { }
-
-// ===== SEED DATA =====
-
-// Admin user
-const adminExists = db.prepare('SELECT COUNT(*) as count FROM users').get();
-if (adminExists.count === 0) {
-  const hashedPassword = bcrypt.hashSync('admin123', 10);
-  db.prepare('INSERT INTO users (username, password, name) VALUES (?, ?, ?)').run('admin', hashedPassword, 'Barbeiro');
-  console.log('✅ Admin: admin / admin123');
+if (process.env.DATABASE_URL) {
+  // Use PostgreSQL if URL is provided (Railway)
+  isPostgres = true;
+  db = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: process.env.DATABASE_URL.includes('railway') ? { rejectUnauthorized: false } : false,
+  });
+  console.log('✅ Base de dados: PostgreSQL');
+} else {
+  // Use SQLite for local dev
+  const sqliteFile = path.join(__dirname, 'barbearia.db');
+  db = new Database(sqliteFile);
+  db.pragma('journal_mode = WAL');
+  db.pragma('foreign_keys = ON');
+  console.log('✅ Base de dados: SQLite (Local)');
 }
 
-// Default services
-const servicesExist = db.prepare('SELECT COUNT(*) as count FROM services').get();
-if (servicesExist.count === 0) {
-  const ins = db.prepare('INSERT INTO services (name, price, duration, sort_order) VALUES (?, ?, ?, ?)');
-  ins.run('Corte Degradê', 50.00, 30, 1);
-  ins.run('Barba', 50.00, 30, 2);
-  ins.run('Sobrancelha', 30.00, 15, 3);
-  ins.run('Barba + Cabelo', 80.00, 60, 4);
-  console.log('✅ Serviços padrão criados');
-}
+// Wrapper for common DB operations to hide differences
+const dbWrapper = {
+  isPostgres,
 
-// Default settings
-const settingsExist = db.prepare('SELECT COUNT(*) as count FROM settings').get();
-if (settingsExist.count === 0) {
-  const ins = db.prepare('INSERT INTO settings (key, value) VALUES (?, ?)');
-  ins.run('open_time', '08:00');
-  ins.run('close_time', '19:00');
-  ins.run('interval_minutes', '30');
-  ins.run('working_days', '1,2,3,4,5,6');
-  ins.run('whatsapp_number', '5500000000000');
-  console.log('✅ Configurações padrão');
-}
+  // Helper to convert '?' to '$1, $2, ...' for Postgres
+  convertParams(sql) {
+    if (!this.isPostgres) return sql;
+    let index = 1;
+    return sql.replace(/\?/g, () => `$${index++}`);
+  },
 
-// Default site config
-const siteExists = db.prepare('SELECT COUNT(*) as count FROM site_config').get();
-if (siteExists.count === 0) {
-  const ins = db.prepare('INSERT INTO site_config (key, value, type) VALUES (?, ?, ?)');
-  // Branding
-  ins.run('site_name', 'BarberPro', 'text');
-  ins.run('site_slogan', 'Estilo e Atitude em Cada Corte', 'text');
-  ins.run('site_description', 'A melhor barbearia da cidade. Profissionais qualificados prontos para transformar seu visual.', 'textarea');
-  ins.run('site_logo', '', 'image');
-  // Banners
-  ins.run('banner_title_1', 'Estilo e Atitude em Cada Corte', 'text');
-  ins.run('banner_subtitle_1', 'Agende seu horário online de forma rápida e prática.', 'text');
-  ins.run('banner_image_1', '', 'image');
-  ins.run('banner_title_2', 'Promoção Especial', 'text');
-  ins.run('banner_subtitle_2', 'Barba + Cabelo por apenas R$ 80,00', 'text');
-  ins.run('banner_image_2', '', 'image');
-  ins.run('banner_title_3', '', 'text');
-  ins.run('banner_subtitle_3', '', 'text');
-  ins.run('banner_image_3', '', 'image');
-  // Contact & Location
-  ins.run('address', 'Rua Exemplo, 123 - Centro', 'text');
-  ins.run('city', 'São Paulo - SP', 'text');
-  ins.run('cep', '00000-000', 'text');
-  ins.run('map_embed_url', '', 'textarea');
-  ins.run('phone', '(00) 00000-0000', 'text');
-  ins.run('instagram', '', 'text');
-  ins.run('facebook', '', 'text');
-  // Promotion
-  ins.run('promotion_active', 'false', 'boolean');
-  ins.run('promotion_title', 'Promoção da Semana', 'text');
-  ins.run('promotion_text', 'Corte + Barba por R$ 70,00!', 'textarea');
-  ins.run('promotion_badge', '🔥 OFERTA', 'text');
-  // About
-  ins.run('about_title', 'Sobre Nós', 'text');
-  ins.run('about_text', 'Somos uma barbearia moderna focada em oferecer a melhor experiência masculina. Com profissionais qualificados e ambiente premium, garantimos estilo e atitude em cada corte.', 'textarea');
-  // Footer
-  ins.run('footer_text', '© 2026 BarberPro — Todos os direitos reservados', 'text');
-  ins.run('site_theme', 'dark-gold', 'text');
-  ins.run('site_background', '', 'image');
-  console.log('✅ Configuração do site criada');
-}
+  async query(sql, params = []) {
+    const finalSql = this.convertParams(sql);
+    if (isPostgres) {
+      const result = await db.query(finalSql, params);
+      return { rows: result.rows, lastInsertId: result.rows[0] ? result.rows[0].id : null, rowCount: result.rowCount };
+    } else {
+      const stmt = db.prepare(sql); // SQLite uses '?' just fine
+      if (sql.trim().toUpperCase().startsWith('SELECT')) {
+        const rows = stmt.all(...params);
+        return { rows, rowCount: rows.length };
+      } else {
+        const info = stmt.run(...params);
+        return { rows: [], lastInsertId: info.lastInsertRowid, rowCount: info.changes };
+      }
+    }
+  },
 
-// Default products
-const productsExist = db.prepare('SELECT COUNT(*) as count FROM products').get();
-if (productsExist.count === 0) {
-  const ins = db.prepare('INSERT INTO products (name, description, price, cost_price, stock_quantity, min_stock, category) VALUES (?, ?, ?, ?, ?, ?, ?)');
-  ins.run('Pomada Modeladora', 'Pomada para cabelo com fixação forte', 45.00, 20.00, 15, 5, 'Cabelo');
-  ins.run('Óleo para Barba', 'Óleo hidratante para barba', 35.00, 15.00, 10, 3, 'Barba');
-  ins.run('Shampoo Masculino', 'Shampoo para cabelo masculino 300ml', 30.00, 12.00, 20, 5, 'Cabelo');
-  ins.run('Balm para Barba', 'Balm modelador para barba', 40.00, 18.00, 8, 3, 'Barba');
-  console.log('✅ Produtos padrão criados');
-}
+  async get(sql, params = []) {
+    const finalSql = this.convertParams(sql);
+    if (isPostgres) {
+      const result = await db.query(finalSql, params);
+      return result.rows[0] || null;
+    } else {
+      return db.prepare(sql).get(...params) || null;
+    }
+  },
 
-module.exports = db;
+  async all(sql, params = []) {
+    const finalSql = this.convertParams(sql);
+    if (isPostgres) {
+      const result = await db.query(finalSql, params);
+      return result.rows;
+    } else {
+      return db.prepare(sql).all(...params);
+    }
+  },
+
+  async run(sql, params = []) {
+    const finalSql = this.convertParams(sql);
+    if (isPostgres) {
+      // For runs that need an ID back, we append RETURNING id
+      let execSql = finalSql;
+      if (sql.trim().toUpperCase().startsWith('INSERT')) {
+        execSql += ' RETURNING id';
+      }
+      const result = await db.query(execSql, params);
+      return { lastInsertRowid: result.rows[0] ? result.rows[0].id : null, changes: result.rowCount };
+    } else {
+      const info = db.prepare(sql).run(...params);
+      return { lastInsertRowid: info.lastInsertRowid, changes: info.changes };
+    }
+  },
+
+  async exec(sql) {
+    if (isPostgres) {
+      return await db.query(sql);
+    } else {
+      return db.exec(sql);
+    }
+  },
+
+  // Helper for batch/transaction initialization (only needed once)
+  async init() {
+    const createTableSQL = `
+      CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        username TEXT UNIQUE NOT NULL,
+        password TEXT NOT NULL,
+        name TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE TABLE IF NOT EXISTS services (
+        id SERIAL PRIMARY KEY,
+        name TEXT NOT NULL,
+        price DECIMAL(10,2) NOT NULL,
+        duration INTEGER NOT NULL DEFAULT 30,
+        active INTEGER NOT NULL DEFAULT 1,
+        sort_order INTEGER DEFAULT 0,
+        show_on_home INTEGER DEFAULT 1,
+        image_url TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE TABLE IF NOT EXISTS clients (
+        id SERIAL PRIMARY KEY,
+        name TEXT NOT NULL,
+        whatsapp TEXT UNIQUE NOT NULL,
+        email TEXT,
+        notes TEXT,
+        birth_date TEXT,
+        total_visits INTEGER DEFAULT 0,
+        total_spent DECIMAL(10,2) DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        last_visit TEXT
+      );
+
+      CREATE TABLE IF NOT EXISTS appointments (
+        id SERIAL PRIMARY KEY,
+        client_id INTEGER,
+        client_name TEXT NOT NULL,
+        client_whatsapp TEXT NOT NULL,
+        service_id INTEGER NOT NULL,
+        date TEXT NOT NULL,
+        time TEXT NOT NULL,
+        end_time TEXT,
+        status TEXT NOT NULL DEFAULT 'confirmed',
+        notes TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (service_id) REFERENCES services(id),
+        FOREIGN KEY (client_id) REFERENCES clients(id)
+      );
+
+      CREATE TABLE IF NOT EXISTS settings (
+        id SERIAL PRIMARY KEY,
+        key TEXT UNIQUE NOT NULL,
+        value TEXT NOT NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS blocked_times (
+        id SERIAL PRIMARY KEY,
+        date TEXT NOT NULL,
+        time TEXT NOT NULL,
+        reason TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE TABLE IF NOT EXISTS products (
+        id SERIAL PRIMARY KEY,
+        name TEXT NOT NULL,
+        description TEXT,
+        price DECIMAL(10,2) NOT NULL,
+        cost_price DECIMAL(10,2) DEFAULT 0,
+        stock_quantity INTEGER DEFAULT 0,
+        min_stock INTEGER DEFAULT 5,
+        category TEXT DEFAULT 'Geral',
+        sku TEXT,
+        image TEXT,
+        active INTEGER DEFAULT 1,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE TABLE IF NOT EXISTS product_sales (
+        id SERIAL PRIMARY KEY,
+        product_id INTEGER NOT NULL,
+        client_id INTEGER,
+        client_name TEXT,
+        quantity INTEGER NOT NULL DEFAULT 1,
+        unit_price DECIMAL(10,2) NOT NULL,
+        total_price DECIMAL(10,2) NOT NULL,
+        date TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (product_id) REFERENCES products(id),
+        FOREIGN KEY (client_id) REFERENCES clients(id)
+      );
+
+      CREATE TABLE IF NOT EXISTS site_config (
+        id SERIAL PRIMARY KEY,
+        key TEXT UNIQUE NOT NULL,
+        value TEXT,
+        type TEXT DEFAULT 'text'
+      );
+    `;
+
+    // SQLite adjustments (replacing SERIAL with INTEGER PRIMARY KEY AUTOINCREMENT)
+    const sql = isPostgres ? createTableSQL : createTableSQL.replace(/SERIAL PRIMARY KEY/g, 'INTEGER PRIMARY KEY AUTOINCREMENT').replace(/TIMESTAMP/g, 'DATETIME').replace(/DECIMAL\(10,2\)/g, 'REAL');
+
+    await this.exec(sql);
+
+    // Seed data logic
+    const adminCount = await this.get('SELECT COUNT(*) as count FROM users');
+    if (parseInt(adminCount.count) === 0) {
+      const hashedPassword = bcrypt.hashSync('admin123', 10);
+      await this.run('INSERT INTO users (username, password, name) VALUES ($1, $2, $3)', ['admin', hashedPassword, 'Barbeiro']);
+      console.log('✅ Admin criado: admin / admin123');
+    }
+
+    const servicesExist = await this.get('SELECT COUNT(*) as count FROM services');
+    if (parseInt(servicesExist.count) === 0) {
+      const q = 'INSERT INTO services (name, price, duration, sort_order) VALUES ($1, $2, $3, $4)';
+      await this.run(q, ['Corte Degradê', 50.00, 30, 1]);
+      await this.run(q, ['Barba', 50.00, 30, 2]);
+      await this.run(q, ['Sobrancelha', 30.00, 15, 3]);
+      await this.run(q, ['Barba + Cabelo', 80.00, 60, 4]);
+      console.log('✅ Serviços padrão criados');
+    }
+
+    const settingsExist = await this.get('SELECT COUNT(*) as count FROM settings');
+    if (parseInt(settingsExist.count) === 0) {
+      const q = 'INSERT INTO settings (key, value) VALUES ($1, $2)';
+      await this.run(q, ['open_time', '08:00']);
+      await this.run(q, ['close_time', '19:00']);
+      await this.run(q, ['interval_minutes', '30']);
+      await this.run(q, ['working_days', '1,2,3,4,5,6']);
+      await this.run(q, ['whatsapp_number', '5500000000000']);
+    }
+
+    const siteExists = await this.get('SELECT COUNT(*) as count FROM site_config');
+    if (parseInt(siteExists.count) === 0) {
+      const q = 'INSERT INTO site_config (key, value, type) VALUES ($1, $2, $3)';
+      await this.run(q, ['site_name', 'BarberPro', 'text']);
+      await this.run(q, ['site_slogan', 'Estilo e Atitude em Cada Corte', 'text']);
+      await this.run(q, ['site_description', 'A melhor barbearia da cidade.', 'textarea']);
+      await this.run(q, ['site_logo', '', 'image']);
+      await this.run(q, ['footer_text', '© 2026 BarberPro', 'text']);
+      await this.run(q, ['site_theme', 'dark-gold', 'text']);
+    }
+  }
+};
+
+module.exports = dbWrapper;
