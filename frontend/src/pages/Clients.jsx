@@ -3,6 +3,7 @@ import { adminApi } from '../api';
 import { useToast } from '../components/Toast';
 import AdminLayout from '../components/AdminLayout';
 import { Users, Search, Phone, Calendar, DollarSign, Edit3, Trash2, X, Eye, UserPlus, Download, Upload, FileText } from 'lucide-react';
+import { maskPhone, unmask } from '../utils/mask';
 
 export default function Clients() {
     const [clients, setClients] = useState([]);
@@ -50,12 +51,18 @@ export default function Clients() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        const payload = {
+            ...formData,
+            whatsapp: unmask(formData.whatsapp || '')
+        };
+
         try {
             if (editingClient) {
-                await adminApi.updateClient(editingClient.id, formData);
+                await adminApi.updateClient(editingClient.id, payload);
                 toast.success('Cliente atualizado');
             } else {
-                await adminApi.createClient(formData);
+                await adminApi.createClient(payload);
                 toast.success('Cliente cadastrado');
             }
             setShowModal(false);
@@ -188,7 +195,7 @@ export default function Clients() {
                             <div>
                                 <h4 style={{ margin: 0 }}>{client.name}</h4>
                                 <p style={{ margin: 0, cursor: 'pointer', color: 'var(--color-accent)', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: 4 }} onClick={() => openWhatsApp(client.whatsapp, client.name)}>
-                                    <Phone size={12} /> {client.whatsapp}
+                                    <Phone size={12} /> {maskPhone(client.whatsapp)}
                                 </p>
                             </div>
                             <div className="text-secondary" style={{ fontSize: '0.85rem' }}>
@@ -239,7 +246,7 @@ export default function Clients() {
                             </div>
                             <div className="form-group">
                                 <label className="form-label">WhatsApp</label>
-                                <input type="text" className="form-input" value={formData.whatsapp} onChange={e => setFormData({ ...formData, whatsapp: e.target.value })} placeholder="55..." required />
+                                <input type="text" className="form-input" value={maskPhone(formData.whatsapp)} onChange={e => setFormData({ ...formData, whatsapp: e.target.value })} placeholder="(00) 00000-0000" maxLength={15} required />
                             </div>
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                                 <div className="form-group">

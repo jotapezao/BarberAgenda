@@ -3,6 +3,7 @@ import { adminApi, BASE_URL } from '../api';
 import { useToast } from '../components/Toast';
 import AdminLayout from '../components/AdminLayout';
 import { Save, Upload, Info, Image as ImageIcon, Layout, Palette, Mail, MapPin, Globe, Shield, Trash2, Settings } from 'lucide-react';
+import { maskPhone, maskCNPJ, validateCNPJ, unmask } from '../utils/mask';
 
 
 // Stable Input Component to fix focus bug
@@ -48,6 +49,12 @@ export default function SiteConfig() {
 
     const handleSave = async (e) => {
         e.preventDefault();
+
+        // Basic validation
+        if (config.site_cnpj && unmask(config.site_cnpj).length > 0 && !validateCNPJ(config.site_cnpj)) {
+            return toast.error('CNPJ inválido!');
+        }
+
         try {
             // Split config into site_config and settings
             const siteConfigKeys = [
@@ -63,8 +70,14 @@ export default function SiteConfig() {
             const settingsPayload = {};
 
             Object.keys(config).forEach(key => {
-                if (siteConfigKeys.includes(key)) sitePayload[key] = config[key];
-                else settingsPayload[key] = config[key];
+                // Ensure values are strings and unmask specific fields if needed
+                let val = String(config[key] || '');
+                if (key === 'site_cnpj' || key === 'phone' || key === 'whatsapp' || key === 'client_whatsapp') {
+                    val = unmask(val);
+                }
+
+                if (siteConfigKeys.includes(key)) sitePayload[key] = val;
+                else settingsPayload[key] = val;
             });
 
             await Promise.all([
@@ -98,7 +111,16 @@ export default function SiteConfig() {
         } catch (err) { toast.error('Erro no upload'); }
     };
 
-    const updateField = (key, value) => setConfig(prev => ({ ...prev, [key]: value }));
+    const updateField = (key, value) => {
+        setConfig(prev => {
+            const next = { ...prev, [key]: value };
+            if (key === 'address' && value && (!prev.map_embed_url || !prev.map_embed_url.includes('google.com'))) {
+                const encoded = encodeURIComponent(value);
+                next.map_embed_url = `https://maps.google.com/maps?q=${encoded}&hl=pt&z=15&output=embed`;
+            }
+            return next;
+        });
+    };
 
     if (loading) return <AdminLayout><div className="loading-spinner"><div className="spinner"></div></div></AdminLayout>;
 
@@ -271,8 +293,8 @@ export default function SiteConfig() {
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 40 }}>
                                 <div className="card" style={{ background: 'var(--color-bg-secondary)', padding: '24px' }}>
                                     <h4 style={{ marginBottom: 20 }}>Dados de Contato</h4>
-                                    <FormField label="Telefone / WhatsApp de Contato" value={config.phone} onChange={v => updateField('phone', v)} placeholder="(00) 00000-0000" />
-                                    <FormField label="CNPJ" value={config.site_cnpj} onChange={v => updateField('site_cnpj', v)} placeholder="00.000.000/0000-00" />
+                                    <FormField label="Telefone / WhatsApp de Contato" value={maskPhone(config.phone || '')} onChange={v => updateField('phone', v)} placeholder="(00) 00000-0000" />
+                                    <FormField label="CNPJ" value={maskCNPJ(config.site_cnpj || '')} onChange={v => updateField('site_cnpj', v)} placeholder="00.000.000/0000-00" />
 
                                     <h4 style={{ margin: '20px 0', borderTop: '1px solid var(--color-border)', paddingTop: 20 }}>Endereço Completo</h4>
                                     <FormField label="Rua / Avenida" value={config.address} onChange={v => updateField('address', v)} />
@@ -284,11 +306,11 @@ export default function SiteConfig() {
                                 <div className="card" style={{ background: 'var(--color-bg-secondary)', padding: '24px' }}>
                                     <h4 style={{ marginBottom: 20 }}>Embed do Google Maps</h4>
                                     <FormField
-                                        label="Código iFrame (Apenas URL 'src')"
+                                        label="Código iFrame do Mapa"
                                         value={config.map_embed_url}
                                         onChange={v => updateField('map_embed_url', v)}
                                         type="textarea"
-                                        info="No Google Maps, vá em 'Compartilhar' > 'Incorporar um mapa'. Copie apenas o link que está dentro do atributo src='https://...' e cole aqui."
+                                        info="Ao digitar o 'Endereço Completo' ao lado, este campo será preenchido automaticamente com um mapa em tempo real."
                                     />
                                     {config.map_embed_url && (
                                         <div style={{ marginTop: 20, borderRadius: 8, overflow: 'hidden', border: '1px solid var(--color-border)' }}>

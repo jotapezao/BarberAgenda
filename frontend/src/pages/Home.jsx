@@ -3,6 +3,7 @@ import { publicApi, BASE_URL } from '../api';
 import { useToast } from '../components/Toast';
 import { Calendar, Clock, User, Phone, CheckCircle, Instagram, MapPin, ChevronRight, Menu, X, Scissors, Star, Trash2 } from 'lucide-react';
 import WhatsAppButton from '../components/WhatsAppButton';
+import { maskPhone, unmask } from '../utils/mask';
 
 
 export default function Home() {
@@ -54,13 +55,15 @@ export default function Home() {
     const handleWhatsAppSubmit = async (e) => {
         e.preventDefault();
         try {
-            const client = await publicApi.checkClient(formData.client_whatsapp);
+            const cleanPhone = unmask(formData.client_whatsapp);
+            const client = await publicApi.checkClient(cleanPhone);
             if (client) {
-                setFormData(prev => ({ ...prev, client_name: client.name, client_birth_date: client.birth_date || '' }));
+                setFormData(prev => ({ ...prev, client_whatsapp: cleanPhone, client_name: client.name, client_birth_date: client.birth_date || '' }));
                 setIsReturning(true);
                 setBookingStep(3);
                 toast.success(`Olá ${client.name}, seja bem-vindo de volta!`);
             } else {
+                setFormData(prev => ({ ...prev, client_whatsapp: cleanPhone }));
                 setIsReturning(false);
                 setBookingStep(2);
             }
@@ -70,7 +73,8 @@ export default function Home() {
     const handleBookingSubmit = async (e) => {
         e.preventDefault();
         try {
-            const result = await publicApi.createAppointment(formData);
+            const payload = { ...formData, client_whatsapp: unmask(formData.client_whatsapp) };
+            const result = await publicApi.createAppointment(payload);
             setBookingSuccess(result);
             toast.success('Agendamento realizado! 🎉');
         } catch (err) { toast.error(err.message); }
@@ -256,7 +260,7 @@ export default function Home() {
                                     <form onSubmit={handleWhatsAppSubmit} className="animate-fade">
                                         <div className="form-group">
                                             <label className="form-label">📱 Seu WhatsApp</label>
-                                            <input type="text" className="form-input" placeholder="(00) 00000-0000" value={formData.client_whatsapp} onChange={e => setFormData({ ...formData, client_whatsapp: e.target.value })} required />
+                                            <input type="text" className="form-input" placeholder="(00) 00000-0000" value={maskPhone(formData.client_whatsapp)} onChange={e => setFormData({ ...formData, client_whatsapp: e.target.value })} maxLength={15} required />
                                         </div>
                                         <button type="submit" className="btn btn-primary w-full" style={{ width: '100%' }}>Próximo Passo <ChevronRight size={18} /></button>
                                     </form>

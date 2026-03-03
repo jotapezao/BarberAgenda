@@ -257,16 +257,27 @@ const dbWrapper = {
         .replace(/DECIMAL\(\d+,\d+\)/g, 'REAL')
         .replace(/DECIMAL/g, 'REAL');
 
-    // Split only basic table creations for safer individual execution
-    const statements = sql.split(';').map(s => s.trim()).filter(s => s.length > 0);
+    // Split statements, but handle edge cases for Postgres
+    const statements = sql
+      .split(';')
+      .map(s => s.trim())
+      .filter(s => s.length > 0 && !s.startsWith('--'));
+
     for (const stmt of statements) {
       try {
         await this.exec(stmt);
       } catch (e) {
-        if (!e.message.includes('already exists') && !e.message.includes('já existe')) {
-          console.error('❌ SQL Error:', e.message);
+        // Postgres has specific error codes for "already exists" but let's stick to message check for simplicity
+        if (!e.message.toLowerCase().includes('already exists')) {
+          console.error(`❌ SQL Error in [${stmt.substring(0, 50)}...]:`, e.message);
         }
       }
+    }
+
+    if (this.isPostgres) {
+      console.log('👀 Verificando tabelas no Postgres...');
+      const tables = await this.all("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'");
+      console.log('📊 Tabelas encontradas:', tables.map(t => t.table_name).join(', '));
     }
 
     // Dynamic migrations (Postgres specifically needs DO blocks handled as one)

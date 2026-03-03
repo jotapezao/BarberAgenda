@@ -90,7 +90,7 @@ export default function Dashboard() {
                 </h2>
                 {data?.todayAppointments?.length > 0 ? (
                     <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-                        <div className="table-header" style={{ display: 'grid', gridTemplateColumns: isAdmin ? '80px 1fr 1fr 1fr 100px 80px 120px' : '80px 1.5fr 1.5fr 100px 100px 120px', padding: '15px 24px', background: 'var(--color-bg-secondary)', borderBottom: '1px solid var(--color-border)', fontSize: '0.85rem', fontWeight: 700, color: 'var(--color-text-muted)' }}>
+                        <div className="table-header appointment-grid" style={{ display: 'grid', gridTemplateColumns: isAdmin ? '80px 1fr 1fr 1fr 100px 80px 120px' : '80px 1.5fr 1.5fr 100px 100px 120px' }}>
                             <div>HR</div>
                             <div>CLIENTE</div>
                             <div>SERVIÇO</div>
@@ -100,7 +100,7 @@ export default function Dashboard() {
                             <div style={{ textAlign: 'right' }}>AÇÕES</div>
                         </div>
                         {data.todayAppointments.map(apt => (
-                            <div key={apt.id} className="table-row" style={{ display: 'grid', gridTemplateColumns: isAdmin ? '80px 1fr 1fr 1fr 100px 80px 120px' : '80px 1.5fr 1.5fr 100px 100px 120px', padding: '15px 24px', alignItems: 'center', borderBottom: '1px solid var(--color-border)' }}>
+                            <div key={apt.id} className="table-row appointment-grid" style={{ display: 'grid', gridTemplateColumns: isAdmin ? '80px 1fr 1fr 1fr 100px 80px 120px' : '80px 1.5fr 1.5fr 100px 100px 120px' }}>
                                 <div className="appointment-time">
                                     <div style={{ fontWeight: 700, fontSize: '1.1rem' }}>{apt.time}</div>
                                     {apt.end_time && <div className="text-secondary" style={{ fontSize: '0.75rem' }}>até {apt.end_time}</div>}
@@ -148,7 +148,7 @@ export default function Dashboard() {
                         <ChevronRight size={22} className="text-accent" /> Próximos Agendamentos
                     </h2>
                     <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-                        <div className="table-header" style={{ display: 'grid', gridTemplateColumns: isAdmin ? '80px 1fr 1fr 1fr 100px 80px 120px' : '80px 1.5fr 1.5fr 100px 100px 120px', padding: '15px 24px', background: 'var(--color-bg-secondary)', borderBottom: '1px solid var(--color-border)', fontSize: '0.85rem', fontWeight: 700, color: 'var(--color-text-muted)' }}>
+                        <div className="table-header appointment-grid" style={{ display: 'grid', gridTemplateColumns: isAdmin ? '80px 1fr 1fr 1fr 100px 80px 120px' : '80px 1.5fr 1.5fr 100px 100px 120px' }}>
                             <div>HR</div>
                             <div>CLIENTE</div>
                             <div>SERVIÇO</div>
@@ -158,7 +158,7 @@ export default function Dashboard() {
                             <div style={{ textAlign: 'right' }}>AÇÕES</div>
                         </div>
                         {data.upcomingAppointments.map(apt => (
-                            <div key={apt.id} className="table-row" style={{ display: 'grid', gridTemplateColumns: isAdmin ? '80px 1fr 1fr 1fr 100px 80px 120px' : '80px 1.5fr 1.5fr 100px 100px 120px', padding: '15px 24px', alignItems: 'center', borderBottom: '1px solid var(--color-border)' }}>
+                            <div key={apt.id} className="table-row appointment-grid" style={{ display: 'grid', gridTemplateColumns: isAdmin ? '80px 1fr 1fr 1fr 100px 80px 120px' : '80px 1.5fr 1.5fr 100px 100px 120px' }}>
                                 <div className="appointment-time">
                                     <div style={{ fontWeight: 700, fontSize: '1.1rem' }}>{apt.time}</div>
                                 </div>

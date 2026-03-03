@@ -3,6 +3,7 @@ import { adminApi, BASE_URL } from '../api';
 import { UserPlus, Edit2, Trash2, Check, X, Shield, Percent, User, Info, CalendarX } from 'lucide-react';
 import AdminLayout from '../components/AdminLayout';
 import { useToast } from '../components/Toast';
+import { maskCPF, maskPhone, validateCPF, unmask } from '../utils/mask';
 
 export default function Barbers() {
     const [barbers, setBarbers] = useState([]);
@@ -61,12 +62,24 @@ export default function Barbers() {
 
     async function handleSubmit(e) {
         e.preventDefault();
+
+        // Basic CPF Validation
+        if (formData.cpf && unmask(formData.cpf).length > 0 && !validateCPF(formData.cpf)) {
+            return toast.error('CPF inválido!');
+        }
+
+        const payload = {
+            ...formData,
+            cpf: unmask(formData.cpf || ''),
+            phone: unmask(formData.phone || '')
+        };
+
         try {
             if (editingBarber) {
-                await adminApi.updateBarber(editingBarber.id, formData);
+                await adminApi.updateBarber(editingBarber.id, payload);
                 toast.success('Barbeiro atualizado');
             } else {
-                await adminApi.createBarber(formData);
+                await adminApi.createBarber(payload);
                 toast.success('Barbeiro cadastrado');
             }
             setIsModalOpen(false);
@@ -246,7 +259,7 @@ export default function Barbers() {
                                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                                             <div className="form-group">
                                                 <label className="form-label">CPF</label>
-                                                <input type="text" className="form-input" value={formData.cpf} onChange={(e) => setFormData({ ...formData, cpf: e.target.value })} placeholder="000.000.000-00" />
+                                                <input type="text" className="form-input" value={maskCPF(formData.cpf || '')} onChange={(e) => setFormData({ ...formData, cpf: e.target.value })} placeholder="000.000.000-00" maxLength={14} />
                                             </div>
                                             <div className="form-group">
                                                 <label className="form-label">Data Nasc.</label>
@@ -255,7 +268,7 @@ export default function Barbers() {
                                         </div>
                                         <div className="form-group">
                                             <label className="form-label">WhatsApp</label>
-                                            <input type="text" className="form-input" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} placeholder="Ex: 11999999999" />
+                                            <input type="text" className="form-input" value={maskPhone(formData.phone || '')} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} placeholder="(00) 00000-0000" maxLength={15} />
                                         </div>
                                     </div>
                                 </div>

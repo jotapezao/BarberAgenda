@@ -2237,3 +2237,31 @@ body {
   background: rgba(212, 175, 55, 0.1);
   transform: translateY(-2px);
 }
+
+@media (max-width: 768px) {
+  .section-header-admin {
+    flex-direction: column !important;
+    text-align: center;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px;
+  }
+
+  .table-header {
+    display: none !important;
+  }
+
+  .table-row {
+    flex-direction: column !important;
+    display: flex !important;
+    padding: 20px !important;
+    gap: 12px !important;
+    border-radius: 12px !important;
+    border: 1px solid var(--color-border);
+    margin-bottom: 12px;
+  }
+}
