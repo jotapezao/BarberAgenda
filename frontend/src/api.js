@@ -1,4 +1,5 @@
 export const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+console.log('🌐 API Base URL:', BASE_URL);
 const API_URL = `${BASE_URL}/api`;
 
 async function request(endpoint, options = {}) {
