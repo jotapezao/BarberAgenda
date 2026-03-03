@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { adminApi } from '../api';
+import { adminApi, BASE_URL } from '../api';
 import { UserPlus, Edit2, Trash2, Check, X, Shield, Percent, User, Info } from 'lucide-react';
 import AdminLayout from '../components/AdminLayout';
 import { useToast } from '../components/Toast';
@@ -7,6 +7,7 @@ import { useToast } from '../components/Toast';
 export default function Barbers() {
     const [barbers, setBarbers] = useState([]);
     const [loading, setLoading] = useState(true);
+    const toast = useToast();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingBarber, setEditingBarber] = useState(null);
     const [formData, setFormData] = useState({
@@ -82,7 +83,6 @@ export default function Barbers() {
         });
         setIsModalOpen(true);
     }
-    const toast = useToast();
 
     return (
         <AdminLayout>
