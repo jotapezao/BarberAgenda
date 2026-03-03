@@ -87,10 +87,10 @@ export default function Home() {
         } catch (err) { toast.error(err.message); }
     };
 
-    const loadSlots = async (date, svcId) => {
+    const loadSlots = async (date, svcId, barbId) => {
         if (!date || !svcId) return;
         try {
-            const result = await publicApi.getAvailableSlots(date, svcId);
+            const result = await publicApi.getAvailableSlots(date, svcId, barbId);
             setSlots(result.slots || []);
             if (result.message && (!result.slots || result.slots.length === 0)) {
                 toast.info(result.message);
@@ -392,7 +392,7 @@ export default function Home() {
                                     <form onSubmit={handleBookingSubmit} className="animate-fade">
                                         <div className="form-group">
                                             <label className="form-label">📅 Data do Agendamento</label>
-                                            <input type="date" className="form-input" min={new Date().toISOString().split('T')[0]} value={formData.date} onChange={e => { setFormData({ ...formData, date: e.target.value, time: '' }); loadSlots(e.target.value, formData.service_id); }} required />
+                                            <input type="date" className="form-input" min={new Date().toISOString().split('T')[0]} value={formData.date} onChange={e => { setFormData({ ...formData, date: e.target.value, time: '' }); loadSlots(e.target.value, formData.service_id, formData.barber_id); }} required />
                                         </div>
                                         {formData.date && (
                                             <div className="form-group">

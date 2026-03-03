@@ -50,6 +50,7 @@ export default function AdminLayout({ children }) {
                             <NavLink to="/admin/clients" className={({ isActive }) => isActive ? 'active' : ''} onClick={closeSidebar}><Users size={20} /> Clientes</NavLink>
                             <NavLink to="/admin/stock" className={({ isActive }) => isActive ? 'active' : ''} onClick={closeSidebar}><Package size={20} /> Estoque</NavLink>
                             <NavLink to="/admin/site-config" className={({ isActive }) => isActive ? 'active' : ''} onClick={closeSidebar}><Palette size={20} /> Personalizar Site</NavLink>
+                            <NavLink to="/admin/security" className={({ isActive }) => isActive ? 'active' : ''} onClick={closeSidebar}><Settings size={20} /> Segurança</NavLink>
                         </>
                     )}
                 </nav>

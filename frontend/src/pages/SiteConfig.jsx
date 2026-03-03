@@ -319,6 +319,21 @@ export default function SiteConfig() {
                                 />
                             </div>
 
+                            <div className="form-group" style={{ marginTop: 16 }}>
+                                <label className="form-label">Fuso Horário do Salão</label>
+                                <select className="form-select" value={config.site_timezone || 'America/Sao_Paulo'} onChange={e => updateField('site_timezone', e.target.value)}>
+                                    <option value="America/Sao_Paulo">Brasília (GMT-3)</option>
+                                    <option value="America/Manaus">Manaus (GMT-4)</option>
+                                    <option value="America/Fortaleza">Fortaleza (GMT-3)</option>
+                                    <option value="Europe/Lisbon">Lisboa (GMT+0/1)</option>
+                                    <option value="UTC">UTC (Padrão)</option>
+                                </select>
+                                <p className="text-muted" style={{ fontSize: '0.75rem', marginTop: 4 }}>
+                                    <Info size={12} style={{ verticalAlign: 'middle', marginRight: 4 }} />
+                                    Importante para validar a antecedência mínima corretamente.
+                                </p>
+                            </div>
+
                             <div className="info-box" style={{ marginTop: 20, background: 'rgba(59, 130, 246, 0.05)', padding: 12, borderRadius: 6, fontSize: '0.8rem', border: '1px solid rgba(59, 130, 246, 0.2)' }}>
                                 <p><Info size={14} style={{ marginRight: 6 }} /> Ao ativar o sistema de barbeiros, certifique-se de que todos os barbeiros ativos tenham um percentual de comissão definido.</p>
                             </div>

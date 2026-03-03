@@ -114,7 +114,33 @@ const dbWrapper = {
         birth_date TEXT,
         phone TEXT,
         photo_url TEXT,
+        role_id INTEGER,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE TABLE IF NOT EXISTS roles (
+        id SERIAL PRIMARY KEY,
+        name TEXT UNIQUE NOT NULL,
+        description TEXT,
+        is_system INTEGER DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE TABLE IF NOT EXISTS role_permissions (
+        id SERIAL PRIMARY KEY,
+        role_id INTEGER NOT NULL,
+        resource TEXT NOT NULL,
+        action TEXT NOT NULL,
+        allowed INTEGER DEFAULT 0,
+        FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE
+      );
+
+      CREATE TABLE IF NOT EXISTS barber_off_days (
+        id SERIAL PRIMARY KEY,
+        barber_id INTEGER NOT NULL,
+        date TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (barber_id) REFERENCES users(id) ON DELETE CASCADE
       );
 
       CREATE TABLE IF NOT EXISTS services (
@@ -242,17 +268,8 @@ const dbWrapper = {
             IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='users' AND COLUMN_NAME='is_active') THEN
               ALTER TABLE users ADD COLUMN is_active INTEGER DEFAULT 1;
             END IF;
-            IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='users' AND COLUMN_NAME='cpf') THEN
-              ALTER TABLE users ADD COLUMN cpf TEXT;
-            END IF;
-            IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='users' AND COLUMN_NAME='birth_date') THEN
-              ALTER TABLE users ADD COLUMN birth_date TEXT;
-            END IF;
-            IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='users' AND COLUMN_NAME='phone') THEN
-              ALTER TABLE users ADD COLUMN phone TEXT;
-            END IF;
-            IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='users' AND COLUMN_NAME='photo_url') THEN
-              ALTER TABLE users ADD COLUMN photo_url TEXT;
+            IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='users' AND COLUMN_NAME='role_id') THEN
+              ALTER TABLE users ADD COLUMN role_id INTEGER;
             END IF;
             IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='appointments' AND COLUMN_NAME='barber_id') THEN
               ALTER TABLE appointments ADD COLUMN barber_id INTEGER;
@@ -271,6 +288,7 @@ const dbWrapper = {
         if (!userCols.find(c => c.name === 'birth_date')) await this.run("ALTER TABLE users ADD COLUMN birth_date TEXT");
         if (!userCols.find(c => c.name === 'phone')) await this.run("ALTER TABLE users ADD COLUMN phone TEXT");
         if (!userCols.find(c => c.name === 'photo_url')) await this.run("ALTER TABLE users ADD COLUMN photo_url TEXT");
+        if (!userCols.find(c => c.name === 'role_id')) await this.run("ALTER TABLE users ADD COLUMN role_id INTEGER");
 
         const appCols = await this.all("PRAGMA table_info(appointments)");
         if (!appCols.find(c => c.name === 'barber_id')) await this.run("ALTER TABLE appointments ADD COLUMN barber_id INTEGER");
@@ -280,10 +298,33 @@ const dbWrapper = {
     }
 
     // Seed data logic
+    // Roles Seed
+    const rolesExist = await this.get('SELECT COUNT(*) as count FROM roles');
+    if (parseInt(rolesExist.count) === 0) {
+      const { lastInsertRowid: adminId } = await this.run('INSERT INTO roles (name, description, is_system) VALUES (?, ?, ?)', ['Admin', 'Acesso total ao sistema', 1]);
+      const { lastInsertRowid: barberId } = await this.run('INSERT INTO roles (name, description, is_system) VALUES (?, ?, ?)', ['Barbeiro', 'Acesso aos seus próprios agendamentos e agenda', 1]);
+      const { lastInsertRowid: auxId } = await this.run('INSERT INTO roles (name, description, is_system) VALUES (?, ?, ?)', ['Auxiliar', 'Acesso limitado ao dashboard e atendimentos', 1]);
+
+      // Simple permission map
+      const resources = ['dashboard', 'appointments', 'financial', 'services', 'barbers', 'clients', 'stock', 'site_config', 'security'];
+      for (const res of resources) {
+        await this.run('INSERT INTO role_permissions (role_id, resource, action, allowed) VALUES (?, ?, ?, ?)', [adminId, res, 'manage', 1]);
+      }
+
+      // Barber permissions (example)
+      await this.run('INSERT INTO role_permissions (role_id, resource, action, allowed) VALUES (?, ?, ?, ?)', [barberId, 'appointments', 'manage', 1]);
+      await this.run('INSERT INTO role_permissions (role_id, resource, action, allowed) VALUES (?, ?, ?, ?)', [barberId, 'clients', 'view', 1]);
+      await this.run('INSERT INTO role_permissions (role_id, resource, action, allowed) VALUES (?, ?, ?, ?)', [barberId, 'financial', 'view', 1]);
+
+      // Update existing admin to have role_id
+      await this.run('UPDATE users SET role_id = ? WHERE role = ?', [adminId, 'admin']);
+    }
+
     const adminCount = await this.get('SELECT COUNT(*) as count FROM users');
     if (parseInt(adminCount.count) === 0) {
+      const adminRole = await this.get('SELECT id FROM roles WHERE name = ?', ['Admin']);
       const hashedPassword = bcrypt.hashSync('admin123', 10);
-      await this.run('INSERT INTO users (username, password, name) VALUES (?, ?, ?)', ['admin', hashedPassword, 'Barbeiro']);
+      await this.run('INSERT INTO users (username, password, name, role_id) VALUES (?, ?, ?, ?)', ['admin', hashedPassword, 'Barbeiro', adminRole?.id || 1]);
       console.log('✅ Admin criado: admin / admin123');
     }
 
@@ -319,6 +360,7 @@ const dbWrapper = {
       await this.run(q, ['site_logo', '', 'image']);
       await this.run(q, ['footer_text', '© 2026 BarberPro', 'text']);
       await this.run(q, ['site_theme', 'dark-gold', 'text']);
+      await this.run(q, ['site_timezone', 'America/Sao_Paulo', 'text']);
     }
   }
 };
