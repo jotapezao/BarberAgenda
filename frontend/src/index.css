@@ -1659,3 +1659,29 @@ textarea {
   border: 1px solid var(--color-accent-subtle) !important;
   box-shadow: 0 15px 50px rgba(0, 0, 0, 0.6) !important;
 }
+
+/* WORKING DAYS (SCHEDULE) */
+.working-days { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+.day-toggle { padding: 10px 14px; border-radius: 8px; border: 1px solid var(--color-border); background: var(--color-bg-primary); color: var(--color-text-secondary); cursor: pointer; transition: all 0.2s; font-weight: 600; font-size: 0.9rem; }
+.day-toggle:hover { border-color: var(--color-accent); }
+.day-toggle.active { background: var(--color-accent); color: var(--btn-text); border-color: var(--color-accent); box-shadow: 0 0 10px var(--color-accent-glow); }
+
+/* 3 NEW THEMES */
+body.theme-ruby-red { --color-bg-primary: #120305; --color-bg-secondary: #240a0e; --color-bg-card: #2f1013; --color-bg-card-hover: #3e1519; --color-bg-input: #240a0e; --color-accent: #f43f5e; --color-accent-light: #fb7185; --color-accent-dark: #e11d48; --color-accent-glow: rgba(244,63,94,0.2); --color-accent-subtle: rgba(244,63,94,0.08); --color-bg-glass: rgba(18,3,5,0.98); --color-text-primary: #fff1f2; --color-text-secondary: #fecdd3; --color-text-muted: #fda4af; --color-border: #4c1d22; --btn-text: #fff; }
+body.theme-emerald-green { --color-bg-primary: #021a11; --color-bg-secondary: #063121; --color-bg-card: #0a402d; --color-bg-card-hover: #0e563d; --color-bg-input: #063121; --color-accent: #10b981; --color-accent-light: #34d399; --color-accent-dark: #059669; --color-accent-glow: rgba(16,185,129,0.2); --color-accent-subtle: rgba(16,185,129,0.08); --color-bg-glass: rgba(2,26,17,0.98); --color-text-primary: #ecfdf5; --color-text-secondary: #a7f3d0; --color-text-muted: #6ee7b7; --color-border: #166e4e; --btn-text: #021a11; }
+body.theme-neon-cyberpunk { --color-bg-primary: #0a0a16; --color-bg-secondary: #14142a; --color-bg-card: #1f1f42; --color-bg-card-hover: #292956; --color-bg-input: #14142a; --color-accent: #00ffff; --color-accent-light: #aaffff; --color-accent-dark: #00cccc; --color-accent-glow: rgba(0,255,255,0.4); --color-accent-subtle: rgba(0,255,255,0.1); --color-bg-glass: rgba(10,10,22,0.98); --color-text-primary: #ffffff; --color-text-secondary: #d1d1e0; --color-text-muted: #a3a3c2; --color-border: #333366; --btn-text: #0a0a16; }
+
+/* DASHBOARD AGENDA FIX */
+.appointment-grid.admin-grid { display: grid; grid-template-columns: 80px 1fr 1fr 1fr 100px 80px 120px; align-items: center; gap: 10px; }
+.appointment-grid.barber-grid { display: grid; grid-template-columns: 80px 1.5fr 1.5fr 100px 100px 120px; align-items: center; gap: 10px; }
+@media (max-width: 900px) {
+  .appointment-grid.admin-grid, .appointment-grid.barber-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    border-bottom: 1px solid var(--color-border);
+    padding: 15px 0;
+  }
+  .table-header.appointment-grid { display: none; }
+  .appointment-grid > div { text-align: left !important;  justify-content: flex-start !important; }
+}

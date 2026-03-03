@@ -6,7 +6,9 @@ import { Calendar, Users, CheckCircle, XCircle, Clock, Phone, ChevronRight, Doll
 
 export default function Dashboard() {
     const [data, setData] = useState(null);
+    const [barbers, setBarbers] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [transferData, setTransferData] = useState({ id: null, barberId: '' });
     const toast = useToast();
 
     const userJson = localStorage.getItem('user');
@@ -16,14 +18,31 @@ export default function Dashboard() {
     useEffect(() => { loadDashboard(); }, []);
 
     const loadDashboard = async () => {
-        try { setData(await adminApi.getDashboard()); }
+        try {
+            const [dashboardData, barbersData] = await Promise.all([
+                adminApi.getDashboard(),
+                adminApi.getBarbers()
+            ]);
+            setData(dashboardData);
+            setBarbers(barbersData);
+        }
         catch (err) { toast.error('Erro ao carregar dashboard'); }
         finally { setLoading(false); }
     };
 
     const updateStatus = async (id, status) => {
-        try { await adminApi.updateAppointment(id, { status }); toast.success(`Status: ${statusLabels[status]}`); loadDashboard(); }
+        try { await adminApi.updateAppointment(id, { status }); toast.success(`Status atualizado`); loadDashboard(); }
         catch (err) { toast.error('Erro ao atualizar'); }
+    };
+
+    const transferAppointment = async () => {
+        if (!transferData.barberId) return toast.error('Selecione um barbeiro');
+        try {
+            await adminApi.updateAppointment(transferData.id, { barber_id: transferData.barberId });
+            toast.success('Agendamento transferido com sucesso');
+            setTransferData({ id: null, barberId: '' });
+            loadDashboard();
+        } catch (err) { toast.error('Erro ao transferir'); }
     };
 
     const statusLabels = { confirmed: 'Confirmado', completed: 'Concluído', cancelled: 'Cancelado' };
@@ -90,7 +109,7 @@ export default function Dashboard() {
                 </h2>
                 {data?.todayAppointments?.length > 0 ? (
                     <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-                        <div className="table-header appointment-grid" style={{ display: 'grid', gridTemplateColumns: isAdmin ? '80px 1fr 1fr 1fr 100px 80px 120px' : '80px 1.5fr 1.5fr 100px 100px 120px' }}>
+                        <div className={`table-header appointment-grid ${isAdmin ? 'admin-grid' : 'barber-grid'}`}>
                             <div>HR</div>
                             <div>CLIENTE</div>
                             <div>SERVIÇO</div>
@@ -100,7 +119,7 @@ export default function Dashboard() {
                             <div style={{ textAlign: 'right' }}>AÇÕES</div>
                         </div>
                         {data.todayAppointments.map(apt => (
-                            <div key={apt.id} className="table-row appointment-grid" style={{ display: 'grid', gridTemplateColumns: isAdmin ? '80px 1fr 1fr 1fr 100px 80px 120px' : '80px 1.5fr 1.5fr 100px 100px 120px' }}>
+                            <div key={apt.id} className={`table-row appointment-grid ${isAdmin ? 'admin-grid' : 'barber-grid'}`}>
                                 <div className="appointment-time">
                                     <div style={{ fontWeight: 700, fontSize: '1.1rem' }}>{apt.time}</div>
                                     {apt.end_time && <div className="text-secondary" style={{ fontSize: '0.75rem' }}>até {apt.end_time}</div>}
@@ -126,6 +145,7 @@ export default function Dashboard() {
                                     {apt.status === 'confirmed' && (
                                         <>
                                             <button className="btn btn-success btn-sm" style={{ padding: '6px' }} onClick={() => updateStatus(apt.id, 'completed')} title="Concluir"><CheckCircle size={16} /></button>
+                                            <button className="btn btn-secondary btn-sm" style={{ padding: '6px' }} onClick={() => setTransferData({ id: apt.id, barberId: apt.barber_id || '' })} title="Transferir Agendamento"><Users size={16} /></button>
                                             <button className="btn btn-danger btn-sm" style={{ padding: '6px' }} onClick={() => updateStatus(apt.id, 'cancelled')} title="Cancelar"><XCircle size={16} /></button>
                                         </>
                                     )}
@@ -148,7 +168,7 @@ export default function Dashboard() {
                         <ChevronRight size={22} className="text-accent" /> Próximos Agendamentos
                     </h2>
                     <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-                        <div className="table-header appointment-grid" style={{ display: 'grid', gridTemplateColumns: isAdmin ? '80px 1fr 1fr 1fr 100px 80px 120px' : '80px 1.5fr 1.5fr 100px 100px 120px' }}>
+                        <div className={`table-header appointment-grid ${isAdmin ? 'admin-grid' : 'barber-grid'}`}>
                             <div>HR</div>
                             <div>CLIENTE</div>
                             <div>SERVIÇO</div>
@@ -158,7 +178,7 @@ export default function Dashboard() {
                             <div style={{ textAlign: 'right' }}>AÇÕES</div>
                         </div>
                         {data.upcomingAppointments.map(apt => (
-                            <div key={apt.id} className="table-row appointment-grid" style={{ display: 'grid', gridTemplateColumns: isAdmin ? '80px 1fr 1fr 1fr 100px 80px 120px' : '80px 1.5fr 1.5fr 100px 100px 120px' }}>
+                            <div key={apt.id} className={`table-row appointment-grid ${isAdmin ? 'admin-grid' : 'barber-grid'}`}>
                                 <div className="appointment-time">
                                     <div style={{ fontWeight: 700, fontSize: '1.1rem' }}>{apt.time}</div>
                                 </div>
@@ -185,8 +205,33 @@ export default function Dashboard() {
                             </div>
                         ))}
                     </div>
-                </div>
             )}
-        </AdminLayout>
-    );
+
+                    {transferData.id && (
+                        <div className="modal-overlay" onClick={() => setTransferData({ id: null, barberId: '' })}>
+                            <div className="modal animate-scale" onClick={e => e.stopPropagation()}>
+                                <div className="modal-header">
+                                    <h2>Transferir Agendamento</h2>
+                                    <button className="btn-icon" onClick={() => setTransferData({ id: null, barberId: '' })}><XCircle size={20} /></button>
+                                </div>
+                                <div className="modal-body">
+                                    <div className="form-group">
+                                        <label className="form-label">Selecione o novo barbeiro</label>
+                                        <select className="form-select" value={transferData.barberId} onChange={e => setTransferData({ ...transferData, barberId: e.target.value })}>
+                                            <option value="">Selecione...</option>
+                                            {barbers.map(b => (
+                                                <option key={b.id} value={b.id}>{b.name}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </div>
+                                <div className="modal-footer">
+                                    <button className="btn btn-secondary" onClick={() => setTransferData({ id: null, barberId: '' })}>Cancelar</button>
+                                    <button className="btn btn-primary" onClick={transferAppointment}>Transferir</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </AdminLayout>
+            );
 }

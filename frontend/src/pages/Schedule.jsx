@@ -172,11 +172,9 @@ export default function Schedule() {
                                     value={settings.interval_minutes || '30'}
                                     onChange={e => setSettings({ ...settings, interval_minutes: e.target.value })}
                                 >
-                                    <option value="15">15 minutos</option>
-                                    <option value="20">20 minutos</option>
-                                    <option value="30">30 minutos</option>
-                                    <option value="45">45 minutos</option>
-                                    <option value="60">60 minutos</option>
+                                    {[5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60].map(m => (
+                                        <option key={m} value={m}>{m} minutos</option>
+                                    ))}
                                 </select>
                             </div>
                         </div>
