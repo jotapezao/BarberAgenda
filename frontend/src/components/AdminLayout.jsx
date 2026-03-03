@@ -40,8 +40,8 @@ export default function AdminLayout({ children }) {
                     )}
                 </div>
                 <nav className="admin-nav">
-                    <NavLink to="/admin" end className={({ isActive }) => isActive ? 'active' : ''} onClick={closeSidebar}><Calendar size={20} /> Agenda de Hoje</NavLink>
-                    <NavLink to="/admin/schedule" className={({ isActive }) => isActive ? 'active' : ''} onClick={closeSidebar}><Settings size={20} /> Horários da Barbearia</NavLink>
+                    <NavLink to="/admin" end className={({ isActive }) => isActive ? 'active' : ''} onClick={closeSidebar}><Calendar size={20} /> Agenda</NavLink>
+                    <NavLink to="/admin/schedule" className={({ isActive }) => isActive ? 'active' : ''} onClick={closeSidebar}><Settings size={20} /> Sistema - Horário</NavLink>
                     <NavLink to="/admin/financial" className={({ isActive }) => isActive ? 'active' : ''} onClick={closeSidebar}><DollarSign size={20} /> Financeiro</NavLink>
                     {isAdmin && (
                         <>

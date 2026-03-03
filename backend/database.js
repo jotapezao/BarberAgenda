@@ -22,6 +22,7 @@ if (databaseUrl) {
 } else {
   // Use SQLite for local dev
   const sqliteFile = path.join(__dirname, 'barbearia.db');
+  if (process.env.NODE_ENV === 'production') throw new Error('You are running on production without a DATABASE_URL. SQLite is not persistent in Railway.');
   db = new Database(sqliteFile);
   db.pragma('journal_mode = WAL');
   db.pragma('foreign_keys = ON');
