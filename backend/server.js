@@ -96,6 +96,17 @@ app.get('/api/available-slots/:date', async (req, res) => {
     const closeTime = settings.close_time || '19:00';
     const interval = parseInt(settings.interval_minutes || '30');
     const workingDays = (settings.working_days || '1,2,3,4,5,6').split(',').map(Number);
+    const minNotice = parseInt(settings.min_booking_notice || '15');
+    const maxAdvance = parseInt(settings.max_booking_advance || '30');
+
+    // Check min/max advance
+    const now = new Date();
+    const targetDate = new Date(date + 'T00:00:00');
+    const maxDate = new Date(); maxDate.setDate(maxDate.getDate() + maxAdvance);
+
+    if (targetDate > maxDate) {
+        return res.json({ slots: [], message: `Agendamentos permitidos apenas até ${maxAdvance} dias de antecedência` });
+    }
 
     // Check working day
     const dayOfWeek = new Date(date + 'T12:00:00').getDay();
@@ -117,13 +128,24 @@ app.get('/api/available-slots/:date', async (req, res) => {
     let currentMinutes = openH * 60 + openM;
     const endMinutes = closeH * 60 + closeM;
 
+    const todayStr = now.toISOString().split('T')[0];
+
     while (currentMinutes + serviceDuration <= endMinutes + interval) {
         if (currentMinutes >= endMinutes) break;
         const h = Math.floor(currentMinutes / 60).toString().padStart(2, '0');
         const m = (currentMinutes % 60).toString().padStart(2, '0');
         const timeStr = `${h}:${m}`;
 
-        if (await isSlotAvailable(date, timeStr, serviceDuration)) {
+        let available = true;
+
+        // Min notice check if same day
+        if (date === todayStr) {
+            const slotTime = new Date(`${date}T${timeStr}:00`);
+            const minAllowed = new Date(now.getTime() + minNotice * 60000);
+            if (slotTime < minAllowed) available = false;
+        }
+
+        if (available && await isSlotAvailable(date, timeStr, serviceDuration)) {
             slots.push(timeStr);
         }
         currentMinutes += interval;
@@ -222,9 +244,9 @@ app.get('/api/clients/check/:whatsapp', async (req, res) => {
     res.json(client || null);
 });
 
-// List active barbers
+// List active barbers (public)
 app.get('/api/barbers', async (req, res) => {
-    res.json(await db.all("SELECT id, name, username FROM users WHERE role = 'barber' AND is_active = 1"));
+    res.json(await db.all("SELECT id, name, username, photo_url FROM users WHERE role = 'barber' AND is_active = 1"));
 });
 
 // ============================
@@ -374,12 +396,12 @@ app.delete('/api/admin/services/:id', authenticateToken, async (req, res) => {
 // -- BARBERS --
 app.get('/api/admin/barbers', authenticateToken, async (req, res) => {
     if (req.user.role !== 'admin') return res.status(403).json({ error: 'Acesso negado' });
-    res.json(await db.all("SELECT id, username, name, commission_rate, total_commission_earned, total_commission_paid, is_active, created_at FROM users WHERE role = 'barber' ORDER BY name"));
+    res.json(await db.all("SELECT id, username, name, cpf, birth_date, phone, photo_url, commission_rate, total_commission_earned, total_commission_paid, is_active, created_at FROM users WHERE role = 'barber' ORDER BY name"));
 });
 
 app.post('/api/admin/barbers', authenticateToken, async (req, res) => {
     if (req.user.role !== 'admin') return res.status(403).json({ error: 'Acesso negado' });
-    const { username, password, name, commission_rate, is_active } = req.body;
+    const { username, password, name, commission_rate, is_active, cpf, birth_date, phone, photo_url } = req.body;
     if (!username || !password || !name) return res.status(400).json({ error: 'Usuário, senha e nome são obrigatórios' });
 
     const existing = await db.get('SELECT id FROM users WHERE username = ?', [username]);
@@ -387,8 +409,8 @@ app.post('/api/admin/barbers', authenticateToken, async (req, res) => {
 
     const hashedPassword = bcrypt.hashSync(password, 10);
     const result = await db.run(
-        'INSERT INTO users (username, password, name, role, commission_rate, is_active) VALUES (?, ?, ?, ?, ?, ?)',
-        [username, hashedPassword, name, 'barber', commission_rate || 0, is_active !== undefined ? is_active : 1]
+        'INSERT INTO users (username, password, name, role, commission_rate, is_active, cpf, birth_date, phone, photo_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [username, hashedPassword, name, 'barber', commission_rate || 0, is_active !== undefined ? is_active : 1, cpf || null, birth_date || null, phone || null, photo_url || null]
     );
     const barber = await db.get('SELECT id, username, name, commission_rate, is_active, created_at FROM users WHERE id = ?', [result.lastInsertRowid]);
     res.status(201).json(barber);
@@ -396,9 +418,9 @@ app.post('/api/admin/barbers', authenticateToken, async (req, res) => {
 
 app.put('/api/admin/barbers/:id', authenticateToken, async (req, res) => {
     if (req.user.role !== 'admin') return res.status(403).json({ error: 'Acesso negado' });
-    const { name, password, commission_rate, is_active } = req.body;
-    const updates = ['name = ?', 'commission_rate = ?', 'is_active = ?'];
-    const params = [name, commission_rate || 0, is_active !== undefined ? is_active : 1];
+    const { name, password, commission_rate, is_active, cpf, birth_date, phone, photo_url } = req.body;
+    const updates = ['name = ?', 'commission_rate = ?', 'is_active = ?', 'cpf = ?', 'birth_date = ?', 'phone = ?', 'photo_url = ?'];
+    const params = [name, commission_rate || 0, is_active !== undefined ? is_active : 1, cpf || null, birth_date || null, phone || null, photo_url || null];
 
     if (password && password.trim() !== '') {
         updates.push('password = ?');
@@ -623,25 +645,31 @@ app.get('/api/admin/financial', authenticateToken, async (req, res) => {
     const today = new Date().toISOString().split('T')[0];
     const monthStart = new Date(); monthStart.setDate(1);
     const monthStartStr = monthStart.toISOString().split('T')[0];
-    let barberId = req.query.barberId;
+
+    let { barberId, startDate, endDate } = req.query;
     if (req.user.role === 'barber') { barberId = req.user.id; }
+
+    // Default period for stats
+    const queryStart = startDate || monthStartStr;
+    const queryEnd = endDate || today;
 
     const whereBarber = barberId ? ' AND a.barber_id = ?' : '';
     const groupBarber = barberId ? ' AND u.id = ?' : '';
+
     const paramsToday = barberId ? [today, barberId] : [today];
-    const paramsMonth = barberId ? [monthStartStr, today, barberId] : [monthStartStr, today];
+    const paramsPeriod = barberId ? [queryStart, queryEnd, barberId] : [queryStart, queryEnd];
 
     const todayStats = await db.get(`
     SELECT COUNT(*) as total_appointments, COALESCE(SUM(s.price), 0) as total_revenue
     FROM appointments a JOIN services s ON a.service_id = s.id WHERE a.date = ? AND a.status = 'completed'${whereBarber}
   `, paramsToday);
 
-    const monthStats = await db.get(`
+    const periodStats = await db.get(`
     SELECT COUNT(*) as total_appointments, COALESCE(SUM(s.price), 0) as total_revenue
     FROM appointments a JOIN services s ON a.service_id = s.id WHERE a.date >= ? AND a.date <= ? AND a.status = 'completed'${whereBarber}
-  `, paramsMonth);
+  `, paramsPeriod);
 
-    const avgTicket = monthStats.total_appointments > 0 ? (monthStats.total_revenue / monthStats.total_appointments).toFixed(2) : 0;
+    const avgTicket = periodStats.total_appointments > 0 ? (periodStats.total_revenue / periodStats.total_appointments).toFixed(2) : 0;
 
     // Product sales ignore barberId for now as products aren't linked to barbers directly
     const productSalesMonth = await db.get(`SELECT COALESCE(SUM(total_price), 0) as total FROM product_sales WHERE date >= ?`, [monthStartStr]);

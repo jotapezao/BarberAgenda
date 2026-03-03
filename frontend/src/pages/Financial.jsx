@@ -75,10 +75,24 @@ const chartDefaults = {
 export default function Financial() {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [barbers, setBarbers] = useState([]);
     const [paying, setPaying] = useState(false);
+
+    // Filters logic
+    const today = new Date().toISOString().split('T')[0];
+    const monthStart = new Date(); monthStart.setDate(1);
+    const monthStartStr = monthStart.toISOString().split('T')[0];
+
+    const [filters, setFilters] = useState({
+        startDate: monthStartStr,
+        endDate: today,
+        barberId: ''
+    });
+
     const toast = useToast();
 
     const handlePay = async (barberId, amount) => {
+        if (!amount || amount <= 0) return;
         if (!window.confirm(`Confirmar registro de pagamento de ${formatPrice(amount)}?`)) return;
         setPaying(true);
         try {
@@ -94,11 +108,19 @@ export default function Financial() {
 
     useEffect(() => {
         loadFinancial();
-    }, []);
+        loadBarbers();
+    }, [filters]);
+
+    const loadBarbers = async () => {
+        try {
+            const list = await adminApi.getBarbers();
+            setBarbers(list);
+        } catch (err) { console.error(err); }
+    };
 
     const loadFinancial = async () => {
         try {
-            const financial = await adminApi.getFinancial();
+            const financial = await adminApi.getFinancial(filters);
             setData(financial);
         } catch (err) {
             toast.error('Erro ao carregar dados financeiros');
@@ -199,12 +221,36 @@ export default function Financial() {
         },
     };
 
+    const totalCommissions = (data?.individualCommissions || []).reduce((acc, curr) => acc + (curr.period_commission || 0), 0);
+    const netRevenue = (data?.month?.revenue || 0) - totalCommissions;
+
     return (
         <AdminLayout>
-            <div className="section-header-admin">
+            <div className="section-header-admin" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '20px' }}>
                 <div>
                     <h1>Financeiro</h1>
                     <p className="text-secondary">Controle de faturamento e métricas de desempenho</p>
+                </div>
+
+                {/* Filter Bar */}
+                <div className="card" style={{ padding: '12px 20px', display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--color-border)' }}>
+                    <div style={{ display: 'flex', flexCol: 'column', gap: '4px' }}>
+                        <label style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>Início</label>
+                        <input type="date" className="btn btn-sm" style={{ background: 'var(--color-bg-secondary)', border: '1px solid var(--color-border)', color: '#fff' }} value={filters.startDate} onChange={e => setFilters({ ...filters, startDate: e.target.value })} />
+                    </div>
+                    <div style={{ display: 'flex', flexCol: 'column', gap: '4px' }}>
+                        <label style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>Fim</label>
+                        <input type="date" className="btn btn-sm" style={{ background: 'var(--color-bg-secondary)', border: '1px solid var(--color-border)', color: '#fff' }} value={filters.endDate} onChange={e => setFilters({ ...filters, endDate: e.target.value })} />
+                    </div>
+                    {isAdmin && (
+                        <div style={{ display: 'flex', flexCol: 'column', gap: '4px' }}>
+                            <label style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>Barbeiro</label>
+                            <select className="btn btn-sm" style={{ background: 'var(--color-bg-secondary)', border: '1px solid var(--color-border)', color: '#fff', minWidth: '140px' }} value={filters.barberId} onChange={e => setFilters({ ...filters, barberId: e.target.value })}>
+                                <option value="">Todos Barbeiros</option>
+                                {barbers.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+                            </select>
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -219,28 +265,35 @@ export default function Financial() {
                 </div>
 
                 <div className="card financial-card">
-                    <h3>📅 Faturamento do Mês</h3>
-                    <div className="value green">{formatPrice(data?.month?.revenue)}</div>
+                    <h3>📅 Receita Bruta (Período)</h3>
+                    <div className="value gold">{formatPrice(data?.month?.revenue)}</div>
                     <p className="text-secondary" style={{ marginTop: '8px', fontSize: '0.85rem' }}>
-                        {data?.month?.appointments || 0} atendimentos
+                        Baseado nos fitros aplicados
                     </p>
                 </div>
 
-                <div className="card financial-card">
-                    <h3>👥 Atendimentos (Mês)</h3>
-                    <div className="value" style={{ color: 'var(--color-info)' }}>{data?.month?.appointments || 0}</div>
-                </div>
-
                 {isAdmin ? (
-                    <div className="card financial-card">
-                        <h3>📊 Ticket Médio</h3>
-                        <div className="value">{formatPrice(data?.month?.avgTicket)}</div>
-                    </div>
+                    <>
+                        <div className="card financial-card">
+                            <h3>💸 Comissões (Período)</h3>
+                            <div className="value" style={{ color: '#ef4444' }}>{formatPrice(totalCommissions)}</div>
+                        </div>
+                        <div className="card financial-card">
+                            <h3>📈 Receita Líquida</h3>
+                            <div className="value green">{formatPrice(netRevenue)}</div>
+                        </div>
+                    </>
                 ) : (
-                    <div className="card financial-card">
-                        <h3>💸 Minha Comissão</h3>
-                        <div className="value gold">{formatPrice(data?.individualCommissions?.[0]?.total_commission)}</div>
-                    </div>
+                    <>
+                        <div className="card financial-card">
+                            <h3>✂️ Meus Atendimentos</h3>
+                            <div className="value" style={{ color: 'var(--color-info)' }}>{data?.month?.appointments || 0}</div>
+                        </div>
+                        <div className="card financial-card">
+                            <h3>⭐ Minha Comissão</h3>
+                            <div className="value gold">{formatPrice(data?.individualCommissions?.[0]?.period_commission)}</div>
+                        </div>
+                    </>
                 )}
             </div>
 

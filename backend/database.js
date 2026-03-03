@@ -7,21 +7,23 @@ const fs = require('fs');
 let db;
 let isPostgres = false;
 
-if (process.env.DATABASE_URL) {
+const databaseUrl = process.env.DATABASE_URL ? process.env.DATABASE_URL.trim() : null;
+
+if (databaseUrl) {
   // Use PostgreSQL if URL is provided (Railway)
   isPostgres = true;
   db = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: process.env.DATABASE_URL.includes('railway') ? { rejectUnauthorized: false } : false,
+    connectionString: databaseUrl,
+    ssl: databaseUrl.includes('localhost') || databaseUrl.includes('127.0.0.1') ? false : { rejectUnauthorized: false },
   });
-  console.log('✅ Base de dados: PostgreSQL');
+  console.log('✅ Conectando ao PostgreSQL...');
 } else {
   // Use SQLite for local dev
   const sqliteFile = path.join(__dirname, 'barbearia.db');
   db = new Database(sqliteFile);
   db.pragma('journal_mode = WAL');
   db.pragma('foreign_keys = ON');
-  console.log('✅ Base de dados: SQLite (Local)');
+  console.log('✅ Conectando ao SQLite (Local)...');
 }
 
 // Wrapper for common DB operations to hide differences
@@ -108,6 +110,10 @@ const dbWrapper = {
         commission_rate DECIMAL(5,2) DEFAULT 0,
         total_commission_earned DECIMAL(10,2) DEFAULT 0,
         is_active INTEGER DEFAULT 1,
+        cpf TEXT,
+        birth_date TEXT,
+        phone TEXT,
+        photo_url TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
 
@@ -205,8 +211,14 @@ const dbWrapper = {
       );
     `;
 
-    // SQLite adjustments (replacing SERIAL with INTEGER PRIMARY KEY AUTOINCREMENT)
-    const sql = isPostgres ? createTableSQL : createTableSQL.replace(/SERIAL PRIMARY KEY/g, 'INTEGER PRIMARY KEY AUTOINCREMENT').replace(/TIMESTAMP/g, 'DATETIME').replace(/DECIMAL\(10,2\)/g, 'REAL');
+    // SQLite adjustments (replacing SERIAL with INTEGER PRIMARY KEY AUTOINCREMENT and numeric types)
+    const sql = isPostgres
+      ? createTableSQL
+      : createTableSQL
+        .replace(/SERIAL PRIMARY KEY/g, 'INTEGER PRIMARY KEY AUTOINCREMENT')
+        .replace(/TIMESTAMP/g, 'DATETIME')
+        .replace(/DECIMAL\(\d+,\d+\)/g, 'REAL')
+        .replace(/DECIMAL/g, 'REAL');
 
     await this.exec(sql);
 
@@ -230,6 +242,18 @@ const dbWrapper = {
             IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='users' AND COLUMN_NAME='is_active') THEN
               ALTER TABLE users ADD COLUMN is_active INTEGER DEFAULT 1;
             END IF;
+            IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='users' AND COLUMN_NAME='cpf') THEN
+              ALTER TABLE users ADD COLUMN cpf TEXT;
+            END IF;
+            IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='users' AND COLUMN_NAME='birth_date') THEN
+              ALTER TABLE users ADD COLUMN birth_date TEXT;
+            END IF;
+            IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='users' AND COLUMN_NAME='phone') THEN
+              ALTER TABLE users ADD COLUMN phone TEXT;
+            END IF;
+            IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='users' AND COLUMN_NAME='photo_url') THEN
+              ALTER TABLE users ADD COLUMN photo_url TEXT;
+            END IF;
             IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='appointments' AND COLUMN_NAME='barber_id') THEN
               ALTER TABLE appointments ADD COLUMN barber_id INTEGER;
             END IF;
@@ -243,6 +267,10 @@ const dbWrapper = {
         if (!userCols.find(c => c.name === 'total_commission_earned')) await this.run("ALTER TABLE users ADD COLUMN total_commission_earned DECIMAL(10,2) DEFAULT 0");
         if (!userCols.find(c => c.name === 'total_commission_paid')) await this.run("ALTER TABLE users ADD COLUMN total_commission_paid DECIMAL(10,2) DEFAULT 0");
         if (!userCols.find(c => c.name === 'is_active')) await this.run("ALTER TABLE users ADD COLUMN is_active INTEGER DEFAULT 1");
+        if (!userCols.find(c => c.name === 'cpf')) await this.run("ALTER TABLE users ADD COLUMN cpf TEXT");
+        if (!userCols.find(c => c.name === 'birth_date')) await this.run("ALTER TABLE users ADD COLUMN birth_date TEXT");
+        if (!userCols.find(c => c.name === 'phone')) await this.run("ALTER TABLE users ADD COLUMN phone TEXT");
+        if (!userCols.find(c => c.name === 'photo_url')) await this.run("ALTER TABLE users ADD COLUMN photo_url TEXT");
 
         const appCols = await this.all("PRAGMA table_info(appointments)");
         if (!appCols.find(c => c.name === 'barber_id')) await this.run("ALTER TABLE appointments ADD COLUMN barber_id INTEGER");
@@ -278,6 +306,8 @@ const dbWrapper = {
       await this.run(q, ['working_days', '1,2,3,4,5,6']);
       await this.run(q, ['whatsapp_number', '5500000000000']);
       await this.run(q, ['use_barbers', '0']);
+      await this.run(q, ['min_booking_notice', '15']);
+      await this.run(q, ['max_booking_advance', '30']);
     }
 
     const siteExists = await this.get('SELECT COUNT(*) as count FROM site_config');

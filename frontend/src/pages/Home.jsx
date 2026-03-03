@@ -90,8 +90,11 @@ export default function Home() {
     const loadSlots = async (date, svcId) => {
         if (!date || !svcId) return;
         try {
-            const { slots } = await publicApi.getAvailableSlots(date, svcId);
-            setSlots(slots);
+            const result = await publicApi.getAvailableSlots(date, svcId);
+            setSlots(result.slots || []);
+            if (result.message && (!result.slots || result.slots.length === 0)) {
+                toast.info(result.message);
+            }
         } catch (err) { toast.error('Erro ao carregar horários'); }
     };
 
@@ -334,10 +337,29 @@ export default function Home() {
                                                             cursor: 'pointer',
                                                             textAlign: 'center',
                                                             border: '1px solid rgba(255,255,255,0.1)',
-                                                            transition: 'all 0.2s ease'
+                                                            transition: 'all 0.2s ease',
+                                                            display: 'flex',
+                                                            flexDirection: 'column',
+                                                            alignItems: 'center',
+                                                            gap: '8px'
                                                         }}>
-                                                        <div style={{ width: 50, height: 50, borderRadius: '50%', background: formData.barber_id === b.id ? 'rgba(0,0,0,0.1)' : 'var(--color-accent-subtle)', margin: '0 auto 10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                                            <User size={24} />
+                                                        <div style={{
+                                                            width: 60,
+                                                            height: 60,
+                                                            borderRadius: '50%',
+                                                            background: formData.barber_id === b.id ? 'rgba(0,0,0,0.1)' : 'var(--color-bg-secondary)',
+                                                            margin: '0 auto',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center',
+                                                            overflow: 'hidden',
+                                                            border: `2px solid ${formData.barber_id === b.id ? 'rgba(0,0,0,0.2)' : 'var(--color-accent-subtle)'}`
+                                                        }}>
+                                                            {b.photo_url ? (
+                                                                <img src={`${BASE_URL}${b.photo_url}`} alt={b.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                            ) : (
+                                                                <User size={28} />
+                                                            )}
                                                         </div>
                                                         <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>{b.name}</div>
                                                     </div>

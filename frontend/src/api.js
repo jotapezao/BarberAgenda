@@ -40,11 +40,11 @@ export const publicApi = {
     createAppointment: (data) => request('/appointments', {
         method: 'POST',
         body: JSON.stringify({
-            client_name: data.clientName,
-            client_whatsapp: data.clientWhatsapp,
-            client_birth_date: data.clientBirthDate,
-            service_id: data.serviceId,
-            barber_id: data.barberId,
+            client_name: data.client_name || data.clientName,
+            client_whatsapp: data.client_whatsapp || data.clientWhatsapp,
+            client_birth_date: data.client_birth_date || data.clientBirthDate,
+            service_id: data.service_id || data.serviceId,
+            barber_id: data.barber_id || data.barberId,
             date: data.date,
             time: data.time,
             notes: data.notes

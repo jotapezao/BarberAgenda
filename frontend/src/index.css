@@ -1438,6 +1438,26 @@ textarea {
   gap: var(--space-xl);
 }
 
+@media (max-width: 768px) {
+  .schedule-config {
+    grid-template-columns: 1fr;
+    gap: var(--space-md);
+  }
+
+  .section-header-admin {
+    flex-direction: column;
+    align-items: stretch !important;
+  }
+
+  .admin-header-actions {
+    width: 100%;
+  }
+
+  .admin-header-actions button {
+    width: 100%;
+  }
+}
+
 .working-days {
   display: flex;
   flex-wrap: wrap;

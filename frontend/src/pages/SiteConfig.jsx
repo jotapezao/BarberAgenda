@@ -296,11 +296,28 @@ export default function SiteConfig() {
                             </div>
 
                             <FormField
-                                label="Número do WhatsApp (Flutuante)"
+                                label="Número do WhatsApp (Botão Flutuante)"
                                 value={config.whatsapp_number}
                                 onChange={v => updateField('whatsapp_number', v)}
-                                info="O número que receberá mensagens do botão fixo no site."
+                                info="Ex: 5511999999999 (Código do país + DDD + Número)"
                             />
+
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginTop: 24 }}>
+                                <FormField
+                                    label="Antecedência Mínima (Minutos)"
+                                    type="number"
+                                    value={config.min_booking_notice}
+                                    onChange={v => updateField('min_booking_notice', v)}
+                                    info="Bloqueia horários muito próximos da hora atual. (Ex: 15 min)"
+                                />
+                                <FormField
+                                    label="Antecedência Máxima (Dias)"
+                                    type="number"
+                                    value={config.max_booking_advance}
+                                    onChange={v => updateField('max_booking_advance', v)}
+                                    info="Limite para agendar no futuro. (Ex: 30 dias)"
+                                />
+                            </div>
 
                             <div className="info-box" style={{ marginTop: 20, background: 'rgba(59, 130, 246, 0.05)', padding: 12, borderRadius: 6, fontSize: '0.8rem', border: '1px solid rgba(59, 130, 246, 0.2)' }}>
                                 <p><Info size={14} style={{ marginRight: 6 }} /> Ao ativar o sistema de barbeiros, certifique-se de que todos os barbeiros ativos tenham um percentual de comissão definido.</p>
