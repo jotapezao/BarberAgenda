@@ -208,13 +208,13 @@ const dbWrapper = {
     const adminCount = await this.get('SELECT COUNT(*) as count FROM users');
     if (parseInt(adminCount.count) === 0) {
       const hashedPassword = bcrypt.hashSync('admin123', 10);
-      await this.run('INSERT INTO users (username, password, name) VALUES ($1, $2, $3)', ['admin', hashedPassword, 'Barbeiro']);
+      await this.run('INSERT INTO users (username, password, name) VALUES (?, ?, ?)', ['admin', hashedPassword, 'Barbeiro']);
       console.log('✅ Admin criado: admin / admin123');
     }
 
     const servicesExist = await this.get('SELECT COUNT(*) as count FROM services');
     if (parseInt(servicesExist.count) === 0) {
-      const q = 'INSERT INTO services (name, price, duration, sort_order) VALUES ($1, $2, $3, $4)';
+      const q = 'INSERT INTO services (name, price, duration, sort_order) VALUES (?, ?, ?, ?)';
       await this.run(q, ['Corte Degradê', 50.00, 30, 1]);
       await this.run(q, ['Barba', 50.00, 30, 2]);
       await this.run(q, ['Sobrancelha', 30.00, 15, 3]);
@@ -224,7 +224,7 @@ const dbWrapper = {
 
     const settingsExist = await this.get('SELECT COUNT(*) as count FROM settings');
     if (parseInt(settingsExist.count) === 0) {
-      const q = 'INSERT INTO settings (key, value) VALUES ($1, $2)';
+      const q = 'INSERT INTO settings (key, value) VALUES (?, ?)';
       await this.run(q, ['open_time', '08:00']);
       await this.run(q, ['close_time', '19:00']);
       await this.run(q, ['interval_minutes', '30']);
@@ -234,7 +234,7 @@ const dbWrapper = {
 
     const siteExists = await this.get('SELECT COUNT(*) as count FROM site_config');
     if (parseInt(siteExists.count) === 0) {
-      const q = 'INSERT INTO site_config (key, value, type) VALUES ($1, $2, $3)';
+      const q = 'INSERT INTO site_config (key, value, type) VALUES (?, ?, ?)';
       await this.run(q, ['site_name', 'BarberPro', 'text']);
       await this.run(q, ['site_slogan', 'Estilo e Atitude em Cada Corte', 'text']);
       await this.run(q, ['site_description', 'A melhor barbearia da cidade.', 'textarea']);
