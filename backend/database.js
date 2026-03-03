@@ -14,16 +14,18 @@ if (databaseUrl) {
   isPostgres = true;
   db = new Pool({
     connectionString: databaseUrl,
-    ssl: databaseUrl.includes('localhost') || databaseUrl.includes('127.0.0.1') ? false : { rejectUnauthorized: false },
+    ssl: { rejectUnauthorized: false },
+    connectionTimeoutMillis: 10000,
   });
-  console.log('✅ Conectando ao PostgreSQL...');
+  const urlSafe = databaseUrl.split('@')[1] || 'URL format unexpected';
+  console.log(`🐘 Conectando ao PostgreSQL em: ${urlSafe}`);
 } else {
   // Use SQLite for local dev
   const sqliteFile = path.join(__dirname, 'barbearia.db');
   db = new Database(sqliteFile);
   db.pragma('journal_mode = WAL');
   db.pragma('foreign_keys = ON');
-  console.log('✅ Conectando ao SQLite (Local)...');
+  console.log('📦 SQLite Ativado: Verifique se DATABASE_URL está configurado no Railway!');
 }
 
 // Wrapper for common DB operations to hide differences
@@ -43,7 +45,7 @@ const dbWrapper = {
       const result = await db.query(finalSql, params);
       return { rows: result.rows, lastInsertId: result.rows[0] ? result.rows[0].id : null, rowCount: result.rowCount };
     } else {
-      const stmt = db.prepare(sql); // SQLite uses '?' just fine
+      const stmt = db.prepare(sql);
       if (sql.trim().toUpperCase().startsWith('SELECT')) {
         const rows = stmt.all(...params);
         return { rows, rowCount: rows.length };
@@ -77,7 +79,6 @@ const dbWrapper = {
   async run(sql, params = []) {
     const finalSql = this.convertParams(sql);
     if (isPostgres) {
-      // For runs that need an ID back, we append RETURNING id
       let execSql = finalSql;
       if (sql.trim().toUpperCase().startsWith('INSERT')) {
         execSql += ' RETURNING id';
@@ -98,8 +99,18 @@ const dbWrapper = {
     }
   },
 
-  // Helper for batch/transaction initialization (only needed once)
   async init() {
+    console.log('🔄 Inicializando Banco de Dados...');
+    if (this.isPostgres) {
+      try {
+        await db.query('SELECT 1');
+        console.log('✅ Conexão com Postgres confirmada.');
+      } catch (e) {
+        console.error('❌ Falha na conexão com Postgres:', e.message);
+        throw e;
+      }
+    }
+
     const createTableSQL = `
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
@@ -109,6 +120,7 @@ const dbWrapper = {
         role TEXT NOT NULL DEFAULT 'admin',
         commission_rate DECIMAL(5,2) DEFAULT 0,
         total_commission_earned DECIMAL(10,2) DEFAULT 0,
+        total_commission_paid DECIMAL(10,2) DEFAULT 0,
         is_active INTEGER DEFAULT 1,
         cpf TEXT,
         birth_date TEXT,
@@ -237,7 +249,6 @@ const dbWrapper = {
       );
     `;
 
-    // SQLite adjustments (replacing SERIAL with INTEGER PRIMARY KEY AUTOINCREMENT and numeric types)
     const sql = isPostgres
       ? createTableSQL
       : createTableSQL
@@ -246,9 +257,19 @@ const dbWrapper = {
         .replace(/DECIMAL\(\d+,\d+\)/g, 'REAL')
         .replace(/DECIMAL/g, 'REAL');
 
-    await this.exec(sql);
+    // Split only basic table creations for safer individual execution
+    const statements = sql.split(';').map(s => s.trim()).filter(s => s.length > 0);
+    for (const stmt of statements) {
+      try {
+        await this.exec(stmt);
+      } catch (e) {
+        if (!e.message.includes('already exists') && !e.message.includes('já existe')) {
+          console.error('❌ SQL Error:', e.message);
+        }
+      }
+    }
 
-    // Dynamic migrations to update existing tables if they were already created
+    // Dynamic migrations (Postgres specifically needs DO blocks handled as one)
     try {
       if (isPostgres) {
         await this.exec(`
@@ -277,65 +298,41 @@ const dbWrapper = {
           END $$;
         `);
       } else {
-        // SQLite migrations
         const userCols = await this.all("PRAGMA table_info(users)");
         if (!userCols.find(c => c.name === 'role')) await this.run("ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'admin'");
-        if (!userCols.find(c => c.name === 'commission_rate')) await this.run("ALTER TABLE users ADD COLUMN commission_rate DECIMAL(5,2) DEFAULT 0");
-        if (!userCols.find(c => c.name === 'total_commission_earned')) await this.run("ALTER TABLE users ADD COLUMN total_commission_earned DECIMAL(10,2) DEFAULT 0");
-        if (!userCols.find(c => c.name === 'total_commission_paid')) await this.run("ALTER TABLE users ADD COLUMN total_commission_paid DECIMAL(10,2) DEFAULT 0");
-        if (!userCols.find(c => c.name === 'is_active')) await this.run("ALTER TABLE users ADD COLUMN is_active INTEGER DEFAULT 1");
-        if (!userCols.find(c => c.name === 'cpf')) await this.run("ALTER TABLE users ADD COLUMN cpf TEXT");
-        if (!userCols.find(c => c.name === 'birth_date')) await this.run("ALTER TABLE users ADD COLUMN birth_date TEXT");
-        if (!userCols.find(c => c.name === 'phone')) await this.run("ALTER TABLE users ADD COLUMN phone TEXT");
-        if (!userCols.find(c => c.name === 'photo_url')) await this.run("ALTER TABLE users ADD COLUMN photo_url TEXT");
         if (!userCols.find(c => c.name === 'role_id')) await this.run("ALTER TABLE users ADD COLUMN role_id INTEGER");
-
         const appCols = await this.all("PRAGMA table_info(appointments)");
         if (!appCols.find(c => c.name === 'barber_id')) await this.run("ALTER TABLE appointments ADD COLUMN barber_id INTEGER");
       }
     } catch (e) {
-      console.warn('Migration warning (safe if already updated):', e.message);
+      console.warn('Migration warning:', e.message);
     }
 
-    // Seed data logic
-    // Roles Seed
+    // Seed Data
     const rolesExist = await this.get('SELECT COUNT(*) as count FROM roles');
     if (parseInt(rolesExist.count) === 0) {
-      const { lastInsertRowid: adminId } = await this.run('INSERT INTO roles (name, description, is_system) VALUES (?, ?, ?)', ['Admin', 'Acesso total ao sistema', 1]);
-      const { lastInsertRowid: barberId } = await this.run('INSERT INTO roles (name, description, is_system) VALUES (?, ?, ?)', ['Barbeiro', 'Acesso aos seus próprios agendamentos e agenda', 1]);
-      const { lastInsertRowid: auxId } = await this.run('INSERT INTO roles (name, description, is_system) VALUES (?, ?, ?)', ['Auxiliar', 'Acesso limitado ao dashboard e atendimentos', 1]);
+      const { lastInsertRowid: adminId } = await this.run('INSERT INTO roles (name, description, is_system) VALUES (?, ?, ?)', ['Admin', 'Acesso total', 1]);
+      const { lastInsertRowid: barberId } = await this.run('INSERT INTO roles (name, description, is_system) VALUES (?, ?, ?)', ['Barbeiro', 'Acesso à agenda', 1]);
 
-      // Simple permission map
       const resources = ['dashboard', 'appointments', 'financial', 'services', 'barbers', 'clients', 'stock', 'site_config', 'security'];
       for (const res of resources) {
         await this.run('INSERT INTO role_permissions (role_id, resource, action, allowed) VALUES (?, ?, ?, ?)', [adminId, res, 'manage', 1]);
       }
-
-      // Barber permissions (example)
-      await this.run('INSERT INTO role_permissions (role_id, resource, action, allowed) VALUES (?, ?, ?, ?)', [barberId, 'appointments', 'manage', 1]);
-      await this.run('INSERT INTO role_permissions (role_id, resource, action, allowed) VALUES (?, ?, ?, ?)', [barberId, 'clients', 'view', 1]);
-      await this.run('INSERT INTO role_permissions (role_id, resource, action, allowed) VALUES (?, ?, ?, ?)', [barberId, 'financial', 'view', 1]);
-
-      // Update existing admin to have role_id
       await this.run('UPDATE users SET role_id = ? WHERE role = ?', [adminId, 'admin']);
     }
 
     const adminCount = await this.get('SELECT COUNT(*) as count FROM users');
     if (parseInt(adminCount.count) === 0) {
-      const adminRole = await this.get('SELECT id FROM roles WHERE name = ?', ['Admin']);
+      const adminRole = await this.get("SELECT id FROM roles WHERE name = 'Admin'");
       const hashedPassword = bcrypt.hashSync('admin123', 10);
-      await this.run('INSERT INTO users (username, password, name, role_id) VALUES (?, ?, ?, ?)', ['admin', hashedPassword, 'Barbeiro', adminRole?.id || 1]);
-      console.log('✅ Admin criado: admin / admin123');
+      await this.run('INSERT INTO users (username, password, name, role_id) VALUES (?, ?, ?, ?)', ['admin', hashedPassword, 'Administrador', adminRole?.id || 1]);
+      console.log('✅ Admin padrão criado: admin / admin123');
     }
 
     const servicesExist = await this.get('SELECT COUNT(*) as count FROM services');
     if (parseInt(servicesExist.count) === 0) {
-      const q = 'INSERT INTO services (name, price, duration, sort_order) VALUES (?, ?, ?, ?)';
-      await this.run(q, ['Corte Degradê', 50.00, 30, 1]);
-      await this.run(q, ['Barba', 50.00, 30, 2]);
-      await this.run(q, ['Sobrancelha', 30.00, 15, 3]);
-      await this.run(q, ['Barba + Cabelo', 80.00, 60, 4]);
-      console.log('✅ Serviços padrão criados');
+      await this.run('INSERT INTO services (name, price, duration) VALUES (?, ?, ?)', ['Corte', 50, 30]);
+      await this.run('INSERT INTO services (name, price, duration) VALUES (?, ?, ?)', ['Barba', 30, 30]);
     }
 
     const settingsExist = await this.get('SELECT COUNT(*) as count FROM settings');
@@ -345,23 +342,20 @@ const dbWrapper = {
       await this.run(q, ['close_time', '19:00']);
       await this.run(q, ['interval_minutes', '30']);
       await this.run(q, ['working_days', '1,2,3,4,5,6']);
-      await this.run(q, ['whatsapp_number', '5500000000000']);
       await this.run(q, ['use_barbers', '0']);
       await this.run(q, ['min_booking_notice', '15']);
       await this.run(q, ['max_booking_advance', '30']);
+      await this.run(q, ['site_timezone', 'America/Sao_Paulo']);
     }
 
-    const siteExists = await this.get('SELECT COUNT(*) as count FROM site_config');
-    if (parseInt(siteExists.count) === 0) {
-      const q = 'INSERT INTO site_config (key, value, type) VALUES (?, ?, ?)';
-      await this.run(q, ['site_name', 'BarberPro', 'text']);
-      await this.run(q, ['site_slogan', 'Estilo e Atitude em Cada Corte', 'text']);
-      await this.run(q, ['site_description', 'A melhor barbearia da cidade.', 'textarea']);
-      await this.run(q, ['site_logo', '', 'image']);
-      await this.run(q, ['footer_text', '© 2026 BarberPro', 'text']);
-      await this.run(q, ['site_theme', 'dark-gold', 'text']);
-      await this.run(q, ['site_timezone', 'America/Sao_Paulo', 'text']);
+    const siteExist = await this.get('SELECT COUNT(*) as count FROM site_config');
+    if (parseInt(siteExist.count) === 0) {
+      const q = 'INSERT INTO site_config (key, value) VALUES (?, ?)';
+      await this.run(q, ['site_name', 'BarberPro']);
+      await this.run(q, ['site_theme', 'dark-gold']);
     }
+
+    console.log('✅ Banco de Dados inicializado.');
   }
 };
 
