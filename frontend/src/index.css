@@ -676,9 +676,7 @@ textarea {
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse at 30% 50%, var(--color-accent-glow) 0%, transparent 60%),
-    radial-gradient(ellipse at 70% 20%, var(--color-accent-subtle) 0%, transparent 50%),
-    linear-gradient(to bottom, rgba(5, 5, 5, 0.7) 0%, rgba(5, 5, 5, 1) 100%);
+  background: linear-gradient(to bottom, rgba(5, 5, 5, 0.4) 0%, rgba(5, 5, 5, 1) 100%);
   z-index: 1;
 }
 
@@ -1554,3 +1552,11 @@ textarea {
     opacity: 0.5;
   }
 }
+
+/* FINAL ADJUSTMENTS (PROMOTION, BOOKING, FOOTER, LOCATION) */
+.promotion-bar { background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-accent-glow) 100%) !important; color: #111 !important; }
+.promotion-bar a { color: #111 !important; text-shadow: none !important; }
+.footer-simple { background: linear-gradient(to bottom, var(--color-bg-secondary) 0%, #050505 100%) !important; border-top: 1px solid var(--color-accent-subtle) !important; padding: 40px 0; margin-top: 60px; }
+.booking-form-container { box-shadow: 0 10px 40px rgba(0,0,0,0.6) !important; border: 1px solid var(--color-accent-subtle) !important; border-radius: 24px !important; }
+@media (max-width: 768px) { .booking-steps { flex-wrap: nowrap !important; overflow-x: auto !important; justify-content: flex-start !important; padding-bottom: 20px !important; } .step span { font-size: 0.75rem !important; } .services-selection-grid { grid-template-columns: 1fr !important; } }
+#location .card { border: 1px solid var(--color-accent-subtle) !important; box-shadow: 0 15px 50px rgba(0,0,0,0.6) !important; }
