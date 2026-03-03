@@ -7,6 +7,9 @@ export default function AdminLayout({ children }) {
     const navigate = useNavigate();
     const [siteConfig, setSiteConfig] = useState({});
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const userJson = localStorage.getItem('user');
+    const user = userJson ? JSON.parse(userJson) : { role: 'admin' };
+    const isAdmin = user.role === 'admin';
 
     useEffect(() => {
         publicApi.getSiteConfig().then(setSiteConfig).catch(console.error);
@@ -39,11 +42,16 @@ export default function AdminLayout({ children }) {
                 <nav className="admin-nav">
                     <NavLink to="/admin" end className={({ isActive }) => isActive ? 'active' : ''} onClick={closeSidebar}><LayoutDashboard size={20} /> Dashboard</NavLink>
                     <NavLink to="/admin/schedule" className={({ isActive }) => isActive ? 'active' : ''} onClick={closeSidebar}><Calendar size={20} /> Agendamentos</NavLink>
-                    <NavLink to="/admin/services" className={({ isActive }) => isActive ? 'active' : ''} onClick={closeSidebar}><Scissors size={20} /> Serviços</NavLink>
-                    <NavLink to="/admin/clients" className={({ isActive }) => isActive ? 'active' : ''} onClick={closeSidebar}><Users size={20} /> Clientes</NavLink>
-                    <NavLink to="/admin/stock" className={({ isActive }) => isActive ? 'active' : ''} onClick={closeSidebar}><Package size={20} /> Estoque</NavLink>
                     <NavLink to="/admin/financial" className={({ isActive }) => isActive ? 'active' : ''} onClick={closeSidebar}><DollarSign size={20} /> Financeiro</NavLink>
-                    <NavLink to="/admin/site-config" className={({ isActive }) => isActive ? 'active' : ''} onClick={closeSidebar}><Palette size={20} /> Personalizar Site</NavLink>
+                    {isAdmin && (
+                        <>
+                            <NavLink to="/admin/services" className={({ isActive }) => isActive ? 'active' : ''} onClick={closeSidebar}><Scissors size={20} /> Serviços</NavLink>
+                            <NavLink to="/admin/barbers" className={({ isActive }) => isActive ? 'active' : ''} onClick={closeSidebar}><Users size={20} /> Barbeiros</NavLink>
+                            <NavLink to="/admin/clients" className={({ isActive }) => isActive ? 'active' : ''} onClick={closeSidebar}><Users size={20} /> Clientes</NavLink>
+                            <NavLink to="/admin/stock" className={({ isActive }) => isActive ? 'active' : ''} onClick={closeSidebar}><Package size={20} /> Estoque</NavLink>
+                            <NavLink to="/admin/site-config" className={({ isActive }) => isActive ? 'active' : ''} onClick={closeSidebar}><Palette size={20} /> Personalizar Site</NavLink>
+                        </>
+                    )}
                 </nav>
                 <button className="logout-btn" onClick={handleLogout}><LogOut size={20} /> Sair do Painel</button>
             </aside>

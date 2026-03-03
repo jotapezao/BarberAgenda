@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { adminApi, BASE_URL } from '../api';
 import { useToast } from '../components/Toast';
 import AdminLayout from '../components/AdminLayout';
-import { Save, Upload, Info, Image as ImageIcon, Layout, Palette, Mail, MapPin, Globe, Shield, Trash2 } from 'lucide-react';
+import { Save, Upload, Info, Image as ImageIcon, Layout, Palette, Mail, MapPin, Globe, Shield, Trash2, Settings } from 'lucide-react';
 
 
 // Stable Input Component to fix focus bug
@@ -91,6 +91,7 @@ export default function SiteConfig() {
                     <button className={`tab-btn ${activeTab === 'banners' ? 'active' : ''}`} onClick={() => setActiveTab('banners')}><ImageIcon size={18} /> Banners</button>
                     <button className={`tab-btn ${activeTab === 'promotion' ? 'active' : ''}`} onClick={() => setActiveTab('promotion')}><Info size={18} /> Promoção</button>
                     <button className={`tab-btn ${activeTab === 'about' ? 'active' : ''}`} onClick={() => setActiveTab('about')}><Layout size={18} /> Sobre & Local</button>
+                    <button className={`tab-btn ${activeTab === 'settings' ? 'active' : ''}`} onClick={() => setActiveTab('settings')}><Settings size={18} /> Sistema</button>
                 </div>
 
                 <div className="card">
@@ -268,6 +269,41 @@ export default function SiteConfig() {
                                         </div>
                                     )}
                                 </div>
+                            </div>
+                        </div>
+                    )}
+                    {activeTab === 'settings' && (
+                        <div className="animate-fade" style={{ maxWidth: 600 }}>
+                            <h3 style={{ marginBottom: 20 }}>Configurações do Sistema</h3>
+
+                            <div className="card" style={{ background: 'rgba(212, 165, 72, 0.05)', border: '1px solid rgba(212, 165, 72, 0.2)', marginBottom: 24 }}>
+                                <div className="form-group" style={{ marginBottom: 0 }}>
+                                    <label className="flex-center" style={{ gap: 12, cursor: 'pointer', justifyContent: 'flex-start' }}>
+                                        <input
+                                            type="checkbox"
+                                            checked={config.use_barbers === '1'}
+                                            onChange={e => updateField('use_barbers', e.target.checked ? '1' : '0')}
+                                            style={{ width: 22, height: 22 }}
+                                        />
+                                        <div>
+                                            <span style={{ fontWeight: 700, display: 'block' }}>Habilitar Multi-Barbeiros</span>
+                                            <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
+                                                Permite cadastrar barbeiros e habilita o cliente a escolher quem deseja no agendamento.
+                                            </span>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <FormField
+                                label="Número do WhatsApp (Flutuante)"
+                                value={config.whatsapp_number}
+                                onChange={v => updateField('whatsapp_number', v)}
+                                info="O número que receberá mensagens do botão fixo no site."
+                            />
+
+                            <div className="info-box" style={{ marginTop: 20, background: 'rgba(59, 130, 246, 0.05)', padding: 12, borderRadius: 6, fontSize: '0.8rem', border: '1px solid rgba(59, 130, 246, 0.2)' }}>
+                                <p><Info size={14} style={{ marginRight: 6 }} /> Ao ativar o sistema de barbeiros, certifique-se de que todos os barbeiros ativos tenham um percentual de comissão definido.</p>
                             </div>
                         </div>
                     )}

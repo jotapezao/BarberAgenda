@@ -5,8 +5,9 @@ import { useToast } from '../components/Toast';
 import { Lock, User } from 'lucide-react';
 
 export default function Login() {
-    const [username, setUsername] = useState('');
+    const [username, setUsername] = useState(localStorage.getItem('saved_username') || '');
     const [password, setPassword] = useState('');
+    const [rememberMe, setRememberMe] = useState(!!localStorage.getItem('saved_username'));
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const navigate = useNavigate();
@@ -20,6 +21,14 @@ export default function Login() {
         try {
             const data = await authApi.login({ username, password });
             localStorage.setItem('token', data.token);
+            localStorage.setItem('user', JSON.stringify(data.user)); // Save user data for role checks
+
+            if (rememberMe) {
+                localStorage.setItem('saved_username', username);
+            } else {
+                localStorage.removeItem('saved_username');
+            }
+
             toast.success(`Bem-vindo, ${data.user.name}!`);
             navigate('/admin');
         } catch (err) {
@@ -162,6 +171,18 @@ export default function Login() {
                             />
                             <Lock size={20} style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-accent)' }} />
                         </div>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.85rem', color: 'var(--color-text-secondary)' }}>
+                            <input
+                                type="checkbox"
+                                checked={rememberMe}
+                                onChange={e => setRememberMe(e.target.checked)}
+                                style={{ width: '16px', height: '16px', accentColor: 'var(--color-accent)' }}
+                            />
+                            Salvar credenciais
+                        </label>
                     </div>
 
                     <button type="submit" className="btn btn-primary" style={{

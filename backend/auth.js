@@ -4,7 +4,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'barbearia-secret-key-2024';
 
 function generateToken(user) {
     return jwt.sign(
-        { id: user.id, username: user.username, name: user.name },
+        { id: user.id, username: user.username, name: user.name, role: user.role },
         JWT_SECRET,
         { expiresIn: '24h' }
     );

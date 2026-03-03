@@ -75,7 +75,22 @@ const chartDefaults = {
 export default function Financial() {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [paying, setPaying] = useState(false);
     const toast = useToast();
+
+    const handlePay = async (barberId, amount) => {
+        if (!window.confirm(`Confirmar registro de pagamento de ${formatPrice(amount)}?`)) return;
+        setPaying(true);
+        try {
+            await adminApi.payCommission(barberId, amount);
+            toast.success('Pagamento registrado!');
+            loadFinancial();
+        } catch (err) {
+            toast.error('Erro ao registrar pagamento');
+        } finally {
+            setPaying(false);
+        }
+    };
 
     useEffect(() => {
         loadFinancial();
@@ -95,6 +110,10 @@ export default function Financial() {
     const formatPrice = (price) => {
         return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(price || 0);
     };
+
+    const userJson = localStorage.getItem('user');
+    const userBuffer = userJson ? JSON.parse(userJson) : { role: 'admin' };
+    const isAdmin = userBuffer.role === 'admin';
 
     if (loading) {
         return (
@@ -212,10 +231,17 @@ export default function Financial() {
                     <div className="value" style={{ color: 'var(--color-info)' }}>{data?.month?.appointments || 0}</div>
                 </div>
 
-                <div className="card financial-card">
-                    <h3>📊 Ticket Médio</h3>
-                    <div className="value">{formatPrice(data?.month?.avgTicket)}</div>
-                </div>
+                {isAdmin ? (
+                    <div className="card financial-card">
+                        <h3>📊 Ticket Médio</h3>
+                        <div className="value">{formatPrice(data?.month?.avgTicket)}</div>
+                    </div>
+                ) : (
+                    <div className="card financial-card">
+                        <h3>💸 Minha Comissão</h3>
+                        <div className="value gold">{formatPrice(data?.individualCommissions?.[0]?.total_commission)}</div>
+                    </div>
+                )}
             </div>
 
             {/* Charts */}
@@ -301,6 +327,58 @@ export default function Financial() {
                     ) : (
                         <div className="empty-state">
                             <p>Sem dados para exibir</p>
+                        </div>
+                    )}
+                </div>
+                {/* Commission Ranking */}
+                <div className="card chart-card" style={{ gridColumn: 'span 2' }}>
+                    <h3>
+                        <Users size={18} style={{ marginRight: '8px', verticalAlign: 'middle' }} />
+                        {isAdmin ? 'Relatório de Comissões (Mês)' : 'Minha Performance (Mês)'}
+                    </h3>
+                    {(data?.individualCommissions || []).length > 0 ? (
+                        <div style={{ overflowX: 'auto' }}>
+                            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                                <thead>
+                                    <tr style={{ borderBottom: '1px solid var(--color-border)' }}>
+                                        <th style={{ textAlign: 'left', padding: '12px 8px', color: 'var(--color-text-muted)', fontSize: '0.8rem', fontWeight: 600 }}>Barbeiro</th>
+                                        <th style={{ textAlign: 'center', padding: '12px 8px', color: 'var(--color-text-muted)', fontSize: '0.8rem', fontWeight: 600 }}>Serviços (Período)</th>
+                                        <th style={{ textAlign: 'right', padding: '12px 8px', color: 'var(--color-text-muted)', fontSize: '0.8rem', fontWeight: 600 }}>Comissão (Período)</th>
+                                        <th style={{ textAlign: 'right', padding: '12px 8px', color: 'var(--color-text-muted)', fontSize: '0.8rem', fontWeight: 600 }}>Total Acumulado</th>
+                                        <th style={{ textAlign: 'right', padding: '12px 8px', color: 'var(--color-text-muted)', fontSize: '0.8rem', fontWeight: 600 }}>Saldo a Pagar</th>
+                                        {isAdmin && <th style={{ textAlign: 'right', padding: '12px 8px', color: 'var(--color-text-muted)', fontSize: '0.8rem', fontWeight: 600 }}>Ação</th>}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {data.individualCommissions.map((c, i) => (
+                                        <tr key={i} style={{ borderBottom: '1px solid var(--color-border)' }}>
+                                            <td style={{ padding: '12px 8px', fontWeight: 600 }}>{c.barber_name}</td>
+                                            <td style={{ textAlign: 'center', padding: '12px 8px' }}>{c.service_count}</td>
+                                            <td style={{ textAlign: 'right', padding: '12px 8px' }}>{formatPrice(c.period_commission)}</td>
+                                            <td style={{ textAlign: 'right', padding: '12px 8px', color: 'var(--color-text-secondary)' }}>{formatPrice(c.total_commission_earned)}</td>
+                                            <td style={{ textAlign: 'right', padding: '12px 8px', fontWeight: 700, color: (c.total_commission_earned - c.total_commission_paid) > 0 ? '#ef4444' : '#22c55e' }}>
+                                                {formatPrice(c.total_commission_earned - c.total_commission_paid)}
+                                            </td>
+                                            {isAdmin && (
+                                                <td style={{ textAlign: 'right', padding: '12px 8px' }}>
+                                                    <button
+                                                        className="btn btn-sm btn-primary"
+                                                        onClick={() => handlePay(c.id, c.total_commission_earned - c.total_commission_paid)}
+                                                        disabled={paying || (c.total_commission_earned - c.total_commission_paid) <= 0}
+                                                        style={{ padding: '4px 12px', fontSize: '0.75rem' }}
+                                                    >
+                                                        Liquidar
+                                                    </button>
+                                                </td>
+                                            )}
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    ) : (
+                        <div className="empty-state">
+                            <p>Sem dados de comissão para o período</p>
                         </div>
                     )}
                 </div>

@@ -9,6 +9,10 @@ export default function Dashboard() {
     const [loading, setLoading] = useState(true);
     const toast = useToast();
 
+    const userJson = localStorage.getItem('user');
+    const user = userJson ? JSON.parse(userJson) : { role: 'admin' };
+    const isAdmin = user.role === 'admin';
+
     useEffect(() => { loadDashboard(); }, []);
 
     const loadDashboard = async () => {
@@ -62,7 +66,10 @@ export default function Dashboard() {
                 </div>
                 <div className="card stat-card">
                     <div className="stat-icon gold"><DollarSign size={24} /></div>
-                    <div className="stat-info"><h3>{formatPrice(data?.stats?.revenue)}</h3><p>Faturamento Hoje</p></div>
+                    <div className="stat-info">
+                        <h3>{isAdmin ? formatPrice(data?.stats?.revenue) : formatPrice(data?.todayAppointments?.reduce((acc, apt) => acc + (apt.service_price * (user.commission_rate || 0) / 100), 0))}</h3>
+                        <p>{isAdmin ? 'Faturamento Hoje' : 'Minha Comissão Hoje'}</p>
+                    </div>
                 </div>
                 <div className="card stat-card">
                     <div className="stat-icon blue"><Users size={24} /></div>
@@ -83,16 +90,17 @@ export default function Dashboard() {
                 </h2>
                 {data?.todayAppointments?.length > 0 ? (
                     <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-                        <div className="table-header" style={{ display: 'grid', gridTemplateColumns: '80px 1.5fr 1.5fr 100px 100px 120px', padding: '15px 24px', background: 'var(--color-bg-secondary)', borderBottom: '1px solid var(--color-border)', fontSize: '0.85rem', fontWeight: 700, color: 'var(--color-text-muted)' }}>
+                        <div className="table-header" style={{ display: 'grid', gridTemplateColumns: isAdmin ? '80px 1fr 1fr 1fr 100px 80px 120px' : '80px 1.5fr 1.5fr 100px 100px 120px', padding: '15px 24px', background: 'var(--color-bg-secondary)', borderBottom: '1px solid var(--color-border)', fontSize: '0.85rem', fontWeight: 700, color: 'var(--color-text-muted)' }}>
                             <div>HR</div>
                             <div>CLIENTE</div>
                             <div>SERVIÇO</div>
+                            {isAdmin && <div>BARBEIRO</div>}
                             <div style={{ textAlign: 'center' }}>STATUS</div>
                             <div style={{ textAlign: 'center' }}>VALOR</div>
                             <div style={{ textAlign: 'right' }}>AÇÕES</div>
                         </div>
                         {data.todayAppointments.map(apt => (
-                            <div key={apt.id} className="table-row" style={{ display: 'grid', gridTemplateColumns: '80px 1.5fr 1.5fr 100px 100px 120px', padding: '15px 24px', alignItems: 'center', borderBottom: '1px solid var(--color-border)' }}>
+                            <div key={apt.id} className="table-row" style={{ display: 'grid', gridTemplateColumns: isAdmin ? '80px 1fr 1fr 1fr 100px 80px 120px' : '80px 1.5fr 1.5fr 100px 100px 120px', padding: '15px 24px', alignItems: 'center', borderBottom: '1px solid var(--color-border)' }}>
                                 <div className="appointment-time">
                                     <div style={{ fontWeight: 700, fontSize: '1.1rem' }}>{apt.time}</div>
                                     {apt.end_time && <div className="text-secondary" style={{ fontSize: '0.75rem' }}>até {apt.end_time}</div>}
@@ -107,6 +115,11 @@ export default function Dashboard() {
                                     <div style={{ fontWeight: 500 }}>{apt.service_name}</div>
                                     <div className="text-secondary" style={{ fontSize: '0.8rem' }}>{formatDuration(apt.service_duration)}</div>
                                 </div>
+                                {isAdmin && (
+                                    <div style={{ fontSize: '0.9rem', color: 'var(--color-accent)' }}>
+                                        {apt.barber_name || 'Nenhum'}
+                                    </div>
+                                )}
                                 <div style={{ textAlign: 'center' }}>{statusBadge(apt.status)}</div>
                                 <div style={{ fontWeight: 700, textAlign: 'center', color: 'var(--color-primary-text)' }}>{formatPrice(apt.service_price)}</div>
                                 <div className="flex-center" style={{ justifyContent: 'flex-end', gap: 6 }}>
@@ -135,16 +148,17 @@ export default function Dashboard() {
                         <ChevronRight size={22} className="text-accent" /> Próximos Agendamentos
                     </h2>
                     <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-                        <div className="table-header" style={{ display: 'grid', gridTemplateColumns: '80px 1.5fr 1.5fr 100px 100px 120px', padding: '15px 24px', background: 'var(--color-bg-secondary)', borderBottom: '1px solid var(--color-border)', fontSize: '0.85rem', fontWeight: 700, color: 'var(--color-text-muted)' }}>
+                        <div className="table-header" style={{ display: 'grid', gridTemplateColumns: isAdmin ? '80px 1fr 1fr 1fr 100px 80px 120px' : '80px 1.5fr 1.5fr 100px 100px 120px', padding: '15px 24px', background: 'var(--color-bg-secondary)', borderBottom: '1px solid var(--color-border)', fontSize: '0.85rem', fontWeight: 700, color: 'var(--color-text-muted)' }}>
                             <div>HR</div>
                             <div>CLIENTE</div>
                             <div>SERVIÇO</div>
+                            {isAdmin && <div>BARBEIRO</div>}
                             <div style={{ textAlign: 'center' }}>STATUS</div>
                             <div style={{ textAlign: 'center' }}>VALOR</div>
                             <div style={{ textAlign: 'right' }}>AÇÕES</div>
                         </div>
                         {data.upcomingAppointments.map(apt => (
-                            <div key={apt.id} className="table-row" style={{ display: 'grid', gridTemplateColumns: '80px 1.5fr 1.5fr 100px 100px 120px', padding: '15px 24px', alignItems: 'center', borderBottom: '1px solid var(--color-border)' }}>
+                            <div key={apt.id} className="table-row" style={{ display: 'grid', gridTemplateColumns: isAdmin ? '80px 1fr 1fr 1fr 100px 80px 120px' : '80px 1.5fr 1.5fr 100px 100px 120px', padding: '15px 24px', alignItems: 'center', borderBottom: '1px solid var(--color-border)' }}>
                                 <div className="appointment-time">
                                     <div style={{ fontWeight: 700, fontSize: '1.1rem' }}>{apt.time}</div>
                                 </div>
@@ -158,6 +172,11 @@ export default function Dashboard() {
                                     <div style={{ fontWeight: 500 }}>{apt.service_name}</div>
                                     <div className="text-secondary" style={{ fontSize: '0.8rem' }}>{formatDuration(apt.service_duration)}</div>
                                 </div>
+                                {isAdmin && (
+                                    <div style={{ fontSize: '0.9rem', color: 'var(--color-accent)' }}>
+                                        {apt.barber_name || '-'}
+                                    </div>
+                                )}
                                 <div style={{ textAlign: 'center' }}>{statusBadge(apt.status)}</div>
                                 <div style={{ fontWeight: 700, textAlign: 'center' }}>{formatPrice(apt.service_price)}</div>
                                 <div className="flex-center" style={{ justifyContent: 'flex-end', gap: 6 }}>

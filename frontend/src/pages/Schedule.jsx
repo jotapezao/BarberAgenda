@@ -14,6 +14,9 @@ export default function Schedule() {
     const [blockDate, setBlockDate] = useState('');
     const [blockTime, setBlockTime] = useState('');
     const [blockReason, setBlockReason] = useState('');
+    const userJson = localStorage.getItem('user');
+    const user = userJson ? JSON.parse(userJson) : { role: 'admin' };
+    const isAdmin = user.role === 'admin';
     const toast = useToast();
 
     useEffect(() => {
@@ -123,92 +126,87 @@ export default function Schedule() {
                     <p className="text-secondary">Configure horários de funcionamento e bloqueios de agenda</p>
                 </div>
                 <div className="admin-header-actions">
-                    <button className="btn btn-primary" onClick={saveSettings} disabled={saving}>
-                        <Save size={18} />
-                        {saving ? 'Salvando...' : 'Salvar Alterações'}
-                    </button>
+                    {isAdmin && (
+                        <button className="btn btn-primary" onClick={saveSettings} disabled={saving}>
+                            <Save size={18} />
+                            {saving ? 'Salvando...' : 'Salvar Alterações'}
+                        </button>
+                    )}
                 </div>
             </div>
 
             <div className="schedule-config">
-                {/* Working Hours */}
-                <div className="card" style={{ padding: '24px' }}>
-                    <h3 style={{ fontSize: '1.1rem', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <Clock size={20} className="text-accent" />
-                        Horário de Funcionamento
-                    </h3>
+                {isAdmin && (
+                    <>
+                        {/* Working Hours */}
+                        <div className="card" style={{ padding: '24px' }}>
+                            <h3 style={{ fontSize: '1.1rem', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <Clock size={20} className="text-accent" />
+                                Horário de Funcionamento
+                            </h3>
 
-                    <div className="form-group">
-                        <label className="form-label">Abertura</label>
-                        <input
-                            type="time"
-                            className="form-input"
-                            value={settings.open_time || '08:00'}
-                            onChange={e => setSettings({ ...settings, open_time: e.target.value })}
-                        />
-                    </div>
+                            <div className="form-group">
+                                <label className="form-label">Abertura</label>
+                                <input
+                                    type="time"
+                                    className="form-input"
+                                    value={settings.open_time || '08:00'}
+                                    onChange={e => setSettings({ ...settings, open_time: e.target.value })}
+                                />
+                            </div>
 
-                    <div className="form-group">
-                        <label className="form-label">Fechamento</label>
-                        <input
-                            type="time"
-                            className="form-input"
-                            value={settings.close_time || '19:00'}
-                            onChange={e => setSettings({ ...settings, close_time: e.target.value })}
-                        />
-                    </div>
+                            <div className="form-group">
+                                <label className="form-label">Fechamento</label>
+                                <input
+                                    type="time"
+                                    className="form-input"
+                                    value={settings.close_time || '19:00'}
+                                    onChange={e => setSettings({ ...settings, close_time: e.target.value })}
+                                />
+                            </div>
 
-                    <div className="form-group">
-                        <label className="form-label">Intervalo entre atendimentos (min)</label>
-                        <select
-                            className="form-select"
-                            value={settings.interval_minutes || '30'}
-                            onChange={e => setSettings({ ...settings, interval_minutes: e.target.value })}
-                        >
-                            <option value="15">15 minutos</option>
-                            <option value="20">20 minutos</option>
-                            <option value="30">30 minutos</option>
-                            <option value="45">45 minutos</option>
-                            <option value="60">60 minutos</option>
-                        </select>
-                    </div>
+                            <div className="form-group">
+                                <label className="form-label">Intervalo entre atendimentos (min)</label>
+                                <select
+                                    className="form-select"
+                                    value={settings.interval_minutes || '30'}
+                                    onChange={e => setSettings({ ...settings, interval_minutes: e.target.value })}
+                                >
+                                    <option value="15">15 minutos</option>
+                                    <option value="20">20 minutos</option>
+                                    <option value="30">30 minutos</option>
+                                    <option value="45">45 minutos</option>
+                                    <option value="60">60 minutos</option>
+                                </select>
+                            </div>
+                        </div>
 
-                    <div className="form-group">
-                        <label className="form-label">Número WhatsApp</label>
-                        <input
-                            type="text"
-                            className="form-input"
-                            placeholder="5511999999999"
-                            value={settings.whatsapp_number || ''}
-                            onChange={e => setSettings({ ...settings, whatsapp_number: e.target.value })}
-                        />
-                    </div>
-                </div>
+                        {/* Working Days */}
+                        <div className="card" style={{ padding: '24px' }}>
+                            <h3 style={{ fontSize: '1.1rem', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <Clock size={20} className="text-accent" />
+                                Dias de Funcionamento
+                            </h3>
 
-                {/* Working Days */}
-                <div className="card" style={{ padding: '24px' }}>
-                    <h3 style={{ fontSize: '1.1rem', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <Clock size={20} className="text-accent" />
-                        Dias de Funcionamento
-                    </h3>
+                            <div className="working-days">
+                                {DAY_NAMES.map((day, index) => (
+                                    <button
+                                        key={index}
+                                        className={`day-toggle ${workingDays.includes(index) ? 'active' : ''}`}
+                                        onClick={() => toggleDay(index)}
+                                        type="button"
+                                    >
+                                        {day}
+                                    </button>
+                                ))}
+                            </div>
 
-                    <div className="working-days">
-                        {DAY_NAMES.map((day, index) => (
-                            <button
-                                key={index}
-                                className={`day-toggle ${workingDays.includes(index) ? 'active' : ''}`}
-                                onClick={() => toggleDay(index)}
-                                type="button"
-                            >
-                                {day}
-                            </button>
-                        ))}
-                    </div>
-
-                    <p className="text-secondary" style={{ fontSize: '0.85rem', marginTop: '12px' }}>
-                        Clique para ativar/desativar os dias de atendimento
-                    </p>
-                </div>
+                            <p className="text-secondary" style={{ fontSize: '0.85rem', marginTop: '12px' }}>
+                                Clique para ativar/desativar os dias de atendimento
+                            </p>
+                        </div>
+                    </>
+                )}
 
                 {/* Block Specific Times */}
                 <div className="card" style={{ padding: '24px' }}>

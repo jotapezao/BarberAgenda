@@ -11,6 +11,7 @@ import Financial from './pages/Financial';
 import Clients from './pages/Clients';
 import Stock from './pages/Stock';
 import SiteConfig from './pages/SiteConfig';
+import Barbers from './pages/Barbers';
 import Developer from './pages/Developer';
 
 function ProtectedRoute({ children }) {
@@ -71,6 +72,7 @@ function App() {
           <Route path="/admin/clients" element={<ProtectedRoute><Clients /></ProtectedRoute>} />
           <Route path="/admin/stock" element={<ProtectedRoute><Stock /></ProtectedRoute>} />
           <Route path="/admin/site-config" element={<ProtectedRoute><SiteConfig /></ProtectedRoute>} />
+          <Route path="/admin/barbers" element={<ProtectedRoute><Barbers /></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>

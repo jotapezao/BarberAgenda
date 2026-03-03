@@ -7,11 +7,12 @@ import WhatsAppButton from '../components/WhatsAppButton';
 
 export default function Home() {
     const [services, setServices] = useState([]);
+    const [barbers, setBarbers] = useState([]);
     const [siteConfig, setSiteConfig] = useState({});
     const [loading, setLoading] = useState(true);
     const [bookingStep, setBookingStep] = useState(1);
     const [isReturning, setIsReturning] = useState(false);
-    const [formData, setFormData] = useState({ client_name: '', client_whatsapp: '', client_birth_date: '', service_id: '', date: '', time: '' });
+    const [formData, setFormData] = useState({ client_name: '', client_whatsapp: '', client_birth_date: '', service_id: '', barber_id: '', date: '', time: '' });
     const [slots, setSlots] = useState([]);
     const [bookingSuccess, setBookingSuccess] = useState(null);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -31,8 +32,13 @@ export default function Home() {
 
     const loadData = async () => {
         try {
-            const [svcData, config] = await Promise.all([publicApi.getServices(), publicApi.getSiteConfig()]);
+            const [svcData, bbrData, config] = await Promise.all([
+                publicApi.getServices(),
+                publicApi.getBarbers(),
+                publicApi.getSiteConfig()
+            ]);
             setServices(svcData);
+            setBarbers(bbrData);
             setSiteConfig(config);
             setLoading(false);
         } catch (err) { toast.error('Erro ao carregar dados'); }
@@ -232,7 +238,15 @@ export default function Home() {
                                     <div className="step-line"></div>
                                     <div className={`step ${bookingStep >= 2 ? 'active' : ''} ${bookingStep > 2 ? 'done' : ''}`}><div className="step-number">2</div><span>Dados</span></div>
                                     <div className="step-line"></div>
-                                    <div className={`step ${bookingStep >= 3 ? 'active' : ''}`}><div className="step-number">3</div><span>Escolher</span></div>
+                                    <div className={`step ${bookingStep >= 3 ? 'active' : ''} ${bookingStep > 3 ? 'done' : ''}`}><div className="step-number">3</div><span>Serviço</span></div>
+                                    {siteConfig.use_barbers === '1' && (
+                                        <>
+                                            <div className="step-line"></div>
+                                            <div className={`step ${bookingStep >= 4 ? 'active' : ''} ${bookingStep > 4 ? 'done' : ''}`}><div className="step-number">4</div><span>Barbeiro</span></div>
+                                        </>
+                                    )}
+                                    <div className="step-line"></div>
+                                    <div className={`step ${bookingStep >= (siteConfig.use_barbers === '1' ? 5 : 4) ? 'active' : ''}`}><div className="step-number">{siteConfig.use_barbers === '1' ? 5 : 4}</div><span>Escolher</span></div>
                                 </div>
 
                                 {bookingStep === 1 && (
@@ -263,21 +277,99 @@ export default function Home() {
                                 )}
 
                                 {bookingStep === 3 && (
-                                    <form onSubmit={handleBookingSubmit} className="animate-fade">
+                                    <form onSubmit={(e) => { e.preventDefault(); setBookingStep(siteConfig.use_barbers === '1' ? 4 : (siteConfig.use_barbers === '1' ? 5 : 4)); }} className="animate-fade">
                                         {isReturning && (
                                             <div className="welcome-back-msg" style={{ background: 'var(--color-accent-subtle)', color: 'var(--color-accent)', padding: '12px 16px', borderRadius: 8, marginBottom: 20, fontSize: '0.9rem', border: '1px solid var(--color-accent-glow)' }}>
-                                                <strong>Olá, {formData.client_name.split(' ')[0]}!</strong> Seja bem-vindo(a) de volta. Selecione o serviço desejado.
+                                                <strong>Olá, {formData.client_name.split(' ')[0]}!</strong> Seja bem-vindo(a) de volta.
                                             </div>
                                         )}
                                         <div className="form-group">
-                                            <label className="form-label">✂️ Serviço</label>
-                                            <select className="form-select" value={formData.service_id} onChange={e => { setFormData({ ...formData, service_id: e.target.value, date: '', time: '' }); setSlots([]); }} required>
-                                                <option value="">Selecione um serviço</option>
-                                                {services.map(s => <option key={s.id} value={s.id}>{s.name} - {formatPrice(s.price)}</option>)}
-                                            </select>
+                                            <label className="form-label">✂️ Selecione o Serviço</label>
+                                            <div className="services-selection-grid" style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '10px' }}>
+                                                {services.map(s => (
+                                                    <div key={s.id}
+                                                        onClick={() => setFormData({ ...formData, service_id: s.id })}
+                                                        className={`service-option-card ${formData.service_id === s.id ? 'selected' : ''}`}
+                                                        style={{
+                                                            padding: '16px',
+                                                            borderRadius: '12px',
+                                                            background: formData.service_id === s.id ? 'var(--color-accent)' : 'rgba(255,255,255,0.03)',
+                                                            color: formData.service_id === s.id ? '#000' : '#fff',
+                                                            cursor: 'pointer',
+                                                            display: 'flex',
+                                                            justifyContent: 'space-between',
+                                                            alignItems: 'center',
+                                                            border: '1px solid rgba(255,255,255,0.1)',
+                                                            transition: 'all 0.2s ease'
+                                                        }}>
+                                                        <div>
+                                                            <div style={{ fontWeight: 700 }}>{s.name}</div>
+                                                            <div style={{ fontSize: '0.8rem', opacity: 0.8 }}>{s.duration} min</div>
+                                                        </div>
+                                                        <div style={{ fontWeight: 800 }}>{formatPrice(s.price)}</div>
+                                                    </div>
+                                                ))}
+                                            </div>
                                         </div>
+                                        <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
+                                            <button type="button" className="btn btn-secondary" onClick={() => setBookingStep(2)} style={{ flex: 1 }}>Voltar</button>
+                                            <button type="button" className="btn btn-primary" onClick={() => setBookingStep(siteConfig.use_barbers === '1' ? 4 : 5)} style={{ flex: 2 }} disabled={!formData.service_id}>Continuar</button>
+                                        </div>
+                                    </form>
+                                )}
+
+                                {bookingStep === 4 && siteConfig.use_barbers === '1' && (
+                                    <form onSubmit={(e) => { e.preventDefault(); setBookingStep(5); }} className="animate-fade">
                                         <div className="form-group">
-                                            <label className="form-label">📅 Data</label>
+                                            <label className="form-label">💈 Escolha o Barbeiro</label>
+                                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '12px' }}>
+                                                {barbers.map(b => (
+                                                    <div key={b.id}
+                                                        onClick={() => setFormData({ ...formData, barber_id: b.id })}
+                                                        style={{
+                                                            padding: '20px 10px',
+                                                            borderRadius: '16px',
+                                                            background: formData.barber_id === b.id ? 'var(--color-accent)' : 'rgba(255,255,255,0.03)',
+                                                            color: formData.barber_id === b.id ? '#000' : '#fff',
+                                                            cursor: 'pointer',
+                                                            textAlign: 'center',
+                                                            border: '1px solid rgba(255,255,255,0.1)',
+                                                            transition: 'all 0.2s ease'
+                                                        }}>
+                                                        <div style={{ width: 50, height: 50, borderRadius: '50%', background: formData.barber_id === b.id ? 'rgba(0,0,0,0.1)' : 'var(--color-accent-subtle)', margin: '0 auto 10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                            <User size={24} />
+                                                        </div>
+                                                        <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>{b.name}</div>
+                                                    </div>
+                                                ))}
+                                                <div onClick={() => setFormData({ ...formData, barber_id: '' })}
+                                                    style={{
+                                                        padding: '20px 10px',
+                                                        borderRadius: '16px',
+                                                        background: formData.barber_id === '' ? 'var(--color-accent)' : 'rgba(255,255,255,0.03)',
+                                                        color: formData.barber_id === '' ? '#000' : '#fff',
+                                                        cursor: 'pointer',
+                                                        textAlign: 'center',
+                                                        border: '1px solid rgba(255,255,255,0.1)'
+                                                    }}>
+                                                    <div style={{ width: 50, height: 50, borderRadius: '50%', background: 'rgba(255,255,255,0.1)', margin: '0 auto 10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                        <Scissors size={24} />
+                                                    </div>
+                                                    <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>Qualquer um</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
+                                            <button type="button" className="btn btn-secondary" onClick={() => setBookingStep(3)} style={{ flex: 1 }}>Voltar</button>
+                                            <button type="button" className="btn btn-primary" onClick={() => setBookingStep(5)} style={{ flex: 2 }}>Próximo Passo</button>
+                                        </div>
+                                    </form>
+                                )}
+
+                                {bookingStep === 5 && (
+                                    <form onSubmit={handleBookingSubmit} className="animate-fade">
+                                        <div className="form-group">
+                                            <label className="form-label">📅 Data do Agendamento</label>
                                             <input type="date" className="form-input" min={new Date().toISOString().split('T')[0]} value={formData.date} onChange={e => { setFormData({ ...formData, date: e.target.value, time: '' }); loadSlots(e.target.value, formData.service_id); }} required />
                                         </div>
                                         {formData.date && (
@@ -286,12 +378,12 @@ export default function Home() {
                                                 <div className="time-slots">
                                                     {slots.length > 0 ? slots.map(h => (
                                                         <div key={h} className={`time-slot ${formData.time === h ? 'selected' : ''}`} onClick={() => setFormData({ ...formData, time: h })}>{h}</div>
-                                                    )) : <p className="text-secondary" style={{ gridColumn: '1/-1', textAlign: 'center' }}>{formData.service_id ? 'Nenhum horário disponível para esta data' : 'Selecione um serviço primeiro'}</p>}
+                                                    )) : <p className="text-secondary" style={{ gridColumn: '1/-1', textAlign: 'center' }}>Nenhum horário disponível para esta data</p>}
                                                 </div>
                                             </div>
                                         )}
                                         <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
-                                            <button type="button" className="btn btn-secondary" onClick={() => setBookingStep(2)} style={{ flex: 1 }}>Voltar</button>
+                                            <button type="button" className="btn btn-secondary" onClick={() => setBookingStep(siteConfig.use_barbers === '1' ? 4 : 3)} style={{ flex: 1 }}>Voltar</button>
                                             <button type="submit" className="btn btn-primary" style={{ flex: 2 }} disabled={!formData.time}>Finalizar Agendamento</button>
                                         </div>
                                     </form>

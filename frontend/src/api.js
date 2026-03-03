@@ -37,7 +37,20 @@ async function uploadFile(file) {
 export const publicApi = {
     getServices: () => request('/services'),
     getAvailableSlots: (date, serviceId) => request(`/available-slots/${date}?serviceId=${serviceId}`),
-    createAppointment: (data) => request('/appointments', { method: 'POST', body: JSON.stringify(data) }),
+    createAppointment: (data) => request('/appointments', {
+        method: 'POST',
+        body: JSON.stringify({
+            client_name: data.clientName,
+            client_whatsapp: data.clientWhatsapp,
+            client_birth_date: data.clientBirthDate,
+            service_id: data.serviceId,
+            barber_id: data.barberId,
+            date: data.date,
+            time: data.time,
+            notes: data.notes
+        })
+    }),
+    getBarbers: () => request('/barbers'),
     getSiteConfig: () => request('/site-config'),
     checkClient: (whatsapp) => request(`/clients/check/${encodeURIComponent(whatsapp)}`),
     cancelAppointment: (id, whatsapp) => request(`/appointments/${id}/cancel`, { method: 'POST', body: JSON.stringify({ whatsapp }) }),
@@ -57,6 +70,8 @@ export const adminApi = {
     createService: (data) => request('/admin/services', { method: 'POST', body: JSON.stringify(data) }),
     updateService: (id, data) => request(`/admin/services/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
     deleteService: (id) => request(`/admin/services/${id}`, { method: 'DELETE' }),
+    deleteBarber: (id) => request(`/admin/barbers/${id}`, { method: 'DELETE' }),
+    payCommission: (id, amount) => request(`/admin/barbers/${id}/pay-commission`, { method: 'POST', body: JSON.stringify({ amount }) }),
     getClients: (params = {}) => { const q = new URLSearchParams(params).toString(); return request(`/admin/clients${q ? '?' + q : ''}`); },
     getClient: (id) => request(`/admin/clients/${id}`),
     updateClient: (id, data) => request(`/admin/clients/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
@@ -72,6 +87,10 @@ export const adminApi = {
     uploadImage: uploadFile,
     getSettings: () => request('/admin/settings'),
     updateSettings: (data) => request('/admin/settings', { method: 'PUT', body: JSON.stringify(data) }),
+    // Barbers
+    getBarbers: () => request('/admin/barbers'),
+    createBarber: (data) => request('/admin/barbers', { method: 'POST', body: JSON.stringify(data) }),
+    updateBarber: (id, data) => request(`/admin/barbers/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
     getBlockedTimes: (date) => { const q = date ? `?date=${date}` : ''; return request(`/admin/blocked-times${q}`); },
     blockTime: (data) => request('/admin/blocked-times', { method: 'POST', body: JSON.stringify(data) }),
     unblockTime: (id) => request(`/admin/blocked-times/${id}`, { method: 'DELETE' }),

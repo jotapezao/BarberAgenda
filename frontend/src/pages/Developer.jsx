@@ -40,29 +40,30 @@ export default function Developer() {
 
             <main style={{ position: 'relative', zIndex: 1 }}>
                 {/* Hero Section */}
-                <section style={{ padding: '80px 20px 40px', textAlign: 'center' }}>
+                <section style={{ padding: '100px 20px 60px', textAlign: 'center', position: 'relative' }}>
                     <div className="container" style={{ maxWidth: '900px' }}>
                         <div style={{ position: 'relative', display: 'inline-block', marginBottom: '40px' }}>
                             <div style={{
                                 position: 'absolute',
-                                inset: '-10px',
+                                inset: '-20px',
                                 background: 'linear-gradient(45deg, #D4AF37, #8b5cf6)',
                                 borderRadius: '50%',
-                                filter: 'blur(15px)',
-                                opacity: 0.3,
-                                animation: 'pulse 3s infinite'
+                                filter: 'blur(30px)',
+                                opacity: 0.2,
+                                animation: 'pulse 4s infinite'
                             }}></div>
                             <img
-                                src="/assets/perfil-dev.png" /* O usuário deve colocar a foto aqui */
+                                src="/assets/perfil-dev.png"
                                 alt="João Paulo Fernandes"
                                 style={{
-                                    width: '180px',
-                                    height: '180px',
+                                    width: '200px',
+                                    height: '200px',
                                     borderRadius: '50%',
                                     objectFit: 'cover',
                                     position: 'relative',
-                                    border: '3px solid #D4AF37',
-                                    boxShadow: '0 20px 40px rgba(0,0,0,0.5)'
+                                    border: '4px solid rgba(212, 165, 72, 0.4)',
+                                    boxShadow: '0 30px 60px -12px rgba(0,0,0,0.8)',
+                                    zIndex: 2
                                 }}
                                 onError={(e) => {
                                     e.target.src = "https://ui-avatars.com/api/?name=Joao+Paulo&background=D4AF37&color=000&size=200";
@@ -70,29 +71,32 @@ export default function Developer() {
                             />
                         </div>
 
-                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '6px 16px', background: 'rgba(212, 165, 72, 0.1)', border: '1px solid rgba(212, 165, 72, 0.2)', borderRadius: '100px', marginBottom: '24px' }}>
+                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '8px 20px', background: 'rgba(212, 165, 72, 0.08)', border: '1px solid rgba(212, 165, 72, 0.2)', borderRadius: '100px', marginBottom: '32px', backdropFilter: 'blur(10px)' }}>
                             <Zap size={14} style={{ color: '#D4AF37' }} />
-                            <span style={{ fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px', color: '#D4AF37' }}>Full Stack Engineer</span>
+                            <span style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '2px', color: '#D4AF37' }}>Full Stack Engineer & Tech Lead</span>
                         </div>
 
-                        <h1 style={{ fontSize: 'clamp(2.5rem, 8vw, 4.5rem)', fontWeight: 900, marginBottom: '24px', lineHeight: 1, letterSpacing: '-2px' }}>
-                            João Paulo <span style={{
-                                background: 'linear-gradient(to right, #D4AF37, #FFDF73)',
+                        <h1 style={{ fontSize: 'clamp(3rem, 10vw, 5rem)', fontWeight: 900, marginBottom: '24px', lineHeight: 0.9, letterSpacing: '-3px' }}>
+                            João Paulo <br />
+                            <span style={{
+                                background: 'linear-gradient(to right, #D4AF37, #FFDF73, #D4AF37)',
+                                backgroundSize: '200% auto',
                                 WebkitBackgroundClip: 'text',
-                                WebkitTextFillColor: 'transparent'
+                                WebkitTextFillColor: 'transparent',
+                                animation: 'shimmer 4s linear infinite'
                             }}>Fernandes</span>
                         </h1>
 
-                        <p style={{ fontSize: '1.2rem', color: '#94a3b8', maxWidth: '650px', margin: '0 auto 40px', lineHeight: 1.6 }}>
-                            Desenvolvedor focado em criar experiências digitais de alto impacto, unindo design premium a uma infraestrutura robusta e escalável.
+                        <p style={{ fontSize: '1.25rem', color: '#94a3b8', maxWidth: '700px', margin: '0 auto 48px', lineHeight: 1.6, fontWeight: 400 }}>
+                            Transformando visões em realidade digital através de código refinado e design de elite. Especialista em ecossistemas Full Stack escaláveis.
                         </p>
 
-                        <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap' }}>
-                            <a href="https://wa.me/5500000000000" target="_blank" rel="noreferrer" className="dev-btn-neon" style={{ borderRadius: '12px', padding: '16px 32px' }}>
-                                <Globe size={20} /> Solicitar Orçamento
+                        <div style={{ display: 'flex', gap: '20px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                            <a href="https://wa.me/5500000000000" target="_blank" rel="noreferrer" className="dev-btn-neon" style={{ borderRadius: '16px', padding: '18px 40px', fontWeight: 700, fontSize: '1rem' }}>
+                                <Globe size={20} /> Solicitar Projeto
                             </a>
-                            <a href="#" className="dev-btn-outline" style={{ borderRadius: '12px', padding: '16px 32px', color: '#fff', border: '1px solid rgba(255,255,255,0.1)' }}>
-                                <Instagram size={20} /> Instagram
+                            <a href="#" className="dev-btn-outline" style={{ borderRadius: '16px', padding: '18px 40px', color: '#fff', border: '1px solid rgba(255,255,255,0.1)', fontWeight: 600, fontSize: '1rem', background: 'rgba(255,255,255,0.03)' }}>
+                                <Instagram size={20} /> Instagram Professional
                             </a>
                         </div>
                     </div>
@@ -163,10 +167,33 @@ export default function Developer() {
                     50% { transform: scale(1.05); opacity: 0.4; }
                     100% { transform: scale(1); opacity: 0.3; }
                 }
+                @keyframes shimmer {
+                    0% { background-position: 200% center; }
+                    100% { background-position: -200% center; }
+                }
                 .dev-glass-card:hover {
                     background: rgba(255,255,255,0.04) !important;
                     border-color: rgba(212, 165, 72, 0.3) !important;
                     transform: translateY(-8px);
+                }
+                .dev-btn-neon {
+                    display: inline-flex; align-items: center; gap: 10px;
+                    background: linear-gradient(135deg, #D4AF37, #B8941F);
+                    color: #000; font-weight: 700; text-decoration: none;
+                    transition: all 0.3s ease; cursor: pointer; border: none;
+                }
+                .dev-btn-neon:hover {
+                    transform: translateY(-3px);
+                    box-shadow: 0 15px 30px rgba(212, 165, 72, 0.3);
+                }
+                .dev-btn-outline {
+                    display: inline-flex; align-items: center; gap: 10px;
+                    text-decoration: none; transition: all 0.3s ease; cursor: pointer;
+                }
+                .dev-btn-outline:hover {
+                    background: rgba(255,255,255,0.08) !important;
+                    border-color: rgba(212, 165, 72, 0.4) !important;
+                    transform: translateY(-3px);
                 }
             `}</style>
         </div>
