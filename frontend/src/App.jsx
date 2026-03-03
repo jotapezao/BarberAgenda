@@ -25,11 +25,10 @@ function App() {
   useEffect(() => {
     publicApi.getSiteConfig().then(config => {
       // 1. Aplicar Tema e Nome
-      const themeSlugs = ['dark-gold', 'dark-purple', 'dark-grey', 'light-clean', 'sophisticated-blue'];
-      const themeClasses = themeSlugs.map(slug => `theme-${slug}`);
-      document.body.classList.remove(...themeClasses);
-      if (config.site_theme && themeSlugs.includes(config.site_theme)) {
-        document.body.classList.add(`theme-${config.site_theme}`);
+      const validThemes = ['theme-dark-gold', 'theme-dark-purple', 'theme-dark-grey', 'theme-light-clean', 'theme-sophisticated-blue'];
+      document.body.classList.remove('theme-dark-gold', 'theme-dark-purple', 'theme-dark-grey', 'theme-light-clean', 'theme-sophisticated-blue');
+      if (config.site_theme && validThemes.includes(config.site_theme)) {
+        document.body.classList.add(config.site_theme);
       } else {
         document.body.classList.add('theme-dark-gold');
       }
