@@ -22,7 +22,7 @@ function ProtectedRoute({ children }) {
 function App() {
   useEffect(() => {
     publicApi.getSiteConfig().then(config => {
-      // Aplicar Tema global baseado no slug salvo (ex: "dark-gold")
+      // 1. Aplicar Tema e Nome
       const themeSlugs = ['dark-gold', 'dark-purple', 'dark-grey', 'light-clean', 'sophisticated-blue'];
       const themeClasses = themeSlugs.map(slug => `theme-${slug}`);
       document.body.classList.remove(...themeClasses);
@@ -32,7 +32,20 @@ function App() {
         document.body.classList.add('theme-dark-gold');
       }
 
-      // Aplicar Background Fixo
+      const siteName = config.site_name || 'BarberPro';
+      document.title = `${siteName} | Barbearia Premium`;
+
+      // 2. Favicon e Meta Imagem Dinâmicos
+      if (config.site_logo) {
+        const logoUrl = `${BASE_URL}${config.site_logo}`;
+        const favicon = document.getElementById('favicon');
+        if (favicon) favicon.href = logoUrl;
+
+        const ogImage = document.getElementById('og-image');
+        if (ogImage) ogImage.setAttribute('content', logoUrl);
+      }
+
+      // 3. Aplicar Background Fixo
       if (config.site_background) {
         document.body.style.backgroundImage = `url(${BASE_URL}${config.site_background})`;
         document.body.style.backgroundAttachment = 'fixed';
