@@ -1554,9 +1554,108 @@ textarea {
 }
 
 /* FINAL ADJUSTMENTS (PROMOTION, BOOKING, FOOTER, LOCATION) */
-.promotion-bar { background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-accent-glow) 100%) !important; color: #111 !important; }
-.promotion-bar a { color: #111 !important; text-shadow: none !important; }
-.footer-simple { background: linear-gradient(to bottom, var(--color-bg-secondary) 0%, #050505 100%) !important; border-top: 1px solid var(--color-accent-subtle) !important; padding: 40px 0; margin-top: 60px; }
-.booking-form-container { box-shadow: 0 10px 40px rgba(0,0,0,0.6) !important; border: 1px solid var(--color-accent-subtle) !important; border-radius: 24px !important; }
-@media (max-width: 768px) { .booking-steps { flex-wrap: nowrap !important; overflow-x: auto !important; justify-content: flex-start !important; padding-bottom: 20px !important; } .step span { font-size: 0.75rem !important; } .services-selection-grid { grid-template-columns: 1fr !important; } }
-#location .card { border: 1px solid var(--color-accent-subtle) !important; box-shadow: 0 15px 50px rgba(0,0,0,0.6) !important; }
+.promotion-bar {
+  background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-accent-glow) 100%) !important;
+  color: #111 !important;
+}
+
+.promotion-bar a {
+  color: #111 !important;
+  text-shadow: none !important;
+}
+
+.footer-simple {
+  background: linear-gradient(to bottom, var(--color-bg-secondary) 0%, #050505 100%) !important;
+  border-top: 1px solid var(--color-accent-subtle) !important;
+  padding: 40px 0;
+  margin-top: 60px;
+}
+
+/* NAVBAR HEADER MATCHING FOOTER */
+.site-header {
+  background: linear-gradient(to bottom, var(--color-bg-secondary) 0%, #050505 100%) !important;
+  border-bottom: 1px solid var(--color-accent-subtle);
+}
+
+.booking-form-container {
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6) !important;
+  border: 1px solid var(--color-accent-subtle) !important;
+  border-radius: 24px !important;
+  padding: 30px;
+}
+
+/* FIX MISSING BOOKING STEPS STYLES */
+.booking-steps {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 30px;
+  gap: 10px;
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-secondary);
+  font-weight: 600;
+  opacity: 0.5;
+  transition: all 0.3s;
+}
+
+.step.active {
+  opacity: 1;
+  color: var(--color-accent);
+}
+
+.step.done {
+  color: var(--color-accent);
+}
+
+.step-number {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--color-bg-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.step.active .step-number {
+  background: var(--color-accent);
+  color: #000;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 10px var(--color-accent-glow);
+}
+
+.step-line {
+  flex: 1;
+  height: 2px;
+  background: var(--color-bg-secondary);
+}
+
+@media (max-width: 768px) {
+  .booking-steps {
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    justify-content: flex-start !important;
+    padding-bottom: 20px !important;
+  }
+
+  .step span {
+    font-size: 0.75rem !important;
+  }
+
+  .services-selection-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+#location .card {
+  border: 1px solid var(--color-accent-subtle) !important;
+  box-shadow: 0 15px 50px rgba(0, 0, 0, 0.6) !important;
+}
