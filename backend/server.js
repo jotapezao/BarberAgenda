@@ -553,20 +553,20 @@ app.get('/api/admin/products', authenticateToken, async (req, res) => {
 });
 
 app.post('/api/admin/products', authenticateToken, async (req, res) => {
-    const { name, description, price, cost_price, stock_quantity, min_stock, category, sku } = req.body;
+    const { name, description, price, cost_price, stock_quantity, min_stock, category, sku, image } = req.body;
     if (!name || !price) return res.status(400).json({ error: 'Nome e preço obrigatórios' });
     const result = await db.run(
-        'INSERT INTO products (name, description, price, cost_price, stock_quantity, min_stock, category, sku) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-        [name, description || '', price, cost_price || 0, stock_quantity || 0, min_stock || 5, category || 'Geral', sku || '']
+        'INSERT INTO products (name, description, price, cost_price, stock_quantity, min_stock, category, sku, image) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [name, description || '', price, cost_price || 0, stock_quantity || 0, min_stock || 5, category || 'Geral', sku || '', image || '']
     );
     res.status(201).json(await db.get('SELECT * FROM products WHERE id = ?', [result.lastInsertRowid]));
 });
 
 app.put('/api/admin/products/:id', authenticateToken, async (req, res) => {
-    const { name, description, price, cost_price, stock_quantity, min_stock, category, active, sku } = req.body;
+    const { name, description, price, cost_price, stock_quantity, min_stock, category, active, sku, image } = req.body;
     await db.run(
-        'UPDATE products SET name=?, description=?, price=?, cost_price=?, stock_quantity=?, min_stock=?, category=?, active=?, sku=? WHERE id=?',
-        [name, description, price, cost_price, stock_quantity, min_stock, category, active ? 1 : 0, sku || '', req.params.id]
+        'UPDATE products SET name=?, description=?, price=?, cost_price=?, stock_quantity=?, min_stock=?, category=?, active=?, sku=?, image=? WHERE id=?',
+        [name, description, price, cost_price, stock_quantity, min_stock, category, active ? 1 : 0, sku || '', image || '', req.params.id]
     );
     res.json(await db.get('SELECT * FROM products WHERE id = ?', [req.params.id]));
 });
@@ -613,8 +613,20 @@ app.get('/api/admin/stock-summary', authenticateToken, async (req, res) => {
 // -- SITE CONFIG --
 app.get('/api/admin/site-config', authenticateToken, async (req, res) => {
     const config = {};
+    // Load from site_config table
     const configList = await db.all('SELECT key, value, type FROM site_config');
     configList.forEach(c => { config[c.key] = { value: c.value, type: c.type }; });
+
+    // Also merge from settings table so the admin UI sees everything
+    const settingsList = await db.all('SELECT key, value FROM settings');
+    settingsList.forEach(s => {
+        if (!config[s.key]) {
+            config[s.key] = { value: s.value, type: 'text' };
+        } else {
+            config[s.key].value = s.value;
+        }
+    });
+
     res.json(config);
 });
 
@@ -630,31 +642,39 @@ app.put('/api/admin/site-config', authenticateToken, async (req, res) => {
 
 // -- BARBERS MGMT --
 app.get('/api/admin/barbers', authenticateToken, async (req, res) => {
-    res.json(await db.all("SELECT id, username, name, role, commission_rate, is_active FROM users WHERE role = 'barber'"));
+    // Return all users that are not 'admin' but can be listed as team members
+    res.json(await db.all("SELECT id, username, name, role, commission_rate, is_active, cpf, birth_date, phone, photo_url, role_id FROM users WHERE role != 'admin' OR id = ?", [req.user.id]));
 });
 
 app.post('/api/admin/barbers', authenticateToken, async (req, res) => {
     if (req.user.role !== 'admin') return res.status(403).json({ error: 'Acesso negado' });
-    const { username, password, name, commission_rate } = req.body;
+    const { username, password, name, commission_rate, is_active, cpf, birth_date, phone, photo_url, role_id } = req.body;
     const hashedPassword = bcrypt.hashSync(password, 10);
     try {
-        await db.run("INSERT INTO users (username, password, name, role, commission_rate) VALUES (?, ?, ?, 'barber', ?)",
-            [username, hashedPassword, name, commission_rate || 0]);
+        await db.run(
+            "INSERT INTO users (username, password, name, role, commission_rate, is_active, cpf, birth_date, phone, photo_url, role_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            [username, hashedPassword, name, 'barber', commission_rate || 0, is_active ?? 1, cpf || '', birth_date || '', phone || '', photo_url || '', role_id || null]
+        );
         res.status(201).json({ message: 'Barbeiro criado' });
     } catch (e) {
-        res.status(400).json({ error: 'Usuário já existe' });
+        res.status(400).json({ error: 'Usuário já existe ou erro nos dados' });
     }
 });
 
 app.put('/api/admin/barbers/:id', authenticateToken, async (req, res) => {
     if (req.user.role !== 'admin') return res.status(403).json({ error: 'Acesso negado' });
-    const { name, commission_rate, is_active, password } = req.body;
+    const { name, commission_rate, is_active, password, cpf, birth_date, phone, photo_url, role_id } = req.body;
+
     if (password) {
-        await db.run('UPDATE users SET name = ?, commission_rate = ?, is_active = ?, password = ? WHERE id = ?',
-            [name, commission_rate, is_active, bcrypt.hashSync(password, 10), req.params.id]);
+        await db.run(
+            'UPDATE users SET name = ?, commission_rate = ?, is_active = ?, password = ?, cpf = ?, birth_date = ?, phone = ?, photo_url = ?, role_id = ? WHERE id = ?',
+            [name, commission_rate, is_active, bcrypt.hashSync(password, 10), cpf || '', birth_date || '', phone || '', photo_url || '', role_id || null, req.params.id]
+        );
     } else {
-        await db.run('UPDATE users SET name = ?, commission_rate = ?, is_active = ? WHERE id = ?',
-            [name, commission_rate, is_active, req.params.id]);
+        await db.run(
+            'UPDATE users SET name = ?, commission_rate = ?, is_active = ?, cpf = ?, birth_date = ?, phone = ?, photo_url = ?, role_id = ? WHERE id = ?',
+            [name, commission_rate, is_active, cpf || '', birth_date || '', phone || '', photo_url || '', role_id || null, req.params.id]
+        );
     }
     res.json({ message: 'Barbeiro atualizado' });
 });

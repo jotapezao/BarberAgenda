@@ -15,7 +15,7 @@ export default function Stock() {
     const [sellingProduct, setSellingProduct] = useState(null);
     const [sellQty, setSellQty] = useState(1);
     const [productForm, setProductForm] = useState({
-        name: '', description: '', price: 0, cost_price: 0, stock_quantity: 0, min_stock: 5, category: 'Geral'
+        name: '', description: '', price: 0, cost_price: 0, stock_quantity: 0, min_stock: 5, category: 'Geral', image: ''
     });
 
     const toast = useToast();
@@ -67,6 +67,16 @@ export default function Stock() {
         } catch (err) { toast.error('Erro ao remover'); }
     };
 
+    const handlePhotoUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        try {
+            const { url } = await adminApi.uploadImage(file);
+            setProductForm(prev => ({ ...prev, image: url }));
+            toast.success('Imagem carregada!');
+        } catch (err) { toast.error('Erro no upload'); }
+    };
+
     const filteredProducts = products.filter(p => p.name.toLowerCase().includes(search.toLowerCase()) || p.category.toLowerCase().includes(search.toLowerCase()));
 
     const formatPrice = (p) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(p || 0);
@@ -81,7 +91,7 @@ export default function Stock() {
                         <h1>Gestão de Estoque</h1>
                         <p>Controle de produtos, estoque e vendas</p>
                     </div>
-                    <button className="btn btn-primary" onClick={() => { setEditingProduct(null); setProductForm({ name: '', description: '', price: 0, cost_price: 0, stock_quantity: 0, min_stock: 5, category: 'Geral' }); setShowProductModal(true); }}>
+                    <button className="btn btn-primary" onClick={() => { setEditingProduct(null); setProductForm({ name: '', description: '', price: 0, cost_price: 0, stock_quantity: 0, min_stock: 5, category: 'Geral', image: '' }); setShowProductModal(true); }}>
                         <Plus size={20} /> Novo Produto
                     </button>
                 </div>
@@ -137,9 +147,18 @@ export default function Stock() {
                         {filteredProducts.map(product => (
                             <div key={product.id} className="table-row" style={{ display: 'grid', gridTemplateColumns: '120px 1fr 120px 120px 120px 150px', padding: '15px 24px', alignItems: 'center', borderBottom: '1px solid var(--color-border)' }}>
                                 <div style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', fontFamily: 'monospace' }}>{product.sku || 'N/A'}</div>
-                                <div>
-                                    <div style={{ fontWeight: 600 }}>{product.name}</div>
-                                    <div style={{ fontSize: '0.75rem', color: 'var(--color-accent)' }}>{product.category}</div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                                    <div style={{ width: 44, height: 44, borderRadius: 8, background: 'var(--color-bg-secondary)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        {product.image ? (
+                                            <img src={`${BASE_URL}${product.image}`} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                        ) : (
+                                            <Package size={20} style={{ opacity: 0.2 }} />
+                                        )}
+                                    </div>
+                                    <div>
+                                        <div style={{ fontWeight: 600 }}>{product.name}</div>
+                                        <div style={{ fontSize: '0.75rem', color: 'var(--color-accent)' }}>{product.category}</div>
+                                    </div>
                                 </div>
                                 <div style={{ textAlign: 'center', fontSize: '0.9rem', color: 'var(--color-text-muted)' }}>{formatPrice(product.cost_price)}</div>
                                 <div style={{ textAlign: 'center', fontSize: '1rem', fontWeight: 700 }}>{formatPrice(product.price)}</div>
@@ -174,14 +193,24 @@ export default function Stock() {
                             </div>
                             <form onSubmit={handleProductSubmit}>
                                 <div className="modal-body">
-                                    <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: 16 }}>
-                                        <div className="form-group">
-                                            <label className="form-label">SKU</label>
-                                            <input type="text" className="form-input" placeholder="Ex: PROD-001" value={productForm.sku || ''} onChange={e => setProductForm({ ...productForm, sku: e.target.value })} />
+                                    <div style={{ display: 'flex', gap: 20, marginBottom: 20 }}>
+                                        <div style={{ width: 100, height: 100, borderRadius: 8, background: 'var(--color-bg-secondary)', border: '2px dashed var(--color-border)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
+                                            {productForm.image ? (
+                                                <img src={`${BASE_URL}${productForm.image}`} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                            ) : (
+                                                <ImageIcon size={30} style={{ opacity: 0.2 }} />
+                                            )}
+                                            <input type="file" onChange={handlePhotoUpload} style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }} accept="image/*" />
                                         </div>
-                                        <div className="form-group">
-                                            <label className="form-label">Nome do Produto</label>
-                                            <input type="text" className="form-input" value={productForm.name} onChange={e => setProductForm({ ...productForm, name: e.target.value })} required />
+                                        <div style={{ flex: 1 }}>
+                                            <div className="form-group">
+                                                <label className="form-label">Nome do Produto</label>
+                                                <input type="text" className="form-input" value={productForm.name} onChange={e => setProductForm({ ...productForm, name: e.target.value })} required />
+                                            </div>
+                                            <div className="form-group" style={{ marginBottom: 0 }}>
+                                                <label className="form-label">SKU / Cód. Barras</label>
+                                                <input type="text" className="form-input" placeholder="Ex: PROD-001" value={productForm.sku || ''} onChange={e => setProductForm({ ...productForm, sku: e.target.value })} />
+                                            </div>
                                         </div>
                                     </div>
                                     <div className="form-group">

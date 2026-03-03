@@ -32,9 +32,15 @@ export default function SiteConfig() {
 
     const loadConfig = async () => {
         try {
-            const data = await adminApi.getSiteConfig();
-            const flatConfig = {};
-            Object.keys(data).forEach(key => flatConfig[key] = data[key].value);
+            // Load both site config and system settings
+            const [siteData, settingsData] = await Promise.all([
+                adminApi.getSiteConfig(),
+                adminApi.getSettings()
+            ]);
+
+            const flatConfig = { ...settingsData };
+            Object.keys(siteData).forEach(key => flatConfig[key] = siteData[key].value);
+
             setConfig(flatConfig);
             setLoading(false);
         } catch (err) { toast.error('Erro ao carregar configurações'); }
@@ -43,7 +49,28 @@ export default function SiteConfig() {
     const handleSave = async (e) => {
         e.preventDefault();
         try {
-            await adminApi.updateSiteConfig(config);
+            // Split config into site_config and settings
+            const siteConfigKeys = [
+                'site_name', 'site_slogan', 'site_theme', 'site_logo', 'site_background',
+                'banner_title_1', 'banner_subtitle_1', 'banner_image_1',
+                'banner_title_2', 'banner_subtitle_2', 'banner_image_2',
+                'banner_title_3', 'banner_subtitle_3', 'banner_image_3',
+                'promotion_active', 'promotion_title', 'promotion_text', 'promotion_badge',
+                'about_title', 'about_text', 'address', 'city', 'cep', 'map_embed_url'
+            ];
+
+            const sitePayload = {};
+            const settingsPayload = {};
+
+            Object.keys(config).forEach(key => {
+                if (siteConfigKeys.includes(key)) sitePayload[key] = config[key];
+                else settingsPayload[key] = config[key];
+            });
+
+            await Promise.all([
+                adminApi.updateSiteConfig(sitePayload),
+                adminApi.updateSettings(settingsPayload)
+            ]);
 
             // Auto-refresh theme variables and background globally
             const validThemes = ['theme-dark-gold', 'theme-dark-purple', 'theme-dark-grey', 'theme-light-clean', 'theme-sophisticated-blue'];
@@ -322,11 +349,27 @@ export default function SiteConfig() {
                             <div className="form-group" style={{ marginTop: 16 }}>
                                 <label className="form-label">Fuso Horário do Salão</label>
                                 <select className="form-select" value={config.site_timezone || 'America/Sao_Paulo'} onChange={e => updateField('site_timezone', e.target.value)}>
-                                    <option value="America/Sao_Paulo">Brasília (GMT-3)</option>
-                                    <option value="America/Manaus">Manaus (GMT-4)</option>
-                                    <option value="America/Fortaleza">Fortaleza (GMT-3)</option>
-                                    <option value="Europe/Lisbon">Lisboa (GMT+0/1)</option>
-                                    <option value="UTC">UTC (Padrão)</option>
+                                    <optgroup label="Américas">
+                                        <option value="America/Sao_Paulo">Brasília (GMT-3)</option>
+                                        <option value="America/Manaus">Manaus (GMT-4)</option>
+                                        <option value="America/Fortaleza">Fortaleza (GMT-3)</option>
+                                        <option value="America/New_York">Nova York / Miami (GMT-5)</option>
+                                        <option value="America/Mexico_City">Cidade do México (GMT-6)</option>
+                                        <option value="America/Argentina/Buenos_Aires">Buenos Aires (GMT-3)</option>
+                                        <option value="America/Santiago">Santiago (GMT-4)</option>
+                                    </optgroup>
+                                    <optgroup label="Europa">
+                                        <option value="Europe/Lisbon">Lisboa (GMT+0/1)</option>
+                                        <option value="Europe/Madrid">Madri (GMT+1)</option>
+                                        <option value="Europe/Paris">Paris (GMT+1)</option>
+                                        <option value="Europe/London">Londres (GMT+0)</option>
+                                    </optgroup>
+                                    <optgroup label="Outros">
+                                        <option value="UTC">UTC (Padrão)</option>
+                                        <option value="Asia/Tokyo">Tóquio (GMT+9)</option>
+                                        <option value="Australia/Sydney">Sydney (GMT+10)</option>
+                                        <option value="Africa/Cairo">Cairo (GMT+2)</option>
+                                    </optgroup>
                                 </select>
                                 <p className="text-muted" style={{ fontSize: '0.75rem', marginTop: 4 }}>
                                     <Info size={12} style={{ verticalAlign: 'middle', marginRight: 4 }} />

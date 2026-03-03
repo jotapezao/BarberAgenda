@@ -281,25 +281,51 @@ export default function Barbers() {
                             </div>
                             <div style={{ padding: 24 }}>
                                 <div className="form-group">
-                                    <label className="form-label">Adicionar Data de Folga</label>
+                                    <label className="form-label">Data de Folga ou Falta</label>
                                     <div style={{ display: 'flex', gap: 10 }}>
-                                        <input type="date" className="form-input" value={newOffDate} onChange={e => setNewOffDate(e.target.value)} />
-                                        <button className="btn btn-primary" onClick={addOffDay}>Add</button>
+                                        <input type="date" className="form-input" value={newOffDate} onChange={e => setNewOffDate(e.target.value)} style={{ flex: 1 }} />
+                                        <button className="btn btn-primary" onClick={addOffDay} disabled={!newOffDate}>Agendar Folga</button>
                                     </div>
+                                    <p className="text-muted" style={{ fontSize: '0.75rem', marginTop: 8 }}>Agende folgas para remover este barbeiro da lista de horários públicos.</p>
                                 </div>
 
-                                <div style={{ marginTop: 20, maxHeight: 300, overflowY: 'auto' }}>
-                                    <h4 style={{ marginBottom: 10 }}>Datas Bloqueadas</h4>
-                                    {offDays.length === 0 ? <p className="text-secondary text-sm">Nenhuma folga registrada.</p> : (
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                                            {offDays.map(d => (
-                                                <div key={d.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--color-bg-secondary)', padding: '8px 12px', borderRadius: 8 }}>
-                                                    <span>{d.date.split('-').reverse().join('/')}</span>
-                                                    <button className="btn-icon text-danger" onClick={() => removeOffDay(d.id)}><Trash2 size={16} /></button>
-                                                </div>
-                                            ))}
+                                <div style={{ marginTop: 30 }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+                                        <List size={18} className="text-accent" />
+                                        <h4 style={{ margin: 0 }}>Histórico de Datas</h4>
+                                    </div>
+                                    {offDays.length === 0 ? (
+                                        <div className="card" style={{ background: 'var(--color-bg-secondary)', textAlign: 'center', padding: 30, border: '1px dashed var(--color-border)' }}>
+                                            <CalendarX size={32} style={{ opacity: 0.1, marginBottom: 10 }} />
+                                            <p className="text-secondary text-sm">Nenhuma folga ou falta registrada no histórico.</p>
+                                        </div>
+                                    ) : (
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                                            {offDays.sort((a, b) => b.date.localeCompare(a.date)).map(d => {
+                                                const isPast = new Date(d.date) < new Date(new Date().toISOString().split('T')[0]);
+                                                return (
+                                                    <div key={d.id} className="table-row-compact" style={{
+                                                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                                        background: 'var(--color-bg-secondary)', padding: '12px 16px', borderRadius: 12,
+                                                        border: '1px solid var(--color-border)',
+                                                        opacity: isPast ? 0.6 : 1
+                                                    }}>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                                                            <div style={{ width: 8, height: 8, borderRadius: '50%', background: isPast ? 'var(--color-text-muted)' : 'var(--color-accent)' }}></div>
+                                                            <div>
+                                                                <div style={{ fontWeight: 600 }}>{d.date.split('-').reverse().join('/')}</div>
+                                                                <div style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)' }}>{isPast ? 'Data Passada' : 'Agendado'}</div>
+                                                            </div>
+                                                        </div>
+                                                        <button className="btn-icon text-danger" onClick={() => removeOffDay(d.id)} title="Remover"><Trash2 size={16} /></button>
+                                                    </div>
+                                                );
+                                            })}
                                         </div>
                                     )}
+                                </div>
+                                <div style={{ marginTop: 30, display: 'flex', gap: 12 }}>
+                                    <button className="btn btn-secondary w-full" onClick={() => setIsOffDaysModalOpen(false)}>Fechar Janela</button>
                                 </div>
                             </div>
                         </div>
