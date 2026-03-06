@@ -137,7 +137,7 @@ export default function Dashboard() {
                 </div>
             </div>
 
-            <div className="dashboard-grid-layout" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 300px', gap: 24, alignItems: 'start' }}>
+            <div className="dashboard-grid-layout" style={{ display: 'grid', gridTemplateColumns: isAdmin ? 'minmax(0, 1fr) 300px' : '1fr', gap: 24, alignItems: 'start' }}>
                 <div className="dashboard-main-col" style={{ minWidth: 0 }}>
                     <div className="stats-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', marginBottom: 24 }}>
                         <div className="card stat-card">
@@ -171,47 +171,49 @@ export default function Dashboard() {
                             </h2>
                         </div>
                         {filteredToday.length > 0 ? (
-                            <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-                                <div className={`table-header appointment-grid ${isAdmin ? 'admin-grid' : 'barber-grid'}`}>
-                                    <div>HR</div>
-                                    <div>CLIENTE</div>
-                                    <div>SERVIÇO</div>
-                                    {isAdmin && <div>BARBEIRO</div>}
-                                    <div style={{ textAlign: 'center' }}>STATUS</div>
-                                    <div style={{ textAlign: 'right' }}>AÇÕES</div>
-                                </div>
+                            <div className="dashboard-agenda-list" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                                 {filteredToday.map(apt => (
-                                    <div key={apt.id} className={`table-row appointment-grid ${isAdmin ? 'admin-grid' : 'barber-grid'}`}>
-                                        <div className="appointment-time">
-                                            <div style={{ fontWeight: 700, fontSize: '1rem' }}>{apt.time}</div>
-                                            {apt.end_time && <div className="text-secondary" style={{ fontSize: '0.7rem' }}>{apt.end_time}</div>}
-                                        </div>
-                                        <div>
-                                            <h4 style={{ margin: 0, fontSize: '0.95rem' }}>{apt.client_name}</h4>
-                                            <p style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, margin: '2px 0 0', fontSize: '0.8rem', color: 'var(--color-accent)' }} onClick={() => openWhatsApp(apt.client_whatsapp, apt.client_name)}>
-                                                <Phone size={10} /> {apt.client_whatsapp}
-                                            </p>
-                                        </div>
-                                        <div className="appointment-service">
-                                            <div style={{ fontWeight: 500, fontSize: '0.9rem' }}>{apt.service_name}</div>
-                                            <div className="text-secondary" style={{ fontSize: '0.75rem' }}>{formatDuration(apt.service_duration)} {isAdmin && `• ${formatPrice(apt.service_price)}`}</div>
-                                        </div>
-                                        {isAdmin && (
-                                            <div style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>
-                                                {apt.barber_name?.split(' ')[0] || '-'}
+                                    <div key={apt.id} className={`card appointment-card-modern ${apt.status}`} style={{ padding: '16px', position: 'relative', overflow: 'hidden' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+                                            <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                                                <div className="time-badge" style={{ background: 'var(--color-bg-secondary)', padding: '6px 12px', borderRadius: '8px', border: '1px solid var(--color-border)', fontSize: '1.1rem', fontWeight: 800, color: 'var(--color-accent)' }}>
+                                                    {apt.time}
+                                                </div>
+                                                <div>
+                                                    <h4 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700 }}>{apt.client_name}</h4>
+                                                    <button
+                                                        style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 4, fontSize: '0.85rem', color: 'var(--color-accent)', padding: 0, background: 'none', border: 'none', cursor: 'pointer' }}
+                                                        onClick={() => openWhatsApp(apt.client_whatsapp, apt.client_name)}
+                                                    >
+                                                        <Phone size={14} /> {maskPhone(apt.client_whatsapp)}
+                                                    </button>
+                                                </div>
                                             </div>
-                                        )}
-                                        <div style={{ textAlign: 'center' }}>{statusBadge(apt.status)}</div>
-                                        <div className="flex-center" style={{ justifyContent: 'flex-end', gap: 6 }}>
-                                            {apt.status === 'confirmed' && (
-                                                <>
-                                                    <button className="btn btn-success btn-sm" style={{ padding: '5px' }} onClick={() => updateStatus(apt.id, 'completed')} title="Concluir"><CheckCircle size={14} /></button>
-                                                    <button className="btn btn-secondary btn-sm" style={{ padding: '5px' }} onClick={() => setTransferData({ id: apt.id, barberId: apt.barber_id || '' })} title="Transferir"><Users size={14} /></button>
-                                                    <button className="btn btn-danger btn-sm" style={{ padding: '5px' }} onClick={() => updateStatus(apt.id, 'cancelled')} title="Cancelar"><XCircle size={14} /></button>
-                                                </>
-                                            )}
-                                            {apt.status === 'cancelled' && <button className="btn btn-ghost btn-sm" onClick={() => updateStatus(apt.id, 'confirmed')} style={{ fontSize: '0.75rem' }}>Reabrir</button>}
-                                            {apt.status === 'completed' && <CheckCircle size={16} className="text-success" />}
+                                            <div>{statusBadge(apt.status)}</div>
+                                        </div>
+
+                                        <div style={{ display: 'flex', gap: 15, marginBottom: 15, fontSize: '0.85rem', color: 'var(--color-text-secondary)', background: 'rgba(255,255,255,0.03)', padding: '8px 12px', borderRadius: 8, flexWrap: 'wrap' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}><LayoutDashboard size={14} /> {apt.service_name}</div>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Clock size={14} /> {formatDuration(apt.service_duration)}</div>
+                                            {isAdmin && <div style={{ fontWeight: 700, color: 'var(--color-success)' }}>{formatPrice(apt.service_price)}</div>}
+                                            {isAdmin && <div style={{ opacity: 0.7 }}>• {apt.barber_name}</div>}
+                                        </div>
+
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
+                                            <div style={{ fontSize: '0.8rem', opacity: 0.6 }}>
+                                                {apt.end_time ? `Termina às ${apt.end_time}` : ''}
+                                            </div>
+                                            <div className="flex-center" style={{ gap: 8 }}>
+                                                {apt.status === 'confirmed' && (
+                                                    <>
+                                                        <button className="btn btn-success btn-sm" onClick={() => updateStatus(apt.id, 'completed')} title="Concluir"><CheckCircle size={16} /></button>
+                                                        <button className="btn btn-secondary btn-sm" onClick={() => setTransferData({ id: apt.id, barberId: apt.barber_id || '' })} title="Transferir"><Users size={16} /></button>
+                                                        <button className="btn btn-danger btn-sm" onClick={() => updateStatus(apt.id, 'cancelled')} title="Cancelar"><XCircle size={16} /></button>
+                                                    </>
+                                                )}
+                                                {apt.status === 'cancelled' && <button className="btn btn-ghost btn-sm" onClick={() => updateStatus(apt.id, 'confirmed')} style={{ fontSize: '0.8rem', fontWeight: 700 }}>REABRIR</button>}
+                                                {apt.status === 'completed' && <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: 'var(--color-success)', fontWeight: 700, fontSize: '0.8rem' }}><CheckCircle size={16} /> CONCLUÍDO</div>}
+                                            </div>
                                         </div>
                                     </div>
                                 ))}
@@ -234,89 +236,88 @@ export default function Dashboard() {
                             <a href="/admin/schedule" className="text-accent" style={{ fontSize: '0.9rem' }}>Ver agenda completa →</a>
                         </div>
                         {filteredUpcoming.length > 0 ? (
-                            <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-                                <div className={`table-header appointment-grid ${isAdmin ? 'admin-grid' : 'barber-grid'}`}>
-                                    <div>DATA/HR</div>
-                                    <div>CLIENTE</div>
-                                    <div>SERVIÇO</div>
-                                    <div style={{ textAlign: 'right' }}>AÇÕES</div>
-                                </div>
+                            <div className="dashboard-agenda-list" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                                 {filteredUpcoming.slice(0, 5).map(apt => (
-                                    <div key={apt.id} className={`table-row appointment-grid ${isAdmin ? 'admin-grid' : 'barber-grid'}`}>
-                                        <div className="appointment-time">
-                                            <div style={{ fontWeight: 700 }}>{formatDateBR(apt.date)}</div>
-                                            <div className="text-secondary" style={{ fontSize: '0.8rem' }}>às {apt.time}</div>
-                                        </div>
-                                        <div>
-                                            <h4 style={{ margin: 0, fontSize: '0.95rem' }}>{apt.client_name}</h4>
-                                            {isAdmin && <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>{apt.barber_name}</p>}
-                                        </div>
-                                        <div className="appointment-service">
-                                            <div style={{ fontWeight: 500, fontSize: '0.9rem' }}>{apt.service_name}</div>
-                                            <div className="text-secondary" style={{ fontSize: '0.75rem' }}>{formatPrice(apt.service_price)}</div>
-                                        </div>
-                                        <div className="flex-center" style={{ justifyContent: 'flex-end' }}>
-                                            <button className="btn btn-danger btn-sm" style={{ padding: '5px' }} onClick={() => updateStatus(apt.id, 'cancelled')}><XCircle size={14} /></button>
+                                    <div key={apt.id} className="card appointment-card-modern confirmed" style={{ padding: '16px' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                            <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                                                <div className="date-badge" style={{ background: 'var(--color-bg-secondary)', padding: '4px 10px', borderRadius: '8px', border: '1px solid var(--color-border)', textAlign: 'center' }}>
+                                                    <div style={{ fontSize: '0.7rem', fontWeight: 600, opacity: 0.7 }}>{formatDateBR(apt.date).split('/')[0]}/{formatDateBR(apt.date).split('/')[1]}</div>
+                                                    <div style={{ fontSize: '0.95rem', fontWeight: 800, color: 'var(--color-accent)' }}>{apt.time}</div>
+                                                </div>
+                                                <div>
+                                                    <h4 style={{ margin: 0, fontSize: '1rem' }}>{apt.client_name}</h4>
+                                                    <div style={{ fontSize: '0.8rem', opacity: 0.7 }}>{apt.service_name} • {apt.barber_name}</div>
+                                                </div>
+                                            </div>
+                                            <div className="flex-center" style={{ gap: 6 }}>
+                                                <button className="btn btn-secondary btn-sm" style={{ padding: '8px' }} onClick={() => openWhatsApp(apt.client_whatsapp, apt.client_name)}><Phone size={14} /></button>
+                                                <button className="btn btn-danger btn-sm" style={{ padding: '8px' }} onClick={() => updateStatus(apt.id, 'cancelled')}><XCircle size={14} /></button>
+                                            </div>
                                         </div>
                                     </div>
                                 ))}
                                 {filteredUpcoming.length > 5 && (
-                                    <div style={{ padding: '12px', textAlign: 'center', borderTop: '1px solid var(--color-border)', background: 'rgba(255,255,255,0.02)' }}>
+                                    <div style={{ padding: '12px', textAlign: 'center', borderTop: '1px solid var(--color-border)', background: 'rgba(255,255,255,0.02)', borderRadius: '0 0 12px 12px' }}>
                                         <p className="text-secondary" style={{ fontSize: '0.85rem' }}>E mais {filteredUpcoming.length - 5} agendamentos...</p>
                                     </div>
                                 )}
                             </div>
                         ) : (
-                            <p className="text-secondary" style={{ textAlign: 'center', padding: '20px' }}>Nenhum agendamento {searchTerm ? 'encontrado' : 'futuro'}.</p>
+                            <div className="card empty-state" style={{ padding: '40px 20px' }}>
+                                <p className="text-secondary" style={{ fontSize: '0.9rem' }}>Nenhum agendamento futuro.</p>
+                            </div>
                         )}
                     </div>
                 </div>
 
-                <div className="dashboard-side-col">
-                    <div className="card" style={{ padding: 20 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 15, color: 'var(--color-accent)' }}>
-                            <Gift size={20} />
-                            <h3 style={{ margin: 0, fontSize: '1.1rem' }}>Aniversariantes</h3>
-                        </div>
-                        <p className="text-secondary" style={{ fontSize: '0.85rem', marginBottom: 20 }}>Clientes que fazem aniversário este mês.</p>
-
-                        {birthdays.length > 0 ? (
-                            <div className="birthday-list" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                                {birthdays.map(c => (
-                                    <div key={c.id} className="birthday-item" style={{ display: 'flex', alignItems: 'center', gap: 12, paddingBottom: 12, borderBottom: '1px solid var(--color-border)' }}>
-                                        <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--color-accent-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-accent)' }}>
-                                            {c.name.charAt(0)}
-                                        </div>
-                                        <div style={{ flex: 1 }}>
-                                            <h4 style={{ margin: 0, fontSize: '0.9rem' }}>{c.name}</h4>
-                                            <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>Dia {c.birth_date ? c.birth_date.split('-')[2] : '-'}</p>
-                                        </div>
-                                        <button className="btn-icon" onClick={() => openWhatsApp(c.whatsapp, c.name)} title="Dar os parabéns">
-                                            <Phone size={14} className="text-accent" />
-                                        </button>
-                                    </div>
-                                ))}
+                {isAdmin && (
+                    <div className="dashboard-side-col">
+                        <div className="card" style={{ padding: 20 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 15, color: 'var(--color-accent)' }}>
+                                <Gift size={20} />
+                                <h3 style={{ margin: 0, fontSize: '1.1rem' }}>Aniversariantes</h3>
                             </div>
-                        ) : (
-                            <div style={{ textAlign: 'center', padding: '20px 0', opacity: 0.5 }}>
-                                <Gift size={32} style={{ marginBottom: 10 }} />
-                                <p style={{ fontSize: '0.85rem' }}>Nenhum aniversariante em {new Date().toLocaleDateString('pt-BR', { month: 'long' })}.</p>
-                            </div>
-                        )}
-                    </div>
+                            <p className="text-secondary" style={{ fontSize: '0.85rem', marginBottom: 20 }}>Clientes que fazem aniversário este mês.</p>
 
-                    <div className="card" style={{ padding: 20, marginTop: 24, background: 'var(--color-bg-secondary)', border: '1px dashed var(--color-border)' }}>
-                        <h4 style={{ fontSize: '0.95rem', marginBottom: 10 }}>Link de Agendamento</h4>
-                        <p className="text-secondary" style={{ fontSize: '0.8rem', marginBottom: 15 }}>Compartilhe com seus clientes para agendarem online.</p>
-                        <div style={{ display: 'flex', gap: 8 }}>
-                            <input readOnly value={window.location.origin} className="form-input" style={{ fontSize: '0.75rem', height: 32 }} />
-                            <button className="btn btn-primary btn-sm" onClick={() => { navigator.clipboard.writeText(window.location.origin); toast.success('Link copiado!'); }}>Copiar</button>
+                            {birthdays.length > 0 ? (
+                                <div className="birthday-list" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                                    {birthdays.map(c => (
+                                        <div key={c.id} className="birthday-item" style={{ display: 'flex', alignItems: 'center', gap: 12, paddingBottom: 12, borderBottom: '1px solid var(--color-border)' }}>
+                                            <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--color-accent-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-accent)' }}>
+                                                {c.name.charAt(0)}
+                                            </div>
+                                            <div style={{ flex: 1 }}>
+                                                <h4 style={{ margin: 0, fontSize: '0.9rem' }}>{c.name}</h4>
+                                                <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>Dia {c.birth_date ? c.birth_date.split('-')[2] : '-'}</p>
+                                            </div>
+                                            <button className="btn-icon" onClick={() => openWhatsApp(c.whatsapp, c.name)} title="Dar os parabéns">
+                                                <Phone size={14} className="text-accent" />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div style={{ textAlign: 'center', padding: '20px 0', opacity: 0.5 }}>
+                                    <Gift size={32} style={{ marginBottom: 10 }} />
+                                    <p style={{ fontSize: '0.85rem' }}>Nenhum aniversariante em {new Date().toLocaleDateString('pt-BR', { month: 'long' })}.</p>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="card" style={{ padding: 20, marginTop: 24, background: 'var(--color-bg-secondary)', border: '1px dashed var(--color-border)' }}>
+                            <h4 style={{ fontSize: '0.95rem', marginBottom: 10 }}>Link de Agendamento</h4>
+                            <p className="text-secondary" style={{ fontSize: '0.8rem', marginBottom: 15 }}>Compartilhe com seus clientes para agendarem online.</p>
+                            <div style={{ display: 'flex', gap: 8 }}>
+                                <input readOnly value={window.location.origin} className="form-input" style={{ fontSize: '0.75rem', height: 32 }} />
+                                <button className="btn btn-primary btn-sm" onClick={() => { navigator.clipboard.writeText(window.location.origin); toast.success('Link copiado!'); }}>Copiar</button>
+                            </div>
                         </div>
                     </div>
-                </div>
+                )}
             </div>
 
-            {/* MODAL: NOVO AGENDAMENTO */}
+            {/* MODALS */}
             {showNewApt && (
                 <div className="modal-overlay" onClick={() => setShowNewApt(false)}>
                     <div className="modal animate-scale" onClick={e => e.stopPropagation()} style={{ maxWidth: 500 }}>
@@ -372,7 +373,6 @@ export default function Dashboard() {
                 </div>
             )}
 
-            {/* MODAL: TRANSFERIR */}
             {transferData.id && (
                 <div className="modal-overlay" onClick={() => setTransferData({ id: null, barberId: '' })}>
                     <div className="modal animate-scale" onClick={e => e.stopPropagation()}>

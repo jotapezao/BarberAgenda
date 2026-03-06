@@ -121,6 +121,22 @@ export default function SiteConfig() {
     const updateField = (key, value) => {
         setConfig(prev => {
             const next = { ...prev, [key]: value };
+
+            // Auto-convert Google Maps links to Embed format
+            if (key === 'map_embed_url' && value) {
+                // If it's a standard maps search/place link
+                if (value.includes('google.com/maps') && !value.includes('embed')) {
+                    const encoded = encodeURIComponent(value);
+                    next.map_embed_url = `https://maps.google.com/maps?q=${encoded}&hl=pt&z=15&output=embed`;
+                }
+                // If it's a short link maps.app.goo.gl, we still need to suggest the user manually gets the embed or we try a simple search
+                else if (value.includes('maps.app.goo.gl')) {
+                    // Short links are hard to convert without fetching, so we'll suggest a search approach
+                    const searchBase = "https://maps.google.com/maps?q=";
+                    next.map_embed_url = `${searchBase}${encodeURIComponent(prev.address || '')}&hl=pt&z=15&output=embed`;
+                }
+            }
+
             if (key === 'address' && value && (!prev.map_embed_url || !prev.map_embed_url.includes('google.com'))) {
                 const encoded = encodeURIComponent(value);
                 next.map_embed_url = `https://maps.google.com/maps?q=${encoded}&hl=pt&z=15&output=embed`;

@@ -232,7 +232,7 @@ export default function Home() {
                                 <h1>{banner.title}</h1>
                                 <p>{banner.subtitle}</p>
                                 <div className="hero-buttons">
-                                    <a href={actionHref} target={target} className="btn btn-primary btn-lg">{btnText}</a>
+                                    <a href={actionHref} target={target} className="btn btn-primary btn-lg" style={{ fontSize: '1.25rem', padding: '18px 42px', transform: 'scale(1.15)', transition: 'all 0.3s ease' }}>{btnText}</a>
                                 </div>
                             </div>
                         </div>
@@ -272,9 +272,16 @@ export default function Home() {
                         </div>
                     ))}
                 </div>
-                <div style={{ textAlign: 'center', marginTop: 40 }}>
-                    <button className="btn btn-outline" onClick={() => setShowReviewModal(true)}>
-                        <Star size={18} style={{ marginRight: 8 }} /> Críticas ou Elogios? Avalie-nos
+                <div style={{ textAlign: 'center', marginTop: 50 }}>
+                    <button className="btn btn-primary btn-lg fade-up"
+                        onClick={() => setShowReviewModal(true)}
+                        style={{
+                            boxShadow: '0 0 20px var(--color-accent-glow)',
+                            border: '2px solid var(--color-accent)',
+                            fontWeight: 800
+                        }}
+                    >
+                        <Star size={20} style={{ marginRight: 10 }} /> Críticas ou Elogios? Avalie-nos
                     </button>
                 </div>
             </section>
@@ -535,20 +542,30 @@ export default function Home() {
                             <h2>O que nossos <span>Clientes dizem</span></h2>
                             <p>A opinião de quem confia no nosso trabalho</p>
                         </div>
-                        <div className="testimonials-grid" style={{ display: 'flex', gap: 20, overflowX: 'auto', paddingBottom: 20, scrollSnapType: 'x mandatory' }}>
+                        <div className="testimonials-grid" style={{ display: 'flex', gap: 24, overflowX: 'auto', padding: '20px 5px 40px', scrollSnapType: 'x mandatory', WebkitOverflowScrolling: 'touch' }}>
                             {publicReviews.map(rev => (
-                                <div key={rev.id} className="card card-glass testimonial-card" style={{ minWidth: 280, flex: 1, scrollSnapAlign: 'start' }}>
-                                    <div style={{ display: 'flex', gap: 2, marginBottom: 10 }}>
+                                <div key={rev.id} className="card card-glass testimonial-card" style={{
+                                    minWidth: 320,
+                                    flex: 1,
+                                    scrollSnapAlign: 'start',
+                                    padding: '30px',
+                                    background: 'rgba(255,255,255,0.03)',
+                                    border: '1px solid rgba(255,255,255,0.05)',
+                                    position: 'relative',
+                                    overflow: 'hidden'
+                                }}>
+                                    <div style={{ position: 'absolute', top: -20, left: -20, width: 80, height: 80, background: 'var(--color-accent-subtle)', borderRadius: '50%', filter: 'blur(40px)', opacity: 0.3 }}></div>
+                                    <div style={{ display: 'flex', gap: 3, marginBottom: 15 }}>
                                         {[...Array(5)].map((_, i) => (
-                                            <Star key={i} size={14} fill={i < (rev.rating / 2) ? "var(--color-accent)" : "none"} stroke="var(--color-accent)" />
+                                            <Star key={i} size={16} fill={i < (rev.rating / 2) ? "var(--color-accent)" : "none"} stroke="var(--color-accent)" />
                                         ))}
                                     </div>
-                                    <p style={{ fontStyle: 'italic', marginBottom: 15, fontSize: '0.9rem' }}>"{rev.comment}"</p>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                                        <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--color-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#000', fontWeight: 800, fontSize: '0.8rem' }}>{rev.client_name.charAt(0)}</div>
+                                    <p style={{ fontStyle: 'italic', marginBottom: 25, fontSize: '1.05rem', lineHeight: 1.6, color: '#fff' }}>"{rev.comment}"</p>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 15, borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 15 }}>
+                                        <div style={{ width: 44, height: 44, borderRadius: '12px', background: 'linear-gradient(135deg, var(--color-accent), var(--color-accent-dark))', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#000', fontWeight: 900, fontSize: '1.1rem', boxShadow: '0 4px 12px rgba(0,0,0,0.3)' }}>{rev.client_name.charAt(0)}</div>
                                         <div>
-                                            <div style={{ fontWeight: 700, fontSize: '0.85rem' }}>{rev.client_name}</div>
-                                            <div style={{ fontSize: '0.7rem', opacity: 0.6 }}>{rev.service_info}</div>
+                                            <div style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--color-accent)' }}>{rev.client_name}</div>
+                                            <div style={{ fontSize: '0.75rem', opacity: 0.7, textTransform: 'uppercase', letterSpacing: '1px' }}>{rev.service_info}</div>
                                         </div>
                                     </div>
                                 </div>
