@@ -14,7 +14,15 @@ const FormField = ({ label, value, onChange, type = 'text', placeholder, info })
             {type === 'textarea' ? (
                 <textarea className="form-input" rows="3" value={value || ''} onChange={e => onChange(e.target.value)} placeholder={placeholder}></textarea>
             ) : (
-                <input type={type} className="form-input" value={value || ''} onChange={e => onChange(e.target.value)} placeholder={placeholder} />
+                <input
+                    type={type}
+                    className="form-input"
+                    value={value || ''}
+                    onChange={e => onChange(e.target.value)}
+                    placeholder={placeholder}
+                    inputMode={type === 'number' || label.toLowerCase().includes('whatsapp') || label.toLowerCase().includes('telefone') || label.toLowerCase().includes('phone') ? 'numeric' : undefined}
+                    pattern={type === 'number' || label.toLowerCase().includes('whatsapp') || label.toLowerCase().includes('telefone') || label.toLowerCase().includes('phone') ? '[0-9]*' : undefined}
+                />
             )}
             {info && <p className="text-muted" style={{ fontSize: '0.75rem', marginTop: 4 }}><Info size={12} style={{ verticalAlign: 'middle', marginRight: 4 }} /> {info}</p>}
         </div>

@@ -261,7 +261,7 @@ export default function Home() {
                                     <form onSubmit={handleWhatsAppSubmit} className="animate-fade">
                                         <div className="form-group">
                                             <label className="form-label">📱 Seu WhatsApp</label>
-                                            <input type="text" className="form-input" placeholder="(00) 00000-0000" value={maskPhone(formData.client_whatsapp)} onChange={e => setFormData({ ...formData, client_whatsapp: e.target.value })} maxLength={15} required />
+                                            <input type="text" className="form-input" placeholder="(00) 00000-0000" value={maskPhone(formData.client_whatsapp)} onChange={e => setFormData({ ...formData, client_whatsapp: e.target.value })} maxLength={15} required inputMode="numeric" pattern="[0-9]*" />
                                         </div>
                                         <button type="submit" className="btn btn-primary w-full" style={{ width: '100%' }}>Próximo Passo <ChevronRight size={18} /></button>
                                     </form>
@@ -563,11 +563,11 @@ export default function Home() {
                                 <p className="text-secondary" style={{ marginBottom: 24, fontSize: '0.9rem' }}>Informe o ID do agendamento e seu WhatsApp para confirmar.</p>
                                 <div className="form-group">
                                     <label className="form-label">ID do Agendamento</label>
-                                    <input type="number" className="form-input" placeholder="Ex: 12" value={cancelData.id} onChange={e => setCancelData({ ...cancelData, id: e.target.value })} required />
+                                    <input type="text" className="form-input" placeholder="Ex: 12" value={cancelData.id} onChange={e => setCancelData({ ...cancelData, id: e.target.value })} required inputMode="numeric" pattern="[0-9]*" />
                                 </div>
                                 <div className="form-group">
                                     <label className="form-label">Seu WhatsApp</label>
-                                    <input type="text" className="form-input" placeholder="(00) 00000-0000" value={cancelData.whatsapp} onChange={e => setCancelData({ ...cancelData, whatsapp: e.target.value })} required />
+                                    <input type="text" className="form-input" placeholder="(00) 00000-0000" value={cancelData.whatsapp} onChange={e => setCancelData({ ...cancelData, whatsapp: e.target.value })} required inputMode="numeric" pattern="[0-9]*" />
                                 </div>
                             </div>
                             <div className="modal-footer">

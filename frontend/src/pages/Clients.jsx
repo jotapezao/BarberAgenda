@@ -263,7 +263,7 @@ export default function Clients() {
                             </div>
                             <div className="form-group">
                                 <label className="form-label">WhatsApp</label>
-                                <input type="text" className="form-input" value={maskPhone(formData.whatsapp)} onChange={e => setFormData({ ...formData, whatsapp: e.target.value })} placeholder="(00) 00000-0000" maxLength={15} required />
+                                <input type="text" className="form-input" value={maskPhone(formData.whatsapp)} onChange={e => setFormData({ ...formData, whatsapp: e.target.value })} placeholder="(00) 00000-0000" maxLength={15} required inputMode="numeric" pattern="[0-9]*" />
                             </div>
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                                 <div className="form-group">
