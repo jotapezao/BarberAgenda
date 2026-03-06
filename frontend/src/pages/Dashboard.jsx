@@ -332,7 +332,7 @@ export default function Dashboard() {
                                 </div>
                                 <div className="form-group" style={{ gridColumn: '1 / span 2' }}>
                                     <label className="form-label">WhatsApp (Opcional)</label>
-                                    <input type="text" className="form-input" value={newApt.client_whatsapp} onChange={e => setNewApt({ ...newApt, client_whatsapp: e.target.value })} placeholder="(00) 00000-0000" inputMode="numeric" pattern="[0-9]*" />
+                                    <input type="text" className="form-input" value={newApt.client_whatsapp} onChange={e => setNewApt({ ...newApt, client_whatsapp: e.target.value })} placeholder="(00) 00000-0000" inputMode="numeric" />
                                 </div>
                                 <div className="form-group" style={{ gridColumn: '1 / span 2' }}>
                                     <label className="form-label">Serviço *</label>

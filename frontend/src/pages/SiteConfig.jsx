@@ -20,8 +20,7 @@ const FormField = ({ label, value, onChange, type = 'text', placeholder, info })
                     value={value || ''}
                     onChange={e => onChange(e.target.value)}
                     placeholder={placeholder}
-                    inputMode={type === 'number' || label.toLowerCase().includes('whatsapp') || label.toLowerCase().includes('telefone') || label.toLowerCase().includes('phone') ? 'numeric' : undefined}
-                    pattern={type === 'number' || label.toLowerCase().includes('whatsapp') || label.toLowerCase().includes('telefone') || label.toLowerCase().includes('phone') ? '[0-9]*' : undefined}
+                    inputMode={type === 'number' || label.toLowerCase().includes('whatsapp') || label.toLowerCase().includes('telefone') || label.toLowerCase().includes('phone') || label.toLowerCase().includes('cnpj') ? 'numeric' : undefined}
                 />
             )}
             {info && <p className="text-muted" style={{ fontSize: '0.75rem', marginTop: 4 }}><Info size={12} style={{ verticalAlign: 'middle', marginRight: 4 }} /> {info}</p>}
