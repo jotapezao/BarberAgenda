@@ -285,7 +285,7 @@ export default function Home() {
                                 )}
 
                                 {bookingStep === 3 && (
-                                    <form onSubmit={(e) => { e.preventDefault(); setBookingStep(siteConfig.use_barbers === '1' ? 4 : (siteConfig.use_barbers === '1' ? 5 : 4)); }} className="animate-fade">
+                                    <form onSubmit={(e) => { e.preventDefault(); setBookingStep(siteConfig.use_barbers === '1' ? 4 : 5); }} className="animate-fade">
                                         {isReturning && (
                                             <div className="welcome-back-msg" style={{ background: 'var(--color-accent-subtle)', color: 'var(--color-accent)', padding: '12px 16px', borderRadius: 8, marginBottom: 20, fontSize: '0.9rem', border: '1px solid var(--color-accent-glow)' }}>
                                                 <strong>Olá, {formData.client_name.split(' ')[0]}!</strong> Seja bem-vindo(a) de volta.
@@ -421,46 +421,90 @@ export default function Home() {
                                 <div className="booking-success-icon"><CheckCircle size={48} /></div>
                                 <h3>Agendamento Confirmado!</h3>
                                 <p className="text-secondary" style={{ marginBottom: 12 }}>Tudo certo! Recebemos seu pedido.</p>
-                                <div className="card" style={{ textAlign: 'left', marginBottom: 24, background: 'var(--color-bg-secondary)' }}>
-                                    <p><strong>Protocolo ID:</strong> {bookingSuccess.id}</p>
-                                    <p><strong>Data:</strong> {bookingSuccess.date.split('-').reverse().join('/')}</p>
-                                    <p><strong>Horário:</strong> {bookingSuccess.time}</p>
-                                    <p><strong>Serviço:</strong> {bookingSuccess.service_name}</p>
+                                <div className="card" style={{ textAlign: 'left', marginBottom: 20, background: 'var(--color-bg-secondary)', padding: '18px 20px' }}>
+                                    <p style={{ marginBottom: 6 }}><strong>🎫 Protocolo:</strong> #{bookingSuccess.id}</p>
+                                    <p style={{ marginBottom: 6 }}><strong>📅 Data:</strong> {bookingSuccess.date.split('-').reverse().join('/')}</p>
+                                    <p style={{ marginBottom: 6 }}><strong>⏰ Horário:</strong> {bookingSuccess.time}</p>
+                                    <p style={{ marginBottom: 0 }}><strong>✂️ Serviço:</strong> {bookingSuccess.service_name}</p>
                                 </div>
-                                <p className="text-secondary" style={{ fontSize: '0.85rem', marginBottom: 24 }}>Anote o ID caso precise cancelar depois.</p>
-                                <button className="btn btn-primary" onClick={() => { setBookingSuccess(null); setBookingStep(1); setFormData({ client_name: '', client_whatsapp: '', service_id: '', date: '', time: '' }); }}>Fazer Outro Agendamento</button>
+                                <p className="text-secondary" style={{ fontSize: '0.82rem', marginBottom: 20 }}>Anote o protocolo caso precise cancelar depois.</p>
+                                <div style={{ display: 'flex', gap: 10, flexDirection: 'column' }}>
+                                    {siteConfig.phone && (
+                                        <a
+                                            href={`https://wa.me/55${siteConfig.phone.replace(/\D/g, '')}?text=Olá! Acabei de agendar. Protocolo %23${bookingSuccess.id} - ${bookingSuccess.date.split('-').reverse().join('/')} às ${bookingSuccess.time}`}
+                                            target="_blank" rel="noreferrer"
+                                            className="btn btn-success"
+                                            style={{ width: '100%', justifyContent: 'center' }}
+                                        >
+                                            📲 Confirmar pelo WhatsApp
+                                        </a>
+                                    )}
+                                    <button className="btn btn-secondary" onClick={() => { setBookingSuccess(null); setBookingStep(1); setFormData({ client_name: '', client_whatsapp: '', service_id: '', barber_id: '', date: '', time: '' }); }} style={{ width: '100%' }}>Fazer Outro Agendamento</button>
+                                </div>
                             </div>
                         )}
                     </div>
                 </div>
             </section>
 
-            <section id="about" className="section container" style={{ paddingTop: 60, paddingBottom: 60 }}>
-                <div className="card card-glass animate-fade" style={{ padding: '60px 40px', textAlign: 'center', maxWidth: 800, margin: '0 auto', boxShadow: '0 10px 40px rgba(0,0,0,0.5)', borderRadius: '24px' }}>
-                    <h2 style={{ fontSize: '2.5rem', margin: '0 auto 20px', fontFamily: 'var(--font-display)', fontWeight: 800, textAlign: 'center' }}>{siteConfig.about_title || 'Sobre Nós'}</h2>
-                    <p className="text-secondary" style={{ fontSize: '1.15rem', lineHeight: 1.8, margin: '0 auto' }}>
-                        {siteConfig.about_text || 'Somos uma barbearia moderna focada em oferecer a melhor experiência. Com profissionais qualificados e ambiente premium, garantimos estilo e atitude em cada corte.'}
-                    </p>
+            <section id="about" className="section container" style={{ paddingBottom: 80 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 40, alignItems: 'center' }}>
+                    <div className="card card-glass animate-fade" style={{ padding: '50px 40px', boxShadow: '0 10px 40px rgba(0,0,0,0.5)', borderRadius: '24px' }}>
+                        <h2 style={{ fontSize: '2.5rem', marginBottom: 20, fontFamily: 'var(--font-display)', fontWeight: 800 }}>{siteConfig.about_title || 'Nossa História'}</h2>
+                        <p className="text-secondary" style={{ fontSize: '1.1rem', lineHeight: 1.7, marginBottom: 25 }}>
+                            {siteConfig.about_text || 'Fundada com o propósito de elevar a autoestima masculina, nossa barbearia combina tradição e modernidade. Cada detalhe foi pensado para proporcionar conforto e resultados impecáveis.'}
+                        </p>
+                        <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 15 }}>
+                            <li style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.9rem' }}><CheckCircle size={16} className="text-accent" /> Profissionais Elite</li>
+                            <li style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.9rem' }}><CheckCircle size={16} className="text-accent" /> Ambiente Premium</li>
+                            <li style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.9rem' }}><CheckCircle size={16} className="text-accent" /> Café & Drinks</li>
+                            <li style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.9rem' }}><CheckCircle size={16} className="text-accent" /> Agendamento Online</li>
+                        </ul>
+                    </div>
+                    <div className="about-visual" style={{ position: 'relative' }}>
+                        <div className="card-glass" style={{ width: '100%', aspectRatio: '1/1', borderRadius: '30px', overflow: 'hidden', transform: 'rotate(3deg)', boxShadow: '0 20px 50px rgba(0,0,0,0.6)' }}>
+                            {siteConfig.banner_image_1 ? (
+                                <img src={`${BASE_URL}${siteConfig.banner_image_1}`} alt="Sobre" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            ) : (
+                                <div style={{ width: '100%', height: '100%', background: 'linear-gradient(45deg, var(--color-bg-secondary), var(--color-accent-subtle))', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <Scissors size={80} className="text-accent" style={{ opacity: 0.2 }} />
+                                </div>
+                            )}
+                        </div>
+                        <div className="card" style={{ position: 'absolute', bottom: -20, left: -20, padding: '20px', background: 'var(--color-accent)', color: '#000', borderRadius: '15px', transform: 'rotate(-5deg)', boxShadow: '0 10px 30px rgba(0,0,0,0.3)', fontWeight: 800 }}>
+                            <Star size={24} style={{ marginBottom: 5 }} />
+                            <div style={{ fontSize: '1.2rem' }}>10+ Anos</div>
+                            <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: 1 }}>De Excelência</div>
+                        </div>
+                    </div>
                 </div>
             </section>
 
-            <section id="location" className="section">
+            <section id="location" className="section bg-secondary" style={{ paddingBottom: 100 }}>
                 <div className="container" style={{ display: 'flex', justifyContent: 'center' }}>
-                    <div className="card card-glass animate-fade" style={{ padding: '50px 40px', maxWidth: 700, margin: '0 auto', boxShadow: '0 8px 30px rgba(0,0,0,0.5)', borderRadius: '24px' }}>
-                        <h3 style={{ fontSize: '2rem', marginBottom: 30, fontFamily: 'var(--font-display)', fontWeight: 800, textAlign: 'center' }}>Contato e Localização</h3>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 30, textAlign: 'left' }}>
-                            <div className="contact-info-item" style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
-                                <div className="service-icon" style={{ width: 44, height: 44, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--color-bg-secondary)' }}><MapPin size={22} className="text-accent" /></div>
+                    <div className="card card-glass animate-fade" style={{ padding: '50px 40px', maxWidth: 800, margin: '0 auto', boxShadow: '0 8px 30px rgba(0,0,0,0.5)', borderRadius: '24px', width: '100%' }}>
+                        <div style={{ textAlign: 'center', marginBottom: 40 }}>
+                            <h3 style={{ fontSize: '2.2rem', marginBottom: 10, fontFamily: 'var(--font-display)', fontWeight: 800 }}>Onde nos <span>Encontrar</span></h3>
+                            <p className="text-secondary">Visite nossa unidade ou entre em contato</p>
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 40, textAlign: 'left' }}>
+                            <div className="contact-info-item" style={{ display: 'flex', alignItems: 'flex-start', gap: 20 }}>
+                                <div className="service-icon" style={{ width: 50, height: 50, borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--color-bg-primary)', border: '1px solid var(--color-border)' }}><MapPin size={24} className="text-accent" /></div>
                                 <div>
-                                    <strong style={{ display: 'block', marginBottom: 4, fontSize: '1.1rem' }}>Endereço</strong>
-                                    <p className="text-secondary" style={{ fontSize: '0.95rem' }}>{siteConfig.address || 'Rua Exemplo, 123'}<br />{siteConfig.city || 'Sua Cidade - SP'}</p>
+                                    <strong style={{ display: 'block', marginBottom: 6, fontSize: '1.15rem' }}>Localização</strong>
+                                    <p className="text-secondary" style={{ fontSize: '1rem', lineHeight: 1.6 }}>{siteConfig.address || 'Rua Exemplo, 123'}<br />{siteConfig.city || 'Sua Cidade - SP'}</p>
+                                    <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(siteConfig.address + ', ' + siteConfig.city)}`} target="_blank" rel="noreferrer" style={{ display: 'inline-block', marginTop: 10, fontSize: '0.85rem', color: 'var(--color-accent)', fontWeight: 700 }}>Abrir no Mapas →</a>
                                 </div>
                             </div>
-                            <div className="contact-info-item" style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
-                                <div className="service-icon" style={{ width: 44, height: 44, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--color-bg-secondary)' }}><Phone size={22} className="text-accent" /></div>
+                            <div className="contact-info-item" style={{ display: 'flex', alignItems: 'flex-start', gap: 20 }}>
+                                <div className="service-icon" style={{ width: 50, height: 50, borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--color-bg-primary)', border: '1px solid var(--color-border)' }}><Phone size={24} className="text-accent" /></div>
                                 <div>
-                                    <strong style={{ display: 'block', marginBottom: 4, fontSize: '1.1rem' }}>WhatsApp</strong>
-                                    <p className="text-secondary" style={{ fontSize: '0.95rem' }}>{siteConfig.phone || '(00) 00000-0000'}</p>
+                                    <strong style={{ display: 'block', marginBottom: 6, fontSize: '1.15rem' }}>Contato Direto</strong>
+                                    <p className="text-secondary" style={{ fontSize: '1rem', lineHeight: 1.6 }}>Fale conosco agora:</p>
+                                    <p style={{ fontSize: '1.1rem', fontWeight: 800, marginTop: 4 }}>{siteConfig.phone || '(00) 00000-0000'}</p>
+                                    <div style={{ display: 'flex', gap: 12, marginTop: 15 }}>
+                                        <a href={`https://wa.me/55${(siteConfig.phone || '').replace(/\D/g, '')}`} target="_blank" rel="noreferrer" className="btn btn-success btn-sm" style={{ padding: '8px 12px' }}><Phone size={16} /> WhatsApp</a>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -468,14 +512,41 @@ export default function Home() {
                 </div>
             </section>
 
-            <footer className="footer-simple">
-                <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 20 }}>
+            <footer className="site-footer" style={{ background: 'var(--color-bg-primary)', borderTop: '1px solid var(--color-border)', padding: '80px 0 40px' }}>
+                <div className="container" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 60, marginBottom: 60 }}>
                     <div className="footer-brand">
-                        <h4>{siteConfig.site_name || 'BarberPro'}</h4>
-                        <p>© 2026 Todos os direitos reservados.</p>
+                        <h2 style={{ fontSize: '1.8rem', fontWeight: 900, marginBottom: 15, textTransform: 'uppercase' }}>{siteConfig.site_name || 'BarberPro'}</h2>
+                        <p className="text-secondary" style={{ fontSize: '0.95rem', lineHeight: 1.6, marginBottom: 25 }}>Sua barbearia de confiança para um visual impecável e atendimento diferenciado.</p>
+                        <div className="social-links" style={{ display: 'flex', gap: 15 }}>
+                            <a href={`https://instagram.com/${siteConfig.instagram || '#'}`} target="_blank" rel="noreferrer" style={{ width: 44, height: 44, borderRadius: '50%', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', transition: 'all 0.3s' }} className="social-icon">
+                                <Instagram size={22} />
+                            </a>
+                        </div>
                     </div>
+                    <div className="footer-links">
+                        <h4 style={{ fontSize: '1.1rem', marginBottom: 20 }}>Explorar</h4>
+                        <ul style={{ listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                            <li><a href="#services" className="text-secondary hover-accent">Serviços</a></li>
+                            <li><a href="#booking" className="text-secondary hover-accent">Agendamento</a></li>
+                            <li><a href="#location" className="text-secondary hover-accent">Localização</a></li>
+                            <li><a href="#" onClick={(e) => { e.preventDefault(); setShowCancelModal(true); }} className="text-secondary hover-accent">Cancelar Agendamento</a></li>
+                        </ul>
+                    </div>
+                    <div className="footer-links">
+                        <h4 style={{ fontSize: '1.1rem', marginBottom: 20 }}>Atendimento</h4>
+                        <ul style={{ listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                            <li className="text-secondary" style={{ fontSize: '0.9rem' }}>Segunda a Sábado</li>
+                            <li className="text-secondary" style={{ fontSize: '0.9rem' }}>{siteConfig.open_time || '08:00'} às {siteConfig.close_time || '19:00'}</li>
+                            <li className="text-secondary" style={{ fontSize: '0.9rem', marginTop: 10 }}>{siteConfig.city || 'Brasil'}</li>
+                        </ul>
+                    </div>
+                </div>
+                <div className="container" style={{ paddingTop: 40, borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 20 }}>
+                    <p className="text-secondary" style={{ fontSize: '0.85rem' }}>© 2026 {siteConfig.site_name}. Todos os direitos reservados.</p>
                     <div className="footer-dev">
-                        <p style={{ fontSize: '0.85rem' }}>Desenvolvido por <a href="/developer" target="_blank" rel="noreferrer" style={{ color: 'var(--color-accent)', fontWeight: 700, textDecoration: 'underline' }}>João Paulo Fernandes</a></p>
+                        <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.4)' }}>
+                            Feito com ❤️ por <a href="/developer" target="_blank" rel="noreferrer" style={{ color: 'var(--color-accent)', fontWeight: 700 }}>João Paulo Fernandes</a>
+                        </p>
                     </div>
                 </div>
             </footer>

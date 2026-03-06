@@ -404,6 +404,47 @@ app.delete('/api/admin/appointments/:id', authenticateToken, async (req, res) =>
     res.json({ message: 'Removido' });
 });
 
+// Admin: Create appointment manually
+app.post('/api/admin/appointments', authenticateToken, async (req, res) => {
+    const { client_name, client_whatsapp, service_id, barber_id, date, time, notes } = req.body;
+    if (!client_name || !service_id || !date || !time) return res.status(400).json({ error: 'Dados incompletos' });
+
+    const service = await db.get('SELECT * FROM services WHERE id = ?', [service_id]);
+    if (!service) return res.status(404).json({ error: 'Serviço não encontrado' });
+    const endTime = calcEndTime(time, service.duration);
+
+    // Admin can override availability check — just warn, don't block
+    let client = client_whatsapp ? await db.get('SELECT * FROM clients WHERE whatsapp = ?', [client_whatsapp]) : null;
+    if (!client && client_whatsapp) {
+        const r = await db.run('INSERT INTO clients (name, whatsapp) VALUES (?, ?)', [client_name, client_whatsapp]);
+        client = await db.get('SELECT * FROM clients WHERE id = ?', [r.lastInsertRowid]);
+    }
+
+    const result = await db.run(
+        'INSERT INTO appointments (client_id, client_name, client_whatsapp, service_id, barber_id, date, time, end_time, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [client ? client.id : null, client_name, client_whatsapp || '', service_id, barber_id || null, date, time, endTime, notes || '']
+    );
+    if (client) {
+        await db.run('UPDATE clients SET total_visits = total_visits + 1, last_visit = ? WHERE id = ?', [date, client.id]);
+    }
+    const appointment = await db.get(`
+        SELECT a.*, s.name as service_name, s.price as service_price, s.duration as service_duration, u.name as barber_name
+        FROM appointments a JOIN services s ON a.service_id = s.id LEFT JOIN users u ON a.barber_id = u.id WHERE a.id = ?
+    `, [result.lastInsertRowid]);
+    res.status(201).json(appointment);
+});
+
+// Aniversariantes do mês
+app.get('/api/admin/birthdays', authenticateToken, async (req, res) => {
+    const month = req.query.month || new Date().toISOString().substring(5, 7);
+    const clients = await db.all(
+        "SELECT * FROM clients WHERE birth_date IS NOT NULL AND birth_date != '' AND substr(birth_date, 6, 2) = ? ORDER BY substr(birth_date, 9, 2) ASC",
+        [month]
+    );
+    res.json(clients);
+});
+
+
 // -- SERVICES --
 app.get('/api/admin/services', authenticateToken, async (req, res) => {
     res.json(await db.all('SELECT * FROM services WHERE active = 1 ORDER BY sort_order ASC'));
@@ -578,7 +619,7 @@ app.delete('/api/admin/products/:id', authenticateToken, async (req, res) => {
 
 // Sell product
 app.post('/api/admin/products/:id/sell', authenticateToken, async (req, res) => {
-    const { quantity, client_name, client_id } = req.body;
+    const { quantity, client_name, client_id, appointment_id } = req.body;
     const product = await db.get('SELECT * FROM products WHERE id = ?', [req.params.id]);
     if (!product) return res.status(404).json({ error: 'Produto não encontrado' });
     if (product.stock_quantity < (quantity || 1)) return res.status(400).json({ error: 'Estoque insuficiente' });
@@ -589,8 +630,8 @@ app.post('/api/admin/products/:id/sell', authenticateToken, async (req, res) => 
 
     await db.run('UPDATE products SET stock_quantity = stock_quantity - ? WHERE id = ?', [qty, req.params.id]);
     await db.run(
-        'INSERT INTO product_sales (product_id, client_id, client_name, quantity, unit_price, total_price, date) VALUES (?, ?, ?, ?, ?, ?, ?)',
-        [req.params.id, client_id || null, client_name || 'Avulso', qty, product.price, total, today]
+        'INSERT INTO product_sales (product_id, client_id, client_name, quantity, unit_price, total_price, date, appointment_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+        [req.params.id, client_id || null, client_name || 'Avulso', qty, product.price, total, today, appointment_id || null]
     );
 
     res.json({ message: 'Venda registrada', total });
@@ -638,45 +679,6 @@ app.put('/api/admin/site-config', authenticateToken, async (req, res) => {
         else { await db.run('INSERT INTO site_config (key, value, type) VALUES (?, ?, ?)', [key, String(value), 'text']); }
     }
     res.json({ message: 'Configurações salvas' });
-});
-
-// -- BARBERS MGMT --
-app.get('/api/admin/barbers', authenticateToken, async (req, res) => {
-    // Return all users that are not 'admin' but can be listed as team members
-    res.json(await db.all("SELECT id, username, name, role, commission_rate, is_active, cpf, birth_date, phone, photo_url, role_id FROM users WHERE role != 'admin' OR id = ?", [req.user.id]));
-});
-
-app.post('/api/admin/barbers', authenticateToken, async (req, res) => {
-    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Acesso negado' });
-    const { username, password, name, commission_rate, is_active, cpf, birth_date, phone, photo_url, role_id } = req.body;
-    const hashedPassword = bcrypt.hashSync(password, 10);
-    try {
-        await db.run(
-            "INSERT INTO users (username, password, name, role, commission_rate, is_active, cpf, birth_date, phone, photo_url, role_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            [username, hashedPassword, name, 'barber', commission_rate || 0, is_active ?? 1, cpf || '', birth_date || '', phone || '', photo_url || '', role_id || null]
-        );
-        res.status(201).json({ message: 'Barbeiro criado' });
-    } catch (e) {
-        res.status(400).json({ error: 'Usuário já existe ou erro nos dados' });
-    }
-});
-
-app.put('/api/admin/barbers/:id', authenticateToken, async (req, res) => {
-    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Acesso negado' });
-    const { name, commission_rate, is_active, password, cpf, birth_date, phone, photo_url, role_id } = req.body;
-
-    if (password) {
-        await db.run(
-            'UPDATE users SET name = ?, commission_rate = ?, is_active = ?, password = ?, cpf = ?, birth_date = ?, phone = ?, photo_url = ?, role_id = ? WHERE id = ?',
-            [name, commission_rate, is_active, bcrypt.hashSync(password, 10), cpf || '', birth_date || '', phone || '', photo_url || '', role_id || null, req.params.id]
-        );
-    } else {
-        await db.run(
-            'UPDATE users SET name = ?, commission_rate = ?, is_active = ?, cpf = ?, birth_date = ?, phone = ?, photo_url = ?, role_id = ? WHERE id = ?',
-            [name, commission_rate, is_active, cpf || '', birth_date || '', phone || '', photo_url || '', role_id || null, req.params.id]
-        );
-    }
-    res.json({ message: 'Barbeiro atualizado' });
 });
 
 // Upload image (for logo, banners)

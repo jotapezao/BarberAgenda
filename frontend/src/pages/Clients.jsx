@@ -14,6 +14,8 @@ export default function Clients() {
     const [showModal, setShowModal] = useState(false);
     const [editingClient, setEditingClient] = useState(null);
     const [formData, setFormData] = useState({ name: '', whatsapp: '', email: '', birth_date: '', notes: '' });
+    const [showBirthdays, setShowBirthdays] = useState(false);
+    const [birthdayClients, setBirthdayClients] = useState([]);
 
     const toast = useToast();
 
@@ -23,6 +25,10 @@ export default function Clients() {
         try {
             const data = await adminApi.getClients(searchTerm ? { search: searchTerm } : {});
             setClients(data);
+
+            // Also load birthdays if not loaded
+            const bdays = await adminApi.getBirthdays();
+            setBirthdayClients(bdays);
         } catch (err) { toast.error('Erro ao carregar clientes'); }
         finally { setLoading(false); }
     };
@@ -157,6 +163,9 @@ export default function Clients() {
                     <p className="text-secondary">{clients.length} clientes cadastrados no sistema</p>
                 </div>
                 <div style={{ display: 'flex', gap: 12 }}>
+                    <button className={`btn ${showBirthdays ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setShowBirthdays(!showBirthdays)} title="Aniversariantes do Mês">
+                        <FileText size={18} /> {showBirthdays ? 'Ver Todos' : 'Aniversariantes'}
+                    </button>
                     <button className="btn btn-secondary" onClick={exportToCSV} title="Exportar CSV">
                         <Download size={18} /> Exportar
                     </button>
@@ -180,17 +189,17 @@ export default function Clients() {
             </form>
 
             {/* Client list */}
-            {clients.length > 0 ? (
+            {(showBirthdays ? birthdayClients : clients).length > 0 ? (
                 <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
                     <div className="table-header" style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 100px 100px 100px 120px', padding: '15px 24px', background: 'var(--color-bg-secondary)', borderBottom: '1px solid var(--color-border)', fontSize: '0.85rem', fontWeight: 700, color: 'var(--color-text-muted)' }}>
                         <div>CLIENTE</div>
-                        <div>HISTÓRICO</div>
+                        <div>{showBirthdays ? 'ANIVERSÁRIO' : 'HISTÓRICO'}</div>
                         <div style={{ textAlign: 'center' }}>VISITAS</div>
                         <div style={{ textAlign: 'center' }}>GASTO</div>
                         <div style={{ textAlign: 'center' }}>STATUS</div>
                         <div style={{ textAlign: 'right' }}>AÇÕES</div>
                     </div>
-                    {clients.map(client => (
+                    {(showBirthdays ? birthdayClients : clients).map(client => (
                         <div key={client.id} className="table-row" style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 100px 100px 100px 120px', padding: '15px 24px', alignItems: 'center', borderBottom: '1px solid var(--color-border)' }}>
                             <div>
                                 <h4 style={{ margin: 0 }}>{client.name}</h4>
@@ -199,8 +208,16 @@ export default function Clients() {
                                 </p>
                             </div>
                             <div className="text-secondary" style={{ fontSize: '0.85rem' }}>
-                                <div style={{ marginBottom: 2 }}>📅 Último: {formatDateBR(client.last_visit)}</div>
-                                <div>📆 Desde: {formatDateBR(client.created_at?.split('T')[0] || client.created_at?.split(' ')[0])}</div>
+                                {showBirthdays ? (
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--color-accent)', fontWeight: 700 }}>
+                                        <Calendar size={14} /> Dia {client.birth_date?.split('-')[2]}
+                                    </div>
+                                ) : (
+                                    <>
+                                        <div style={{ marginBottom: 2 }}>📅 Último: {formatDateBR(client.last_visit)}</div>
+                                        <div>📆 Desde: {formatDateBR(client.created_at?.split('T')[0] || client.created_at?.split(' ')[0])}</div>
+                                    </>
+                                )}
                             </div>
                             <div style={{ textAlign: 'center' }}>
                                 <div style={{ fontWeight: 700, fontSize: '1.1rem' }}>{client.total_visits}</div>
@@ -226,8 +243,8 @@ export default function Clients() {
             ) : (
                 <div className="card empty-state">
                     <Users size={48} />
-                    <h3>Nenhum cliente cadastrado</h3>
-                    <p>Clientes serão cadastrados automaticamente ao agendar</p>
+                    <h3>{showBirthdays ? 'Nenhum aniversariante este mês' : 'Nenhum cliente cadastrado'}</h3>
+                    <p>{showBirthdays ? 'Fique de olho nos próximos meses!' : 'Clientes serão cadastrados automaticamente ao agendar'}</p>
                 </div>
             )}
 

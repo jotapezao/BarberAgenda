@@ -118,4 +118,6 @@ export const adminApi = {
     unblockTime: (id) => request(`/admin/blocked-times/${id}`, { method: 'DELETE' }),
     getFinancial: (params = {}) => { const q = new URLSearchParams(params).toString(); return request(`/admin/financial${q ? '?' + q : ''}`); },
     changePassword: (data) => request('/admin/change-password', { method: 'PUT', body: JSON.stringify(data) }),
+    createAppointmentAdmin: (data) => request('/admin/appointments', { method: 'POST', body: JSON.stringify(data) }),
+    getBirthdays: (month) => request(`/admin/birthdays${month ? '?month=' + month : ''}`),
 };

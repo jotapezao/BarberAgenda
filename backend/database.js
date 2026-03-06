@@ -237,9 +237,11 @@ const dbWrapper = {
         unit_price DECIMAL(10,2) NOT NULL,
         total_price DECIMAL(10,2) NOT NULL,
         date TEXT NOT NULL,
+        appointment_id INTEGER,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (product_id) REFERENCES products(id),
-        FOREIGN KEY (client_id) REFERENCES clients(id)
+        FOREIGN KEY (client_id) REFERENCES clients(id),
+        FOREIGN KEY (appointment_id) REFERENCES appointments(id)
       );
 
       CREATE TABLE IF NOT EXISTS site_config (
@@ -307,6 +309,9 @@ const dbWrapper = {
             IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='appointments' AND COLUMN_NAME='barber_id') THEN
               ALTER TABLE appointments ADD COLUMN barber_id INTEGER;
             END IF;
+            IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='product_sales' AND COLUMN_NAME='appointment_id') THEN
+              ALTER TABLE product_sales ADD COLUMN appointment_id INTEGER;
+            END IF;
           END $$;
         `);
       } else {
@@ -315,6 +320,8 @@ const dbWrapper = {
         if (!userCols.find(c => c.name === 'role_id')) await this.run("ALTER TABLE users ADD COLUMN role_id INTEGER");
         const appCols = await this.all("PRAGMA table_info(appointments)");
         if (!appCols.find(c => c.name === 'barber_id')) await this.run("ALTER TABLE appointments ADD COLUMN barber_id INTEGER");
+        const saleCols = await this.all("PRAGMA table_info(product_sales)");
+        if (!saleCols.find(c => c.name === 'appointment_id')) await this.run("ALTER TABLE product_sales ADD COLUMN appointment_id INTEGER");
       }
     } catch (e) {
       console.warn('Migration warning:', e.message);
