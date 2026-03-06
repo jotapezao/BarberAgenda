@@ -27,10 +27,21 @@ export default function AdminLayout({ children }) {
 
     return (
         <div className="admin-container">
-            <button className="mobile-menu-btn" onClick={toggleSidebar}>
-                <Menu size={24} />
+            <button
+                className="mobile-menu-btn"
+                onClick={toggleSidebar}
+                style={{
+                    background: 'var(--color-bg-secondary)',
+                    border: '1px solid var(--color-border)',
+                    borderRadius: 10,
+                    color: 'var(--color-accent)',
+                    cursor: 'pointer',
+                    boxShadow: '0 2px 12px rgba(0,0,0,0.5)'
+                }}
+            >
+                <Menu size={22} />
             </button>
-            <div className={`sidebar-overlay ${isSidebarOpen ? 'open' : ''}`} onClick={closeSidebar}></div>
+            <div className={`sidebar-overlay ${isSidebarOpen ? 'active' : ''}`} onClick={closeSidebar}></div>
             <aside className={`admin-sidebar ${isSidebarOpen ? 'open' : ''}`}>
                 <div className="admin-logo">
                     {siteConfig.site_logo ? (

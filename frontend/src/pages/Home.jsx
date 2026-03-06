@@ -144,13 +144,14 @@ export default function Home() {
                             </div>
                         </div>
 
+                        <div className={`navbar-overlay ${isMenuOpen ? 'active' : ''}`} onClick={() => setIsMenuOpen(false)} />
                         <ul className={`navbar-links ${isMenuOpen ? 'open' : ''}`}>
                             <li><a href="#services" onClick={() => setIsMenuOpen(false)}>Serviços</a></li>
                             <li><a href="#booking" onClick={() => setIsMenuOpen(false)}>Agendar</a></li>
                             <li><a href="#about" onClick={() => setIsMenuOpen(false)}>Nossa História</a></li>
                             <li><a href="#location" onClick={() => setIsMenuOpen(false)}>Onde Estamos</a></li>
-                            <li className="mobile-only"><button className="btn btn-outline btn-sm" onClick={() => setShowCancelModal(true)} style={{ width: '100%' }}>Cancelar Agendamento</button></li>
-                            <li className="mobile-only"><a href="/admin" className="btn btn-primary btn-sm" style={{ width: '100%' }}>Acesso Restrito</a></li>
+                            <li className="mobile-only"><button className="btn btn-outline btn-sm" onClick={() => { setShowCancelModal(true); setIsMenuOpen(false); }} style={{ width: '100%', marginTop: 10 }}>Cancelar Agendamento</button></li>
+                            <li className="mobile-only"><a href="/admin" className="btn btn-primary btn-sm" style={{ width: '100%', marginTop: 8, textAlign: 'center' }}>Acesso Restrito</a></li>
                         </ul>
 
                         <div className="navbar-actions desk-only">
@@ -158,7 +159,7 @@ export default function Home() {
                             <a href="/admin" className="btn btn-primary btn-sm">Painel Barber</a>
                         </div>
 
-                        <button className="navbar-menu-btn" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+                        <button className="navbar-menu-btn" onClick={() => setIsMenuOpen(!isMenuOpen)} aria-label={isMenuOpen ? 'Fechar menu' : 'Abrir menu'}>
                             {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
                         </button>
                     </div>
