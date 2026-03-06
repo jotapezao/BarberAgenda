@@ -287,6 +287,49 @@ app.get('/api/barbers', async (req, res) => {
     res.json(await db.all("SELECT id, name, username, photo_url FROM users WHERE role = 'barber' AND is_active = 1"));
 });
 
+// Get last visit for feedback (public)
+app.get('/api/reviews/last-visit/:whatsapp', async (req, res) => {
+    const { whatsapp } = req.params;
+    const apt = await db.get(`
+        SELECT a.id, a.client_name, a.date, a.time, s.name as service_name, u.name as barber_name
+        FROM appointments a
+        JOIN services s ON a.service_id = s.id
+        LEFT JOIN users u ON a.barber_id = u.id
+        WHERE a.client_whatsapp = ? AND a.status = 'completed'
+        ORDER BY a.date DESC, a.time DESC LIMIT 1
+    `, [whatsapp]);
+    res.json(apt || null);
+});
+
+// Submit review (public)
+app.post('/api/reviews', async (req, res) => {
+    const { appointment_id, rating, comment } = req.body;
+    if (!appointment_id || rating === undefined) return res.status(400).json({ error: 'Dados insuficientes' });
+
+    const apt = await db.get(`
+        SELECT a.*, u.name as barber_name, s.name as service_name 
+        FROM appointments a 
+        JOIN services s ON a.service_id = s.id 
+        LEFT JOIN users u ON a.barber_id = u.id 
+        WHERE a.id = ?
+    `, [appointment_id]);
+
+    if (!apt) return res.status(404).json({ error: 'Agendamento não encontrado' });
+
+    await db.run(`
+        INSERT INTO reviews (appointment_id, client_id, client_name, rating, comment, service_info, barber_name)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    `, [apt.id, apt.client_id, apt.client_name, rating, comment || '', apt.service_name, apt.barber_name]);
+
+    res.status(201).json({ message: 'Avaliação enviada com sucesso' });
+});
+
+// Get selected reviews for Home (public)
+app.get('/api/public-reviews', async (req, res) => {
+    const reviews = await db.all('SELECT * FROM reviews WHERE show_on_home = 1 ORDER BY created_at DESC LIMIT 5');
+    res.json(reviews);
+});
+
 // ============================
 // AUTH
 // ============================
@@ -877,6 +920,34 @@ app.post('/api/admin/barbers/:id/pay-commission', authenticateToken, async (req,
 
     await db.run('UPDATE users SET total_commission_paid = total_commission_paid + ? WHERE id = ?', [amount, id]);
     res.json({ message: 'Pagamento registrado com sucesso' });
+});
+
+// -- REVIEWS (Admin) --
+app.get('/api/admin/reviews', authenticateToken, async (req, res) => {
+    const reviews = await db.all('SELECT * FROM reviews ORDER BY created_at DESC');
+    res.json(reviews);
+});
+
+app.get('/api/admin/reviews/unread-count', authenticateToken, async (req, res) => {
+    const result = await db.get('SELECT COUNT(*) as count FROM reviews WHERE is_read = 0');
+    res.json({ count: result.count || 0 });
+});
+
+app.patch('/api/admin/reviews/:id', authenticateToken, async (req, res) => {
+    const { id } = req.params;
+    const { show_on_home, is_read } = req.body;
+    const updates = []; const params = [];
+    if (show_on_home !== undefined) { updates.push('show_on_home = ?'); params.push(show_on_home ? 1 : 0); }
+    if (is_read !== undefined) { updates.push('is_read = ?'); params.push(is_read ? 1 : 0); }
+    if (updates.length === 0) return res.status(400).json({ error: 'Nenhum campo para atualizar' });
+    params.push(id);
+    await db.run(`UPDATE reviews SET ${updates.join(', ')} WHERE id = ?`, params);
+    res.json({ message: 'Atualizado' });
+});
+
+app.delete('/api/admin/reviews/:id', authenticateToken, async (req, res) => {
+    await db.run('DELETE FROM reviews WHERE id = ?', [req.params.id]);
+    res.json({ message: 'Removido' });
 });
 
 // Change password

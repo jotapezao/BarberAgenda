@@ -14,6 +14,7 @@ import SiteConfig from './pages/SiteConfig';
 import Barbers from './pages/Barbers';
 import Security from './pages/Security';
 import Developer from './pages/Developer';
+import Reviews from './pages/Reviews';
 
 function ProtectedRoute({ children }) {
   const token = localStorage.getItem('token');
@@ -73,6 +74,7 @@ function App() {
           <Route path="/admin/stock" element={<ProtectedRoute><Stock /></ProtectedRoute>} />
           <Route path="/admin/site-config" element={<ProtectedRoute><SiteConfig /></ProtectedRoute>} />
           <Route path="/admin/barbers" element={<ProtectedRoute><Barbers /></ProtectedRoute>} />
+          <Route path="/admin/reviews" element={<ProtectedRoute><Reviews /></ProtectedRoute>} />
           <Route path="/admin/security" element={<ProtectedRoute><Security /></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

@@ -250,6 +250,22 @@ const dbWrapper = {
         value TEXT,
         type TEXT DEFAULT 'text'
       );
+      
+      CREATE TABLE IF NOT EXISTS reviews (
+        id SERIAL PRIMARY KEY,
+        appointment_id INTEGER,
+        client_id INTEGER,
+        client_name TEXT,
+        rating INTEGER NOT NULL,
+        comment TEXT,
+        show_on_home INTEGER DEFAULT 0,
+        is_read INTEGER DEFAULT 0,
+        service_info TEXT,
+        barber_name TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (appointment_id) REFERENCES appointments(id),
+        FOREIGN KEY (client_id) REFERENCES clients(id)
+      );
     `;
 
     const sql = isPostgres

@@ -58,6 +58,9 @@ export const publicApi = {
     getSiteConfig: () => request('/site-config'),
     checkClient: (whatsapp) => request(`/clients/check/${encodeURIComponent(whatsapp)}`),
     cancelAppointment: (id, whatsapp) => request(`/appointments/${id}/cancel`, { method: 'POST', body: JSON.stringify({ whatsapp }) }),
+    getLastVisit: (whatsapp) => request(`/reviews/last-visit/${encodeURIComponent(whatsapp)}`),
+    submitReview: (data) => request('/reviews', { method: 'POST', body: JSON.stringify(data) }),
+    getPublicReviews: () => request('/public-reviews'),
 };
 
 export const authApi = {
@@ -120,4 +123,8 @@ export const adminApi = {
     changePassword: (data) => request('/admin/change-password', { method: 'PUT', body: JSON.stringify(data) }),
     createAppointmentAdmin: (data) => request('/admin/appointments', { method: 'POST', body: JSON.stringify(data) }),
     getBirthdays: (month) => request(`/admin/birthdays${month ? '?month=' + month : ''}`),
+    getReviews: () => request('/admin/reviews'),
+    getUnreadReviewsCount: () => request('/admin/reviews/unread-count'),
+    updateReview: (id, data) => request(`/admin/reviews/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+    deleteReview: (id) => request(`/admin/reviews/${id}`, { method: 'DELETE' }),
 };

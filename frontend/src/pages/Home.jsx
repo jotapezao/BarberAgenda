@@ -21,6 +21,14 @@ export default function Home() {
     const [scrolled, setScrolled] = useState(false);
     const [showCancelModal, setShowCancelModal] = useState(false);
     const [cancelData, setCancelData] = useState({ id: '', whatsapp: '' });
+    const [showReviewModal, setShowReviewModal] = useState(false);
+    const [reviewStep, setReviewStep] = useState(1);
+    const [reviewWhatsApp, setReviewWhatsApp] = useState('');
+    const [lastVisit, setLastVisit] = useState(null);
+    const [reviewRating, setReviewRating] = useState(10);
+    const [reviewComment, setReviewComment] = useState('');
+    const [reviewSuccess, setReviewSuccess] = useState(false);
+    const [publicReviews, setPublicReviews] = useState([]);
 
     const toast = useToast();
 
@@ -42,7 +50,15 @@ export default function Home() {
             setBarbers(bbrData);
             setSiteConfig(config);
             setLoading(false);
+            loadPublicReviews();
         } catch (err) { toast.error('Erro ao carregar dados'); }
+    };
+
+    const loadPublicReviews = async () => {
+        try {
+            const data = await publicApi.getPublicReviews();
+            setPublicReviews(data);
+        } catch (err) { console.error(err); }
     };
 
     useEffect(() => {
@@ -89,6 +105,33 @@ export default function Home() {
             setShowCancelModal(false);
             setCancelData({ id: '', whatsapp: '' });
         } catch (err) { toast.error(err.message); }
+    };
+
+    const handleSearchVisit = async (e) => {
+        e.preventDefault();
+        try {
+            const cleanPhone = unmask(reviewWhatsApp);
+            const visit = await publicApi.getLastVisit(cleanPhone);
+            if (visit) {
+                setLastVisit(visit);
+                setReviewStep(2);
+            } else {
+                toast.error('Nenhum atendimento finalizado encontrado para este número.');
+            }
+        } catch (err) { toast.error('Erro ao buscar atendimento'); }
+    };
+
+    const handleReviewSubmit = async (e) => {
+        e.preventDefault();
+        try {
+            await publicApi.submitReview({
+                appointment_id: lastVisit.id,
+                rating: reviewRating,
+                comment: reviewComment
+            });
+            setReviewSuccess(true);
+            setReviewStep(3);
+        } catch (err) { toast.error('Erro ao enviar avaliação'); }
     };
 
     const loadSlots = async (date, svcId, barbId) => {
@@ -228,6 +271,11 @@ export default function Home() {
                             </div>
                         </div>
                     ))}
+                </div>
+                <div style={{ textAlign: 'center', marginTop: 40 }}>
+                    <button className="btn btn-outline" onClick={() => setShowReviewModal(true)}>
+                        <Star size={18} style={{ marginRight: 8 }} /> Críticas ou Elogios? Avalie-nos
+                    </button>
                 </div>
             </section>
 
@@ -480,6 +528,36 @@ export default function Home() {
                 </div>
             </section>
 
+            {publicReviews.length > 0 && (
+                <section className="section bg-secondary" style={{ overflow: 'hidden' }}>
+                    <div className="container">
+                        <div className="section-header">
+                            <h2>O que nossos <span>Clientes dizem</span></h2>
+                            <p>A opinião de quem confia no nosso trabalho</p>
+                        </div>
+                        <div className="testimonials-grid" style={{ display: 'flex', gap: 20, overflowX: 'auto', paddingBottom: 20, scrollSnapType: 'x mandatory' }}>
+                            {publicReviews.map(rev => (
+                                <div key={rev.id} className="card card-glass testimonial-card" style={{ minWidth: 280, flex: 1, scrollSnapAlign: 'start' }}>
+                                    <div style={{ display: 'flex', gap: 2, marginBottom: 10 }}>
+                                        {[...Array(5)].map((_, i) => (
+                                            <Star key={i} size={14} fill={i < (rev.rating / 2) ? "var(--color-accent)" : "none"} stroke="var(--color-accent)" />
+                                        ))}
+                                    </div>
+                                    <p style={{ fontStyle: 'italic', marginBottom: 15, fontSize: '0.9rem' }}>"{rev.comment}"</p>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                        <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--color-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#000', fontWeight: 800, fontSize: '0.8rem' }}>{rev.client_name.charAt(0)}</div>
+                                        <div>
+                                            <div style={{ fontWeight: 700, fontSize: '0.85rem' }}>{rev.client_name}</div>
+                                            <div style={{ fontSize: '0.7rem', opacity: 0.6 }}>{rev.service_info}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+            )}
+
             <section id="location" className="section bg-secondary" style={{ paddingBottom: 100 }}>
                 <div className="container" style={{ display: 'flex', justifyContent: 'center' }}>
                     <div className="card card-glass animate-fade" style={{ padding: '50px 40px', maxWidth: 800, margin: '0 auto', boxShadow: '0 8px 30px rgba(0,0,0,0.5)', borderRadius: '24px', width: '100%' }}>
@@ -575,6 +653,82 @@ export default function Home() {
                                 <button type="submit" className="btn btn-danger">Confirmar</button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {showReviewModal && (
+                <div className="modal-overlay" onClick={() => { setShowReviewModal(false); setReviewStep(1); setReviewSuccess(false); }}>
+                    <div className="modal animate-scale" onClick={e => e.stopPropagation()} style={{ maxWidth: 450 }}>
+                        <div className="modal-header">
+                            <h2>{reviewStep === 3 ? 'Obrigado!' : 'Sua Avaliação'}</h2>
+                            <button className="btn-icon" onClick={() => { setShowReviewModal(false); setReviewStep(1); setReviewSuccess(false); }}><X size={20} /></button>
+                        </div>
+                        <div className="modal-body">
+                            {reviewStep === 1 && (
+                                <form onSubmit={handleSearchVisit}>
+                                    <p className="text-secondary" style={{ marginBottom: 20 }}>Insira seu WhatsApp para localizarmos seu último atendimento.</p>
+                                    <div className="form-group">
+                                        <label className="form-label">📱 Seu WhatsApp</label>
+                                        <input type="text" className="form-input" placeholder="(00) 00000-0000" value={maskPhone(reviewWhatsApp)} onChange={e => setReviewWhatsApp(e.target.value)} required inputMode="numeric" />
+                                    </div>
+                                    <button type="submit" className="btn btn-primary w-full">Buscar Atendimento <ChevronRight size={18} /></button>
+                                </form>
+                            )}
+
+                            {reviewStep === 2 && lastVisit && (
+                                <form onSubmit={handleReviewSubmit}>
+                                    <div className="welcome-back-msg" style={{ background: 'var(--color-bg-secondary)', padding: '15px', borderRadius: 10, marginBottom: 20, fontSize: '0.9rem', border: '1px solid var(--color-border)' }}>
+                                        <div style={{ fontWeight: 700, marginBottom: 4 }}>Olá, {lastVisit.client_name}!</div>
+                                        Vimos que você realizou <strong>{lastVisit.service_name}</strong> dia {lastVisit.date.split('-').reverse().join('/')} com o barbeiro <strong>{lastVisit.barber_name || 'Profissional'}</strong>.
+                                    </div>
+
+                                    <div className="form-group" style={{ textAlign: 'center' }}>
+                                        <label className="form-label">Como você avalia nosso atendimento? (0 a 10)</label>
+                                        <div style={{ display: 'flex', justifyContent: 'center', gap: 5, flexWrap: 'wrap', marginTop: 10 }}>
+                                            {[...Array(11)].map((_, i) => (
+                                                <button
+                                                    key={i}
+                                                    type="button"
+                                                    onClick={() => setReviewRating(i)}
+                                                    style={{
+                                                        width: 32, height: 32, borderRadius: 6,
+                                                        background: reviewRating === i ? 'var(--color-accent)' : 'rgba(255,255,255,0.05)',
+                                                        color: reviewRating === i ? '#000' : '#fff',
+                                                        border: '1px solid var(--color-border)',
+                                                        fontWeight: 800, fontSize: '0.8rem', cursor: 'pointer', transition: 'all 0.2s'
+                                                    }}
+                                                >
+                                                    {i}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div className="form-group">
+                                        <label className="form-label">Deixe um comentário (opcional)</label>
+                                        <textarea className="form-input" rows="3" value={reviewComment} onChange={e => setReviewComment(e.target.value)} placeholder="Conte-nos o que achou..."></textarea>
+                                    </div>
+
+                                    <button type="submit" className="btn btn-primary w-full">Enviar Avaliação</button>
+                                </form>
+                            )}
+
+                            {reviewStep === 3 && (
+                                <div style={{ textAlign: 'center', padding: '20px 0' }}>
+                                    <div style={{ width: 60, height: 60, borderRadius: '50%', background: 'var(--color-success)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+                                        <CheckCircle size={32} />
+                                    </div>
+                                    <h3 style={{ marginBottom: 10 }}>Avaliação Enviada!</h3>
+                                    <p className="text-secondary" style={{ marginBottom: 25 }}>
+                                        {reviewRating >= 8 ? 'Ficamos muito felizes que gostou! Esperamos vê-lo em breve.' :
+                                            reviewRating >= 5 ? 'Agradecemos pelo seu feedback, vamos trabalhar para melhorar cada vez mais!' :
+                                                'Lamentamos que sua experiência não tenha sido ideal. Iremos analisar seu comentário atentamente.'}
+                                    </p>
+                                    <button className="btn btn-secondary w-full" onClick={() => { setShowReviewModal(false); setReviewStep(1); setReviewSuccess(false); }}>Fechar</button>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
             )}
