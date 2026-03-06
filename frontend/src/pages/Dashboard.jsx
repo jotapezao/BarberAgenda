@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { adminApi } from '../api';
+import { adminApi, publicApi } from '../api';
 import { useToast } from '../components/Toast';
 import AdminLayout from '../components/AdminLayout';
-import { Calendar, Users, CheckCircle, XCircle, Clock, Phone, ChevronRight, DollarSign, Package, Plus, Gift, LayoutDashboard, Search, AlertTriangle } from 'lucide-react';
+import { Calendar, Users, CheckCircle, XCircle, Clock, Phone, ChevronRight, DollarSign, Package, Plus, Gift, LayoutDashboard, Search, AlertTriangle, Scissors } from 'lucide-react';
+import { maskPhone } from '../utils/mask';
 
 export default function Dashboard() {
     const [data, setData] = useState(null);
@@ -26,18 +27,21 @@ export default function Dashboard() {
     const loadDashboard = async () => {
         try {
             const curMonth = new Date().toISOString().substring(5, 7);
-            const [dashboardData, barbersData, svcData, bdData] = await Promise.all([
+            const [dashboardData, svcData, bdData, barbersList] = await Promise.all([
                 adminApi.getDashboard(),
-                adminApi.getBarbers(),
                 adminApi.getServices(),
                 adminApi.getBirthdays(curMonth),
+                publicApi.getBarbers()
             ]);
             setData(dashboardData);
-            setBarbers(barbersData);
             setServices(svcData);
             setBirthdays(bdData);
+            setBarbers(barbersList);
         }
-        catch (err) { toast.error('Erro ao carregar dashboard'); }
+        catch (err) {
+            console.error('Erro no Dashboard:', err);
+            toast.error('Erro ao carregar dashboard');
+        }
         finally { setLoading(false); }
     };
 
@@ -193,7 +197,7 @@ export default function Dashboard() {
                                         </div>
 
                                         <div style={{ display: 'flex', gap: 15, marginBottom: 15, fontSize: '0.85rem', color: 'var(--color-text-secondary)', background: 'rgba(255,255,255,0.03)', padding: '8px 12px', borderRadius: 8, flexWrap: 'wrap' }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}><LayoutDashboard size={14} /> {apt.service_name}</div>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Scissors size={14} /> {apt.service_name}</div>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Clock size={14} /> {formatDuration(apt.service_duration)}</div>
                                             {isAdmin && <div style={{ fontWeight: 700, color: 'var(--color-success)' }}>{formatPrice(apt.service_price)}</div>}
                                             {isAdmin && <div style={{ opacity: 0.7 }}>• {apt.barber_name}</div>}
