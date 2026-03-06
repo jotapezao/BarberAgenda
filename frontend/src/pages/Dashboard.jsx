@@ -205,33 +205,34 @@ export default function Dashboard() {
                             </div>
                         ))}
                     </div>
+                </div>
             )}
 
-                    {transferData.id && (
-                        <div className="modal-overlay" onClick={() => setTransferData({ id: null, barberId: '' })}>
-                            <div className="modal animate-scale" onClick={e => e.stopPropagation()}>
-                                <div className="modal-header">
-                                    <h2>Transferir Agendamento</h2>
-                                    <button className="btn-icon" onClick={() => setTransferData({ id: null, barberId: '' })}><XCircle size={20} /></button>
-                                </div>
-                                <div className="modal-body">
-                                    <div className="form-group">
-                                        <label className="form-label">Selecione o novo barbeiro</label>
-                                        <select className="form-select" value={transferData.barberId} onChange={e => setTransferData({ ...transferData, barberId: e.target.value })}>
-                                            <option value="">Selecione...</option>
-                                            {barbers.map(b => (
-                                                <option key={b.id} value={b.id}>{b.name}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                </div>
-                                <div className="modal-footer">
-                                    <button className="btn btn-secondary" onClick={() => setTransferData({ id: null, barberId: '' })}>Cancelar</button>
-                                    <button className="btn btn-primary" onClick={transferAppointment}>Transferir</button>
-                                </div>
+            {transferData.id && (
+                <div className="modal-overlay" onClick={() => setTransferData({ id: null, barberId: '' })}>
+                    <div className="modal animate-scale" onClick={e => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h2>Transferir Agendamento</h2>
+                            <button className="btn-icon" onClick={() => setTransferData({ id: null, barberId: '' })}><XCircle size={20} /></button>
+                        </div>
+                        <div className="modal-body">
+                            <div className="form-group">
+                                <label className="form-label">Selecione o novo barbeiro</label>
+                                <select className="form-select" value={transferData.barberId} onChange={e => setTransferData({ ...transferData, barberId: e.target.value })}>
+                                    <option value="">Selecione...</option>
+                                    {barbers.map(b => (
+                                        <option key={b.id} value={b.id}>{b.name}</option>
+                                    ))}
+                                </select>
                             </div>
                         </div>
-                    )}
-                </AdminLayout>
-            );
+                        <div className="modal-footer">
+                            <button className="btn btn-secondary" onClick={() => setTransferData({ id: null, barberId: '' })}>Cancelar</button>
+                            <button className="btn btn-primary" onClick={transferAppointment}>Transferir</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </AdminLayout>
+    );
 }
