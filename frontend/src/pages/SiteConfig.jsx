@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { adminApi, BASE_URL } from '../api';
 import { useToast } from '../components/Toast';
 import AdminLayout from '../components/AdminLayout';
-import { Save, Upload, Info, Image as ImageIcon, Layout, Palette, Mail, MapPin, Globe, Shield, Trash2, Settings } from 'lucide-react';
+import { Save, Upload, Info, Image as ImageIcon, Layout, Palette, Mail, MapPin, Globe, Shield, Trash2, Settings, Gift } from 'lucide-react';
 import { maskPhone, maskCNPJ, validateCNPJ, unmask } from '../utils/mask';
 
 
@@ -70,7 +70,8 @@ export default function SiteConfig() {
                 'banner_title_2', 'banner_subtitle_2', 'banner_image_2',
                 'banner_title_3', 'banner_subtitle_3', 'banner_image_3',
                 'promotion_active', 'promotion_title', 'promotion_text', 'promotion_badge',
-                'about_title', 'about_text', 'address', 'city', 'cep', 'map_embed_url'
+                'about_title', 'about_text', 'address', 'city', 'cep', 'map_embed_url',
+                'birthday_reward_active', 'birthday_reward_value'
             ];
 
             const sitePayload = {};
@@ -394,35 +395,37 @@ export default function SiteConfig() {
                                 />
                             </div>
 
-                            <div className="form-group" style={{ marginTop: 16 }}>
-                                <label className="form-label">Fuso Horário do Salão</label>
-                                <select className="form-select" value={config.site_timezone || 'America/Sao_Paulo'} onChange={e => updateField('site_timezone', e.target.value)}>
-                                    <optgroup label="Américas">
-                                        <option value="America/Sao_Paulo">Brasília (GMT-3)</option>
-                                        <option value="America/Manaus">Manaus (GMT-4)</option>
-                                        <option value="America/Fortaleza">Fortaleza (GMT-3)</option>
-                                        <option value="America/New_York">Nova York / Miami (GMT-5)</option>
-                                        <option value="America/Mexico_City">Cidade do México (GMT-6)</option>
-                                        <option value="America/Argentina/Buenos_Aires">Buenos Aires (GMT-3)</option>
-                                        <option value="America/Santiago">Santiago (GMT-4)</option>
-                                    </optgroup>
-                                    <optgroup label="Europa">
-                                        <option value="Europe/Lisbon">Lisboa (GMT+0/1)</option>
-                                        <option value="Europe/Madrid">Madri (GMT+1)</option>
-                                        <option value="Europe/Paris">Paris (GMT+1)</option>
-                                        <option value="Europe/London">Londres (GMT+0)</option>
-                                    </optgroup>
-                                    <optgroup label="Outros">
-                                        <option value="UTC">UTC (Padrão)</option>
-                                        <option value="Asia/Tokyo">Tóquio (GMT+9)</option>
-                                        <option value="Australia/Sydney">Sydney (GMT+10)</option>
-                                        <option value="Africa/Cairo">Cairo (GMT+2)</option>
-                                    </optgroup>
-                                </select>
-                                <p className="text-muted" style={{ fontSize: '0.75rem', marginTop: 4 }}>
-                                    <Info size={12} style={{ verticalAlign: 'middle', marginRight: 4 }} />
-                                    Importante para validar a antecedência mínima corretamente.
-                                </p>
+                            <div className="card" style={{ background: 'rgba(212, 165, 72, 0.05)', border: '1px solid rgba(212, 165, 72, 0.2)', marginBottom: 24, marginTop: 24 }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 15, color: 'var(--color-accent)' }}>
+                                    <Gift size={20} />
+                                    <h4 style={{ margin: 0 }}>Recompensa de Aniversário</h4>
+                                </div>
+                                <div className="form-group">
+                                    <label className="flex-center" style={{ gap: 12, cursor: 'pointer', justifyContent: 'flex-start' }}>
+                                        <input
+                                            type="checkbox"
+                                            checked={config.birthday_reward_active === 'true'}
+                                            onChange={e => updateField('birthday_reward_active', e.target.checked ? 'true' : 'false')}
+                                            style={{ width: 22, height: 22 }}
+                                        />
+                                        <div>
+                                            <span style={{ fontWeight: 700, display: 'block' }}>Habilitar Desconto de Aniversário</span>
+                                            <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
+                                                Permite enviar uma cortesia para clientes no mês de aniversário.
+                                            </span>
+                                        </div>
+                                    </label>
+                                </div>
+                                {config.birthday_reward_active === 'true' && (
+                                    <FormField
+                                        label="Valor da Cortesia (R$)"
+                                        type="number"
+                                        value={config.birthday_reward_value}
+                                        onChange={v => updateField('birthday_reward_value', v)}
+                                        placeholder="50.00"
+                                        info="Este valor será sugerido ao enviar a mensagem de parabéns."
+                                    />
+                                )}
                             </div>
 
                             <div className="info-box" style={{ marginTop: 20, background: 'rgba(59, 130, 246, 0.05)', padding: 12, borderRadius: 6, fontSize: '0.8rem', border: '1px solid rgba(59, 130, 246, 0.2)' }}>

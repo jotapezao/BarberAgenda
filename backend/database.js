@@ -328,6 +328,12 @@ const dbWrapper = {
             IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='product_sales' AND COLUMN_NAME='appointment_id') THEN
               ALTER TABLE product_sales ADD COLUMN appointment_id INTEGER;
             END IF;
+            IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='appointments' AND COLUMN_NAME='discount_amount') THEN
+              ALTER TABLE appointments ADD COLUMN discount_amount DECIMAL(10,2) DEFAULT 0;
+            END IF;
+            IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='appointments' AND COLUMN_NAME='is_birthday_reward') THEN
+              ALTER TABLE appointments ADD COLUMN is_birthday_reward INTEGER DEFAULT 0;
+            END IF;
           END $$;
         `);
       } else {
@@ -338,6 +344,8 @@ const dbWrapper = {
         if (!appCols.find(c => c.name === 'barber_id')) await this.run("ALTER TABLE appointments ADD COLUMN barber_id INTEGER");
         const saleCols = await this.all("PRAGMA table_info(product_sales)");
         if (!saleCols.find(c => c.name === 'appointment_id')) await this.run("ALTER TABLE product_sales ADD COLUMN appointment_id INTEGER");
+        if (!appCols.find(c => c.name === 'discount_amount')) await this.run("ALTER TABLE appointments ADD COLUMN discount_amount REAL DEFAULT 0");
+        if (!appCols.find(c => c.name === 'is_birthday_reward')) await this.run("ALTER TABLE appointments ADD COLUMN is_birthday_reward INTEGER DEFAULT 0");
       }
     } catch (e) {
       console.warn('Migration warning:', e.message);
@@ -388,6 +396,14 @@ const dbWrapper = {
       const q = 'INSERT INTO site_config (key, value) VALUES (?, ?)';
       await this.run(q, ['site_name', 'BarberPro']);
       await this.run(q, ['site_theme', 'dark-gold']);
+    }
+
+
+    // Add birthday settings if not exists
+    const bdaySetExist = await this.get("SELECT COUNT(*) as count FROM site_config WHERE key = 'birthday_reward_active'");
+    if (parseInt(bdaySetExist.count) === 0) {
+      await this.run("INSERT INTO site_config (key, value, type) VALUES (?, ?, ?)", ['birthday_reward_active', '1', 'text']);
+      await this.run("INSERT INTO site_config (key, value, type) VALUES (?, ?, ?)", ['birthday_reward_value', '50.00', 'text']);
     }
 
     console.log('✅ Banco de Dados inicializado.');

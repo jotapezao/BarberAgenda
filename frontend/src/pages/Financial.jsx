@@ -272,6 +272,14 @@ export default function Financial() {
                     </p>
                 </div>
 
+                <div className="card financial-card">
+                    <h3>🎁 Cortesias / Descontos</h3>
+                    <div className="value" style={{ color: 'var(--color-info)' }}>{formatPrice(data?.month?.total_discounts)}</div>
+                    <p className="text-secondary" style={{ marginTop: '8px', fontSize: '0.85rem' }}>
+                        Total de descontos no período
+                    </p>
+                </div>
+
                 {isAdmin ? (
                     <>
                         <div className="card financial-card">

@@ -359,7 +359,6 @@ app.get('/api/admin/dashboard', authenticateToken, async (req, res) => {
     const whereBarber = barberId ? ' AND a.barber_id = ?' : '';
     const statsWhereBarber = barberId ? ' AND barber_id = ?' : '';
     const params = barberId ? [today, barberId] : [today];
-    const upcomingParams = barberId ? [today, new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0], barberId] : [today, new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0]];
 
     const todayAppointments = await db.all(`
     SELECT a.*, s.name as service_name, s.price as service_price, s.duration as service_duration, u.name as barber_name
@@ -367,32 +366,18 @@ app.get('/api/admin/dashboard', authenticateToken, async (req, res) => {
     WHERE a.date = ?${whereBarber} ORDER BY a.time ASC
   `, params);
 
-    const upcomingAppointments = await db.all(`
-    SELECT a.*, s.name as service_name, s.price as service_price, s.duration as service_duration, u.name as barber_name
-    FROM appointments a JOIN services s ON a.service_id = s.id LEFT JOIN users u ON a.barber_id = u.id
-    WHERE a.date > ? AND a.date <= ?${whereBarber} ORDER BY a.date ASC, a.time ASC
-  `, upcomingParams);
-
     const todayStats = await db.get(`
     SELECT COUNT(*) as total,
-      SUM(CASE WHEN status = 'confirmed' THEN 1 ELSE 0 END) as confirmed,
-      SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed,
-      SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) as cancelled
+      SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed
     FROM appointments WHERE date = ?${statsWhereBarber}
   `, params);
 
-    const todayRevenue = await db.get(`
-    SELECT COALESCE(SUM(s.price), 0) as revenue
-    FROM appointments a JOIN services s ON a.service_id = s.id
-    WHERE a.date = ? AND a.status = 'completed'${whereBarber}
-  `, params);
-
-    const totalClients = await db.get('SELECT COUNT(*) as count FROM clients');
-    const lowStockProducts = await db.get('SELECT COUNT(*) as count FROM products WHERE stock_quantity <= min_stock AND active = 1');
-
     res.json({
-        todayAppointments, upcomingAppointments,
-        stats: { ...todayStats, revenue: todayRevenue ? todayRevenue.revenue : 0, totalClients: totalClients.count, lowStock: lowStockProducts.count }
+        todayAppointments,
+        stats: {
+            total: todayStats.total || 0,
+            completed: todayStats.completed || 0
+        }
     });
 });
 
@@ -412,25 +397,34 @@ app.get('/api/admin/appointments', authenticateToken, async (req, res) => {
 
 app.patch('/api/admin/appointments/:id', authenticateToken, async (req, res) => {
     const { id } = req.params;
-    const { status, notes, barber_id } = req.body;
+    const { status, notes, barber_id, discount_amount, is_birthday_reward } = req.body;
     const updates = []; const params = [];
     if (status) { updates.push('status = ?'); params.push(status); }
     if (notes !== undefined) { updates.push('notes = ?'); params.push(notes); }
     if (barber_id !== undefined) { updates.push('barber_id = ?'); params.push(barber_id); }
+    if (discount_amount !== undefined) { updates.push('discount_amount = ?'); params.push(discount_amount); }
+    if (is_birthday_reward !== undefined) { updates.push('is_birthday_reward = ?'); params.push(is_birthday_reward ? 1 : 0); }
+
     if (updates.length === 0) return res.status(400).json({ error: 'Nenhum campo para atualizar' });
     params.push(id);
     await db.run(`UPDATE appointments SET ${updates.join(', ')} WHERE id = ?`, params);
 
     // If completed, update client total_spent and barber commission
     if (status === 'completed') {
-        const apt = await db.get('SELECT a.client_id, a.barber_id, s.price FROM appointments a JOIN services s ON a.service_id = s.id WHERE a.id = ?', [id]);
+        const apt = await db.get('SELECT a.client_id, a.barber_id, a.discount_amount, s.price FROM appointments a JOIN services s ON a.service_id = s.id WHERE a.id = ?', [id]);
+        const finalPrice = Math.max(0, (apt.price || 0) - (apt.discount_amount || 0));
+
         if (apt && apt.client_id) {
-            await db.run('UPDATE clients SET total_spent = total_spent + ? WHERE id = ?', [apt.price, apt.client_id]);
+            await db.run('UPDATE clients SET total_spent = total_spent + ? WHERE id = ?', [finalPrice, apt.client_id]);
         }
         if (apt && apt.barber_id) {
             const barber = await db.get('SELECT commission_rate FROM users WHERE id = ?', [apt.barber_id]);
             if (barber && barber.commission_rate) {
-                const commission = apt.price * (barber.commission_rate / 100);
+                // Commission is usually calculated on the full price unless specified otherwise
+                // But if it's a shop-given discount, we might want to pay on full price.
+                // However, to keep it simple and align with "Financeiro", we use finalPrice if needed.
+                // Re-read: "Essa cortesia também deve ser contabilizada dentro do Financeiro"
+                const commission = finalPrice * (barber.commission_rate / 100);
                 await db.run('UPDATE users SET total_commission_earned = total_commission_earned + ? WHERE id = ?', [commission, apt.barber_id]);
             }
         }
@@ -859,12 +853,16 @@ app.get('/api/admin/financial', authenticateToken, async (req, res) => {
     const paramsPeriod = barberId ? [queryStart, queryEnd, barberId] : [queryStart, queryEnd];
 
     const todayStats = await db.get(`
-    SELECT COUNT(*) as total_appointments, COALESCE(SUM(s.price), 0) as total_revenue
+    SELECT COUNT(*) as total_appointments, 
+           COALESCE(SUM(s.price - COALESCE(a.discount_amount, 0)), 0) as total_revenue,
+           COALESCE(SUM(COALESCE(a.discount_amount, 0)), 0) as total_discounts
     FROM appointments a JOIN services s ON a.service_id = s.id WHERE a.date = ? AND a.status = 'completed'${whereBarber}
   `, paramsToday);
 
     const periodStats = await db.get(`
-    SELECT COUNT(*) as total_appointments, COALESCE(SUM(s.price), 0) as total_revenue
+    SELECT COUNT(*) as total_appointments, 
+           COALESCE(SUM(s.price - COALESCE(a.discount_amount, 0)), 0) as total_revenue,
+           COALESCE(SUM(COALESCE(a.discount_amount, 0)), 0) as total_discounts
     FROM appointments a JOIN services s ON a.service_id = s.id WHERE a.date >= ? AND a.date <= ? AND a.status = 'completed'${whereBarber}
   `, paramsPeriod);
 
@@ -873,19 +871,19 @@ app.get('/api/admin/financial', authenticateToken, async (req, res) => {
     const productSalesPeriod = await db.get(`SELECT COALESCE(SUM(total_price), 0) as total FROM product_sales WHERE date >= ? AND date <= ?`, [queryStart, queryEnd]);
 
     const dailyRevenue = await db.all(`
-    SELECT a.date, COUNT(*) as appointments, COALESCE(SUM(s.price), 0) as revenue
+    SELECT a.date, COUNT(*) as appointments, COALESCE(SUM(s.price - COALESCE(a.discount_amount, 0)), 0) as revenue
     FROM appointments a JOIN services s ON a.service_id = s.id WHERE a.date >= ? AND a.date <= ? AND a.status = 'completed'${whereBarber}
     GROUP BY a.date ORDER BY a.date ASC
   `, [queryStart, queryEnd, ...(barberId ? [barberId] : [])]);
 
     const monthlyRevenue = await db.all(`
-    SELECT substr(a.date, 1, 7) as month, COUNT(*) as appointments, COALESCE(SUM(s.price), 0) as revenue
+    SELECT substr(a.date, 1, 7) as month, COUNT(*) as appointments, COALESCE(SUM(s.price - COALESCE(a.discount_amount, 0)), 0) as revenue
     FROM appointments a JOIN services s ON a.service_id = s.id WHERE a.date >= ? AND a.date <= ? AND a.status = 'completed'${whereBarber}
     GROUP BY substr(a.date, 1, 7) ORDER BY month ASC
   `, [queryStart, queryEnd, ...(barberId ? [barberId] : [])]);
 
     const topServices = await db.all(`
-    SELECT s.name, COUNT(*) as count, COALESCE(SUM(s.price), 0) as revenue
+    SELECT s.name, COUNT(*) as count, COALESCE(SUM(s.price - COALESCE(a.discount_amount, 0)), 0) as revenue
     FROM appointments a JOIN services s ON a.service_id = s.id WHERE a.status = 'completed' AND a.date >= ? AND a.date <= ?${whereBarber}
     GROUP BY s.id, s.name ORDER BY count DESC
   `, [queryStart, queryEnd, ...(barberId ? [barberId] : [])]);
@@ -894,8 +892,8 @@ app.get('/api/admin/financial', authenticateToken, async (req, res) => {
     const individualCommissions = await db.all(`
     SELECT u.id, u.name as barber_name, u.total_commission_earned, u.total_commission_paid,
            COUNT(a.id) as service_count, 
-           COALESCE(SUM(s.price), 0) as total_revenue,
-           COALESCE(SUM(s.price * (u.commission_rate / 100)), 0) as period_commission
+           COALESCE(SUM(s.price - COALESCE(a.discount_amount, 0)), 0) as total_revenue,
+           COALESCE(SUM((s.price - COALESCE(a.discount_amount, 0)) * (u.commission_rate / 100)), 0) as period_commission
     FROM users u 
     LEFT JOIN appointments a ON u.id = a.barber_id AND a.status = 'completed' AND a.date >= ? AND a.date <= ?
     LEFT JOIN services s ON a.service_id = s.id
@@ -904,8 +902,18 @@ app.get('/api/admin/financial', authenticateToken, async (req, res) => {
   `, [queryStart, queryEnd, ...(barberId ? [barberId] : [])]);
 
     res.json({
-        today: { appointments: todayStats.total_appointments, revenue: todayStats.total_revenue },
-        month: { appointments: periodStats.total_appointments, revenue: periodStats.total_revenue, avgTicket: parseFloat(avgTicket), productSales: productSalesPeriod.total },
+        today: {
+            appointments: todayStats.total_appointments,
+            revenue: todayStats.total_revenue,
+            total_discounts: todayStats.total_discounts
+        },
+        month: {
+            appointments: periodStats.total_appointments,
+            revenue: periodStats.total_revenue,
+            total_discounts: periodStats.total_discounts,
+            avgTicket: parseFloat(avgTicket),
+            productSales: productSalesPeriod.total
+        },
         dailyRevenue, monthlyRevenue, topServices, individualCommissions
     });
 });

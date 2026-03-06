@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { adminApi } from '../api';
 import { useToast } from '../components/Toast';
 import AdminLayout from '../components/AdminLayout';
-import { Users, Search, Phone, Calendar, DollarSign, Edit3, Trash2, X, Eye, UserPlus, Download, Upload, FileText } from 'lucide-react';
+import { Users, Search, Phone, Calendar, DollarSign, Edit3, Trash2, X, Eye, UserPlus, Download, Upload, FileText, Gift } from 'lucide-react';
 import { maskPhone, unmask } from '../utils/mask';
 
 export default function Clients() {
@@ -16,6 +16,10 @@ export default function Clients() {
     const [formData, setFormData] = useState({ name: '', whatsapp: '', email: '', birth_date: '', notes: '' });
     const [showBirthdays, setShowBirthdays] = useState(false);
     const [birthdayClients, setBirthdayClients] = useState([]);
+    const [showBirthdayMsg, setShowBirthdayMsg] = useState(false);
+    const [selectedBirthday, setSelectedBirthday] = useState(null);
+    const [birthdayMsg, setBirthdayMsg] = useState('');
+    const [siteConfig, setSiteConfig] = useState({});
 
     const toast = useToast();
 
@@ -23,12 +27,17 @@ export default function Clients() {
 
     const loadClients = async (searchTerm = '') => {
         try {
-            const data = await adminApi.getClients(searchTerm ? { search: searchTerm } : {});
-            setClients(data);
-
-            // Also load birthdays if not loaded
-            const bdays = await adminApi.getBirthdays();
+            const [clientsData, bdays, configData] = await Promise.all([
+                adminApi.getClients(searchTerm ? { search: searchTerm } : {}),
+                adminApi.getBirthdays(),
+                adminApi.getSiteConfig()
+            ]);
+            setClients(clientsData);
             setBirthdayClients(bdays);
+
+            const config = {};
+            Object.keys(configData).forEach(k => config[k] = configData[k].value);
+            setSiteConfig(config);
         } catch (err) { toast.error('Erro ao carregar clientes'); }
         finally { setLoading(false); }
     };
@@ -153,6 +162,32 @@ export default function Clients() {
         window.open(`https://wa.me/${full}?text=Olá, ${name}!`, '_blank');
     };
 
+    const prepareBirthdayMsg = (client) => {
+        const rewardActive = siteConfig.birthday_reward_active === 'true';
+        const rewardVal = siteConfig.birthday_reward_value || '50,00';
+        const siteName = siteConfig.site_name || 'nossa barbearia';
+
+        let msg = `Olá, ${client.name}! 🎂\nA ${siteName} lhe deseja um feliz aniversário! Muita saúde e sucesso.\n\n`;
+
+        if (rewardActive) {
+            msg += `Para comemorar, você ganhou uma cortesia de R$ ${rewardVal} para usar em sua próxima visita este mês! 🎁\n\nEsperamos por você!`;
+        } else {
+            msg += `Gostaríamos de desejar um dia incrível! Esperamos vê-lo em breve.`;
+        }
+
+        setSelectedBirthday(client);
+        setBirthdayMsg(msg);
+        setShowBirthdayMsg(true);
+    };
+
+    const sendBirthdayWhatsApp = () => {
+        if (!selectedBirthday) return;
+        const clean = selectedBirthday.whatsapp.replace(/\D/g, '');
+        const full = clean.startsWith('55') ? clean : `55${clean}`;
+        window.open(`https://wa.me/${full}?text=${encodeURIComponent(birthdayMsg)}`, '_blank');
+        setShowBirthdayMsg(false);
+    };
+
     if (loading) return <AdminLayout><div className="loading-spinner"><div className="spinner"></div></div></AdminLayout>;
 
     return (
@@ -164,7 +199,7 @@ export default function Clients() {
                 </div>
                 <div style={{ display: 'flex', gap: 12 }}>
                     <button className={`btn ${showBirthdays ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setShowBirthdays(!showBirthdays)} title="Aniversariantes do Mês">
-                        <FileText size={18} /> {showBirthdays ? 'Ver Todos' : 'Aniversariantes'}
+                        <Gift size={18} /> {showBirthdays ? 'Ver Todos' : 'Aniversariantes'}
                     </button>
                     <button className="btn btn-secondary" onClick={exportToCSV} title="Exportar CSV">
                         <Download size={18} /> Exportar
@@ -233,6 +268,11 @@ export default function Clients() {
                                 </span>
                             </div>
                             <div className="flex-center" style={{ justifyContent: 'flex-end', gap: 8 }}>
+                                {showBirthdays && (
+                                    <button className="btn btn-primary btn-sm" style={{ background: 'var(--color-success)', border: 'none', padding: '6px 10px' }} onClick={() => prepareBirthdayMsg(client)} title="Enviar Parabéns">
+                                        <Gift size={14} />
+                                    </button>
+                                )}
                                 <button className="btn btn-secondary btn-sm" style={{ padding: '6px 10px' }} onClick={() => setSelectedClient(client) || setShowDetail(true)} title="Detalhes"><Eye size={14} /></button>
                                 <button className="btn btn-secondary btn-sm" style={{ padding: '6px 10px' }} onClick={() => handleOpenModal(client)} title="Editar"><Edit3 size={14} /></button>
                                 <button className="btn btn-danger btn-sm" style={{ padding: '6px 10px' }} onClick={() => deleteClient(client.id)} title="Remover"><Trash2 size={14} /></button>
@@ -342,6 +382,46 @@ export default function Clients() {
                             ) : (
                                 <p className="text-center text-secondary" style={{ marginTop: 20 }}>Sem histórico de agendamentos</p>
                             )}
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* Birthday Message Modal */}
+            {showBirthdayMsg && selectedBirthday && (
+                <div className="modal-overlay" onClick={() => setShowBirthdayMsg(false)}>
+                    <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 500, borderRadius: 20 }}>
+                        <div className="modal-header">
+                            <h2>Enviar Parabéns</h2>
+                            <button onClick={() => setShowBirthdayMsg(false)}><X size={20} /></button>
+                        </div>
+                        <div style={{ padding: 24 }}>
+                            <div style={{ marginBottom: 15, display: 'flex', alignItems: 'center', gap: 12, padding: 15, background: 'var(--color-bg-secondary)', borderRadius: 12 }}>
+                                <div style={{ width: 45, height: 45, borderRadius: '50%', background: 'var(--color-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#000', fontWeight: 800 }}>
+                                    {selectedBirthday.name.charAt(0)}
+                                </div>
+                                <div>
+                                    <h4 style={{ margin: 0 }}>{selectedBirthday.name}</h4>
+                                    <p style={{ margin: 0, fontSize: '0.8rem', opacity: 0.7 }}>WhatsApp: {maskPhone(selectedBirthday.whatsapp)}</p>
+                                </div>
+                            </div>
+
+                            <div className="form-group">
+                                <label className="form-label">Mensagem Personalizada</label>
+                                <textarea
+                                    className="form-input"
+                                    rows="10"
+                                    value={birthdayMsg}
+                                    onChange={e => setBirthdayMsg(e.target.value)}
+                                    style={{ fontSize: '0.9rem', lineHeight: '1.4' }}
+                                ></textarea>
+                            </div>
+
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 12, marginTop: 20 }}>
+                                <button className="btn btn-secondary" onClick={() => setShowBirthdayMsg(false)}>Cancelar</button>
+                                <button className="btn btn-primary" onClick={sendBirthdayWhatsApp} style={{ background: '#25D366', borderColor: '#25D366', color: '#fff' }}>
+                                    <Phone size={18} /> Enviar WhatsApp
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
