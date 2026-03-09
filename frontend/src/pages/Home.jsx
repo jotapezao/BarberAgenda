@@ -413,8 +413,9 @@ export default function Home() {
                                     <p className="text-secondary">Fale conosco pelo WhatsApp:</p>
                                     <div style={{ fontSize: '1.3rem', fontWeight: 800, margin: '8px 0', color: '#fff' }}>65 99285-9585</div>
                                     <a href={`https://wa.me/5565992859585`} target="_blank" rel="noreferrer" className="btn btn-success btn-sm" style={{ marginTop: 10 }}>
-                                        <Instagram size={16} /> Abrir Chat Agora
+                                        <Phone size={16} /> Abrir Chat Agora
                                     </a>
+
                                 </div>
                             </div>
 

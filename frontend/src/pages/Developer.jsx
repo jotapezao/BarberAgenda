@@ -93,14 +93,18 @@ export default function Developer() {
 
                         <div style={{ display: 'flex', gap: '20px', justifyContent: 'center', flexWrap: 'wrap' }}>
                             <a href="https://wa.me/5565992859585" target="_blank" rel="noreferrer" className="dev-btn-neon" style={{ borderRadius: '16px', padding: '18px 40px', fontWeight: 700, fontSize: '1rem' }}>
-                                <Globe size={20} /> Solicitar Orçamento
+                                <Phone size={20} /> (65) 99285-9585
+                            </a>
+                            <a href="mailto:jpffs@outlook.com" className="dev-btn-outline" style={{ borderRadius: '16px', padding: '18px 40px', color: '#fff', border: '1px solid rgba(255,255,255,0.1)', fontWeight: 600, fontSize: '1rem', background: 'rgba(255,255,255,0.03)' }}>
+                                <Mail size={20} /> jpffs@outlook.com
                             </a>
                             <a href="https://instagram.com/jpzaoo" target="_blank" rel="noreferrer" className="dev-btn-outline" style={{ borderRadius: '16px', padding: '18px 40px', color: '#fff', border: '1px solid rgba(255,255,255,0.1)', fontWeight: 600, fontSize: '1rem', background: 'rgba(255,255,255,0.03)' }}>
-                                <Instagram size={20} /> Instagram Professional
+                                <Instagram size={20} /> @jpzaoo
                             </a>
                         </div>
                     </div>
                 </section>
+
 
                 {/* Specialties */}
                 <section className="container" style={{ padding: '60px 20px', maxWidth: '1100px' }}>
