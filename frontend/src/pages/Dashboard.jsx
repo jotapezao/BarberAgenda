@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { adminApi, publicApi } from '../api';
 import { useToast } from '../components/Toast';
 import AdminLayout from '../components/AdminLayout';
-import { Calendar, Users, CheckCircle, XCircle, Clock, Phone, Plus, Search, Scissors, Filter } from 'lucide-react';
+import { Calendar, Users, CheckCircle, XCircle, Clock, Phone, Plus, Search, Scissors, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
 import { maskPhone } from '../utils/mask';
 
 export default function Dashboard() {
@@ -10,12 +10,15 @@ export default function Dashboard() {
     const [barbers, setBarbers] = useState([]);
     const [services, setServices] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
     const [selectedBarber, setSelectedBarber] = useState('all');
     const [transferData, setTransferData] = useState({ id: null, barberId: '' });
     const [finishModal, setFinishModal] = useState({ id: null, discount_amount: '', is_birthday_reward: false, payment_method: 'PIX' });
     const [showNewApt, setShowNewApt] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [newApt, setNewApt] = useState({ client_name: '', client_whatsapp: '', service_id: '', barber_id: '', date: '', time: '', notes: '' });
+    const [clientSuggestions, setClientSuggestions] = useState([]);
+    const [showSuggestions, setShowSuggestions] = useState(false);
     const [savingApt, setSavingApt] = useState(false);
     const toast = useToast();
 
@@ -23,12 +26,15 @@ export default function Dashboard() {
     const user = userJson ? JSON.parse(userJson) : { role: 'admin' };
     const isAdmin = user.role === 'admin';
 
-    useEffect(() => { loadDashboard(); }, [selectedBarber]);
+    useEffect(() => { loadDashboard(); }, [selectedBarber, selectedDate]);
 
     const loadDashboard = async () => {
         try {
             const [dashboardData, svcData, barbersList] = await Promise.all([
-                adminApi.getDashboard({ barberId: selectedBarber !== 'all' ? selectedBarber : undefined }),
+                adminApi.getDashboard({
+                    barberId: selectedBarber !== 'all' ? selectedBarber : undefined,
+                    date: selectedDate
+                }),
                 adminApi.getServices(),
                 publicApi.getBarbers()
             ]);
@@ -89,6 +95,32 @@ export default function Dashboard() {
         finally { setSavingApt(false); }
     };
 
+    const handleClientSearch = async (val) => {
+        setNewApt({ ...newApt, client_name: val });
+        if (val.length < 2) {
+            setClientSuggestions([]);
+            setShowSuggestions(false);
+            return;
+        }
+        try {
+            const clients = await adminApi.getClients({ search: val });
+            setClientSuggestions(clients);
+            setShowSuggestions(true);
+        } catch (err) {
+            console.error('Erro ao buscar clientes:', err);
+        }
+    };
+
+    const selectClient = (client) => {
+        setNewApt({
+            ...newApt,
+            client_name: client.name,
+            client_whatsapp: client.whatsapp
+        });
+        setClientSuggestions([]);
+        setShowSuggestions(false);
+    };
+
     const statusBadge = (status) => {
         const labels = { confirmed: 'Confirmado', completed: 'Concluído', cancelled: 'Cancelado' };
         return <span className={`badge badge-${status}`} style={{ fontSize: '0.65rem', textTransform: 'uppercase', padding: '2px 6px' }}>{labels[status]}</span>;
@@ -120,8 +152,50 @@ export default function Dashboard() {
                 {/* Header Simplificado */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
                     <h1 style={{ fontSize: '1.4rem', fontWeight: 900, margin: 0 }}>Portal Barbeiro</h1>
-                    <button className="btn btn-primary btn-circle" onClick={() => setShowNewApt(true)} title="Novo Agendamento">
-                        <Plus size={24} />
+                    <div style={{ display: 'flex', gap: 10 }}>
+                        <button className="btn btn-primary btn-circle" onClick={() => {
+                            setNewApt({ ...newApt, date: selectedDate });
+                            setShowNewApt(true);
+                        }} title="Novo Agendamento">
+                            <Plus size={24} />
+                        </button>
+                    </div>
+                </div>
+
+                {/* Seletor de Data */}
+                <div className="card glass-card" style={{ padding: '10px 15px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, borderRadius: 16 }}>
+                    <button className="btn-icon" onClick={() => {
+                        const d = new Date(selectedDate + 'T12:00:00');
+                        d.setDate(d.getDate() - 1);
+                        setSelectedDate(d.toISOString().split('T')[0]);
+                    }}>
+                        <ChevronLeft size={20} />
+                    </button>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', position: 'relative' }}>
+                        <Calendar size={18} className="text-accent" />
+                        <input
+                            type="date"
+                            value={selectedDate}
+                            onChange={e => setSelectedDate(e.target.value)}
+                            style={{
+                                background: 'transparent',
+                                border: 'none',
+                                color: '#fff',
+                                fontSize: '0.95rem',
+                                fontWeight: 700,
+                                outline: 'none',
+                                cursor: 'pointer'
+                            }}
+                        />
+                    </div>
+
+                    <button className="btn-icon" onClick={() => {
+                        const d = new Date(selectedDate + 'T12:00:00');
+                        d.setDate(d.getDate() + 1);
+                        setSelectedDate(d.toISOString().split('T')[0]);
+                    }}>
+                        <ChevronRight size={20} />
                     </button>
                 </div>
 
@@ -173,7 +247,7 @@ export default function Dashboard() {
 
                 {/* Lista de Agenda de Hoje */}
                 <h2 style={{ fontSize: '1rem', fontWeight: 800, marginBottom: 15, display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <Clock size={18} className="text-secondary" /> Agenda de Hoje
+                    <Clock size={14} className="text-secondary" /> Agendamentos do Dia
                 </h2>
 
                 <div className="agenda-list-compact" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -237,9 +311,58 @@ export default function Dashboard() {
                             <button className="btn-icon" onClick={() => setShowNewApt(false)}><XCircle size={20} /></button>
                         </div>
                         <div className="modal-body">
-                            <div className="form-group">
+                            <div className="form-group" style={{ position: 'relative' }}>
                                 <label className="form-label">Cliente *</label>
-                                <input type="text" className="form-input" value={newApt.client_name} onChange={e => setNewApt({ ...newApt, client_name: e.target.value })} placeholder="Nome..." />
+                                <input
+                                    type="text"
+                                    className="form-input"
+                                    value={newApt.client_name}
+                                    onChange={e => handleClientSearch(e.target.value)}
+                                    placeholder="Comece a digitar o nome..."
+                                    autoComplete="off"
+                                />
+                                {showSuggestions && clientSuggestions.length > 0 && (
+                                    <div className="suggestions-list" style={{
+                                        position: 'absolute',
+                                        top: '100%',
+                                        left: 0,
+                                        right: 0,
+                                        background: 'rgba(30,30,30,0.98)',
+                                        backdropFilter: 'blur(10px)',
+                                        border: '1px solid var(--color-border)',
+                                        borderRadius: '12px',
+                                        zIndex: 100,
+                                        maxHeight: '220px',
+                                        overflowY: 'auto',
+                                        boxShadow: '0 10px 40px rgba(0,0,0,0.8)',
+                                        marginTop: '5px'
+                                    }}>
+                                        {clientSuggestions.map(client => (
+                                            <div
+                                                key={client.id}
+                                                className="suggestion-item"
+                                                onClick={() => selectClient(client)}
+                                                style={{
+                                                    padding: '12px 15px',
+                                                    cursor: 'pointer',
+                                                    borderBottom: '1px solid rgba(255,255,255,0.05)',
+                                                    display: 'flex',
+                                                    justifyContent: 'space-between',
+                                                    alignItems: 'center',
+                                                    transition: 'all 0.2s'
+                                                }}
+                                                onMouseOver={e => e.currentTarget.style.background = 'rgba(212, 165, 72, 0.15)'}
+                                                onMouseOut={e => e.currentTarget.style.background = 'transparent'}
+                                            >
+                                                <div>
+                                                    <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>{client.name}</div>
+                                                    <div style={{ fontSize: '0.8rem', opacity: 0.6, color: 'var(--color-accent)' }}>{maskPhone(client.whatsapp)}</div>
+                                                </div>
+                                                <Plus size={14} className="text-secondary" />
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                             <div className="form-group">
                                 <label className="form-label">WhatsApp</label>
@@ -255,7 +378,7 @@ export default function Dashboard() {
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 15 }}>
                                 <div className="form-group">
                                     <label className="form-label">Data *</label>
-                                    <input type="date" className="form-input" value={newApt.date} onChange={e => setNewApt({ ...newApt, date: e.target.value })} />
+                                    <input type="date" className="form-input" value={newApt.date || selectedDate} onChange={e => setNewApt({ ...newApt, date: e.target.value })} />
                                 </div>
                                 <div className="form-group">
                                     <label className="form-label">Hora *</label>
@@ -277,77 +400,114 @@ export default function Dashboard() {
                             </button>
                         </div>
                     </div>
-                </div>
-            )}
+                </div >
+            )
+            }
 
-            {transferData.id && (
-                <div className="modal-overlay" onClick={() => setTransferData({ id: null, barberId: '' })}>
-                    <div className="modal animate-scale" onClick={e => e.stopPropagation()} style={{ borderRadius: 24 }}>
-                        <div className="modal-header">
-                            <h2>Transferir Barbeiro</h2>
-                            <button className="btn-icon" onClick={() => setTransferData({ id: null, barberId: '' })}><XCircle size={20} /></button>
-                        </div>
-                        <div className="modal-body">
-                            <select className="form-select" value={transferData.barberId} onChange={e => setTransferData({ ...transferData, barberId: e.target.value })}>
-                                <option value="">Selecione novo barbeiro...</option>
-                                {barbers.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
-                            </select>
-                        </div>
-                        <div className="modal-footer" style={{ border: 'none' }}>
-                            <button className="btn btn-primary" style={{ width: '100%' }} onClick={transferAppointment}>Concluir Transferência</button>
+            {
+                transferData.id && (
+                    <div className="modal-overlay" onClick={() => setTransferData({ id: null, barberId: '' })}>
+                        <div className="modal animate-scale" onClick={e => e.stopPropagation()} style={{ borderRadius: 24, maxWidth: 400 }}>
+                            <div className="modal-header">
+                                <h2>Transferir para outro Barbeiro</h2>
+                                <button className="btn-icon" onClick={() => setTransferData({ id: null, barberId: '' })}><XCircle size={20} /></button>
+                            </div>
+                            <div className="modal-body" style={{ padding: '20px 0' }}>
+                                <p style={{ opacity: 0.7, marginBottom: 15, fontSize: '0.9rem' }}>Selecione o novo profissional para este atendimento:</p>
+                                <div style={{ display: 'grid', gap: 10 }}>
+                                    {barbers.map(b => (
+                                        <button
+                                            key={b.id}
+                                            onClick={() => {
+                                                adminApi.updateAppointment(transferData.id, { barber_id: b.id })
+                                                    .then(() => {
+                                                        toast.success('Transferido para ' + b.name);
+                                                        setTransferData({ id: null, barberId: '' });
+                                                        loadDashboard();
+                                                    })
+                                                    .catch(() => toast.error('Erro ao transferir'));
+                                            }}
+                                            style={{
+                                                padding: '15px',
+                                                borderRadius: 12,
+                                                border: '1px solid var(--color-border)',
+                                                background: transferData.barberId == b.id ? 'var(--color-accent)' : 'rgba(255,255,255,0.03)',
+                                                color: transferData.barberId == b.id ? '#000' : '#fff',
+                                                textAlign: 'left',
+                                                fontWeight: 600,
+                                                cursor: 'pointer',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: 12,
+                                                transition: 'all 0.2s'
+                                            }}
+                                        >
+                                            <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem' }}>
+                                                {b.name.charAt(0)}
+                                            </div>
+                                            {b.name}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                            <div className="modal-footer" style={{ border: 'none' }}>
+                                <button className="btn btn-ghost" style={{ width: '100%' }} onClick={() => setTransferData({ id: null, barberId: '' })}>Cancelar</button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
-            {finishModal.id && (
-                <div className="modal-overlay" onClick={() => setFinishModal({ id: null, discount_amount: '', is_birthday_reward: false })}>
-                    <div className="modal animate-scale" onClick={e => e.stopPropagation()} style={{ borderRadius: 24, maxWidth: 400 }}>
-                        <div className="modal-header">
-                            <h2>Finalizar Atendimento</h2>
-                            <button className="btn-icon" onClick={() => setFinishModal({ id: null, discount_amount: '', is_birthday_reward: false })}><XCircle size={20} /></button>
-                        </div>
-                        <div className="modal-body">
-                            <div className="form-group">
-                                <label className="form-label">Desconto aplicado (R$)</label>
-                                <input
-                                    type="number"
-                                    className="form-input"
-                                    value={finishModal.discount_amount}
-                                    onChange={e => setFinishModal({ ...finishModal, discount_amount: e.target.value })}
-                                    placeholder="0,00"
-                                    inputMode="numeric"
-                                />
+            {
+                finishModal.id && (
+                    <div className="modal-overlay" onClick={() => setFinishModal({ id: null, discount_amount: '', is_birthday_reward: false })}>
+                        <div className="modal animate-scale" onClick={e => e.stopPropagation()} style={{ borderRadius: 24, maxWidth: 400 }}>
+                            <div className="modal-header">
+                                <h2>Finalizar Atendimento</h2>
+                                <button className="btn-icon" onClick={() => setFinishModal({ id: null, discount_amount: '', is_birthday_reward: false })}><XCircle size={20} /></button>
                             </div>
-                            <div className="form-group">
-                                <label className="form-label">Forma de Pagamento</label>
-                                <select
-                                    className="form-select"
-                                    value={finishModal.payment_method}
-                                    onChange={e => setFinishModal({ ...finishModal, payment_method: e.target.value })}
-                                >
-                                    <option value="PIX">PIX</option>
-                                    <option value="Dinheiro">Dinheiro</option>
-                                    <option value="Cartão de Crédito">Cartão de Crédito</option>
-                                    <option value="Cartão de Débito">Cartão de Débito</option>
-                                </select>
+                            <div className="modal-body">
+                                <div className="form-group">
+                                    <label className="form-label">Desconto aplicado (R$)</label>
+                                    <input
+                                        type="number"
+                                        className="form-input"
+                                        value={finishModal.discount_amount}
+                                        onChange={e => setFinishModal({ ...finishModal, discount_amount: e.target.value })}
+                                        placeholder="0,00"
+                                        inputMode="numeric"
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label className="form-label">Forma de Pagamento</label>
+                                    <select
+                                        className="form-select"
+                                        value={finishModal.payment_method}
+                                        onChange={e => setFinishModal({ ...finishModal, payment_method: e.target.value })}
+                                    >
+                                        <option value="PIX">PIX</option>
+                                        <option value="Dinheiro">Dinheiro</option>
+                                        <option value="Cartão de Crédito">Cartão de Crédito</option>
+                                        <option value="Cartão de Débito">Cartão de Débito</option>
+                                    </select>
+                                </div>
+                                <label className="flex-center" style={{ gap: 10, cursor: 'pointer', justifyContent: 'flex-start', marginTop: 15 }}>
+                                    <input
+                                        type="checkbox"
+                                        checked={finishModal.is_birthday_reward}
+                                        onChange={e => setFinishModal({ ...finishModal, is_birthday_reward: e.target.checked })}
+                                        style={{ width: 18, height: 18 }}
+                                    />
+                                    <span style={{ fontSize: '0.9rem' }}>Cortesia de Aniversário</span>
+                                </label>
                             </div>
-                            <label className="flex-center" style={{ gap: 10, cursor: 'pointer', justifyContent: 'flex-start', marginTop: 15 }}>
-                                <input
-                                    type="checkbox"
-                                    checked={finishModal.is_birthday_reward}
-                                    onChange={e => setFinishModal({ ...finishModal, is_birthday_reward: e.target.checked })}
-                                    style={{ width: 18, height: 18 }}
-                                />
-                                <span style={{ fontSize: '0.9rem' }}>Cortesia de Aniversário</span>
-                            </label>
-                        </div>
-                        <div className="modal-footer" style={{ border: 'none' }}>
-                            <button className="btn btn-primary" style={{ width: '100%' }} onClick={finishAppointment}>Confirmar e Finalizar</button>
+                            <div className="modal-footer" style={{ border: 'none' }}>
+                                <button className="btn btn-primary" style={{ width: '100%' }} onClick={finishAppointment}>Confirmar e Finalizar</button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
-        </AdminLayout>
+                )
+            }
+        </AdminLayout >
     );
 }

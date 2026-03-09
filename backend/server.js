@@ -352,13 +352,14 @@ app.get('/api/auth/me', authenticateToken, (req, res) => res.json(req.user));
 
 // -- DASHBOARD --
 app.get('/api/admin/dashboard', authenticateToken, async (req, res) => {
-    const today = new Date().toISOString().split('T')[0];
-    let barberId = req.query.barberId;
+    const { barberId: queryBarberId, date } = req.query;
+    const targetDate = date || new Date().toISOString().split('T')[0];
+    let barberId = queryBarberId;
     if (req.user.role === 'barber') { barberId = req.user.id; }
 
     const whereBarber = barberId ? ' AND a.barber_id = ?' : '';
     const statsWhereBarber = barberId ? ' AND barber_id = ?' : '';
-    const params = barberId ? [today, barberId] : [today];
+    const params = barberId ? [targetDate, barberId] : [targetDate];
 
     const todayAppointments = await db.all(`
     SELECT a.*, s.name as service_name, s.price as service_price, s.duration as service_duration, u.name as barber_name
