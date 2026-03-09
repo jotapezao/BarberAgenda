@@ -381,37 +381,71 @@ export default function Home() {
                 </section>
             )}
 
-            <section id="location" className="section bg-secondary" style={{ paddingBottom: 100 }}>
-                <div className="container" style={{ display: 'flex', justifyContent: 'center' }}>
-                    <div className="card card-glass animate-fade" style={{ padding: '50px 40px', maxWidth: 800, margin: '0 auto', boxShadow: '0 8px 30px rgba(0,0,0,0.5)', borderRadius: '24px', width: '100%' }}>
-                        <div style={{ textAlign: 'center', marginBottom: 40 }}>
-                            <h3 style={{ fontSize: '2.2rem', marginBottom: 10, fontFamily: 'var(--font-display)', fontWeight: 800 }}>Onde nos <span>Encontrar</span></h3>
-                            <p className="text-secondary">Visite nossa unidade ou entre em contato</p>
+            <section id="location" className="section bg-secondary">
+                <div className="container">
+                    <div className="section-header" style={{ marginBottom: 60 }}>
+                        <h2 style={{ fontSize: '2.5rem' }}>Onde nos <span>Encontrar</span></h2>
+                        <p>Visite nossa unidade ou entre em contato pelos nossos canais oficiais</p>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: 30 }}>
+                        <div className="card card-glass fade-up" style={{ padding: '40px', display: 'flex', flexDirection: 'column', gap: 30 }}>
+                            <div className="contact-item" style={{ display: 'flex', gap: 20 }}>
+                                <div style={{ width: 56, height: 56, borderRadius: 16, background: 'var(--color-bg-primary)', border: '1px solid var(--color-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-accent)' }}>
+                                    <MapPin size={28} />
+                                </div>
+                                <div>
+                                    <h4 style={{ fontSize: '1.2rem', marginBottom: 5 }}>Endereço VIP</h4>
+                                    <p className="text-secondary" style={{ lineHeight: 1.6 }}>
+                                        {siteConfig.address || 'Rua Exemplo, 123'}<br />
+                                        {siteConfig.city || 'Barra do Garças - MT'}
+                                    </p>
+                                    <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(siteConfig.address + ', ' + siteConfig.city)}`} target="_blank" rel="noreferrer" className="text-accent" style={{ fontWeight: 700, fontSize: '0.9rem', marginTop: 10, display: 'inline-block' }}>Ver no Google Maps →</a>
+                                </div>
+                            </div>
+
+                            <div className="contact-item" style={{ display: 'flex', gap: 20 }}>
+                                <div style={{ width: 56, height: 56, borderRadius: 16, background: 'var(--color-bg-primary)', border: '1px solid var(--color-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-accent)' }}>
+                                    <Phone size={28} />
+                                </div>
+                                <div>
+                                    <h4 style={{ fontSize: '1.2rem', marginBottom: 5 }}>Canais de Atendimento</h4>
+                                    <p className="text-secondary">Fale conosco pelo WhatsApp:</p>
+                                    <div style={{ fontSize: '1.3rem', fontWeight: 800, margin: '8px 0', color: '#fff' }}>65 99285-9585</div>
+                                    <a href={`https://wa.me/5565992859585`} target="_blank" rel="noreferrer" className="btn btn-success btn-sm" style={{ marginTop: 10 }}>
+                                        <Instagram size={16} /> Abrir Chat Agora
+                                    </a>
+                                </div>
+                            </div>
+
+                            <div style={{ marginTop: 'auto', paddingTop: 20, borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                                <h5 style={{ marginBottom: 15, fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: 1, color: 'var(--color-text-muted)' }}>Horário de Funcionamento</h5>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                                    <span className="text-secondary">Segunda - Sábado</span>
+                                    <span style={{ fontWeight: 700 }}>{siteConfig.open_time || '08:00'} - {siteConfig.close_time || '19:00'}</span>
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', opacity: 0.5 }}>
+                                    <span className="text-secondary">Domingo</span>
+                                    <span style={{ fontWeight: 700 }}>Fechado</span>
+                                </div>
+                            </div>
                         </div>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 40, textAlign: 'left' }}>
-                            <div className="contact-info-item" style={{ display: 'flex', alignItems: 'flex-start', gap: 20 }}>
-                                <div className="service-icon" style={{ width: 50, height: 50, borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--color-bg-primary)', border: '1px solid var(--color-border)' }}><MapPin size={24} className="text-accent" /></div>
-                                <div>
-                                    <strong style={{ display: 'block', marginBottom: 6, fontSize: '1.15rem' }}>Localização</strong>
-                                    <p className="text-secondary" style={{ fontSize: '1rem', lineHeight: 1.6 }}>{siteConfig.address || 'Rua Exemplo, 123'}<br />{siteConfig.city || 'Sua Cidade - SP'}</p>
-                                    <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(siteConfig.address + ', ' + siteConfig.city)}`} target="_blank" rel="noreferrer" style={{ display: 'inline-block', marginTop: 10, fontSize: '0.85rem', color: 'var(--color-accent)', fontWeight: 700 }}>Abrir no Mapas →</a>
-                                </div>
-                            </div>
-                            <div className="contact-info-item" style={{ display: 'flex', alignItems: 'flex-start', gap: 20 }}>
-                                <div className="service-icon" style={{ width: 50, height: 50, borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--color-bg-primary)', border: '1px solid var(--color-border)' }}><Phone size={24} className="text-accent" /></div>
-                                <div>
-                                    <strong style={{ display: 'block', marginBottom: 6, fontSize: '1.15rem' }}>Contato Direto</strong>
-                                    <p className="text-secondary" style={{ fontSize: '1rem', lineHeight: 1.6 }}>Fale conosco agora:</p>
-                                    <p style={{ fontSize: '1.1rem', fontWeight: 800, marginTop: 4 }}>{siteConfig.phone || '(00) 00000-0000'}</p>
-                                    <div style={{ display: 'flex', gap: 12, marginTop: 15 }}>
-                                        <a href={`https://wa.me/55${(siteConfig.phone || '').replace(/\D/g, '')}`} target="_blank" rel="noreferrer" className="btn btn-success btn-sm" style={{ padding: '8px 12px' }}><Phone size={16} /> WhatsApp</a>
-                                    </div>
-                                </div>
-                            </div>
+
+                        <div className="card card-glass fade-up" style={{ padding: 10, minHeight: 400, overflow: 'hidden' }}>
+                            <iframe
+                                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3844.463138356942!2d-52.26189912411926!3d-15.88478472535032!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x937072cc2193e25b%3A0x6b6e4e5e4e5e4e5e!2zQmFycmEgZG8gR2Fyw6dhcyAtIE1U!5e0!3m2!1spt-BR!2sbr!4v1709999999999!5m2!1spt-BR!2sbr"
+                                width="100%"
+                                height="100%"
+                                style={{ border: 0, borderRadius: 15, filter: 'grayscale(0.3) contrast(1.1) invert(0.9) hue-rotate(180deg)' }}
+                                allowFullScreen=""
+                                loading="lazy"
+                                referrerPolicy="no-referrer-when-downgrade"
+                            ></iframe>
                         </div>
                     </div>
                 </div>
             </section>
+
 
             <footer className="site-footer" style={{ background: 'var(--color-bg-primary)', borderTop: '1px solid var(--color-border)', padding: '80px 0 40px' }}>
                 <div className="container" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 60, marginBottom: 60 }}>

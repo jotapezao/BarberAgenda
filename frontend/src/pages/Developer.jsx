@@ -73,7 +73,7 @@ export default function Developer() {
 
                         <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '8px 20px', background: 'rgba(212, 165, 72, 0.08)', border: '1px solid rgba(212, 165, 72, 0.2)', borderRadius: '100px', marginBottom: '32px', backdropFilter: 'blur(10px)' }}>
                             <Zap size={14} style={{ color: '#D4AF37' }} />
-                            <span style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '2px', color: '#D4AF37' }}>Full Stack Engineer & Tech Lead</span>
+                            <span style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '2px', color: '#D4AF37' }}>Especialista em Soluções de T.I. & Infraestrutura</span>
                         </div>
 
                         <h1 style={{ fontSize: 'clamp(3rem, 10vw, 5rem)', fontWeight: 900, marginBottom: '24px', lineHeight: 0.9, letterSpacing: '-3px' }}>
@@ -88,14 +88,14 @@ export default function Developer() {
                         </h1>
 
                         <p style={{ fontSize: '1.25rem', color: '#94a3b8', maxWidth: '700px', margin: '0 auto 48px', lineHeight: 1.6, fontWeight: 400 }}>
-                            Transformando visões em realidade digital através de código refinado e design de elite. Especialista em ecossistemas Full Stack escaláveis.
+                            Soluções em T.I., suporte técnico especializado, projetos de rede e infraestrutura robusta. Tudo que sua empresa necessita para crescer com segurança e tecnologia.
                         </p>
 
                         <div style={{ display: 'flex', gap: '20px', justifyContent: 'center', flexWrap: 'wrap' }}>
-                            <a href="https://wa.me/5500000000000" target="_blank" rel="noreferrer" className="dev-btn-neon" style={{ borderRadius: '16px', padding: '18px 40px', fontWeight: 700, fontSize: '1rem' }}>
-                                <Globe size={20} /> Solicitar Projeto
+                            <a href="https://wa.me/5565992859585" target="_blank" rel="noreferrer" className="dev-btn-neon" style={{ borderRadius: '16px', padding: '18px 40px', fontWeight: 700, fontSize: '1rem' }}>
+                                <Globe size={20} /> Solicitar Orçamento
                             </a>
-                            <a href="#" className="dev-btn-outline" style={{ borderRadius: '16px', padding: '18px 40px', color: '#fff', border: '1px solid rgba(255,255,255,0.1)', fontWeight: 600, fontSize: '1rem', background: 'rgba(255,255,255,0.03)' }}>
+                            <a href="https://instagram.com/jpzaoo" target="_blank" rel="noreferrer" className="dev-btn-outline" style={{ borderRadius: '16px', padding: '18px 40px', color: '#fff', border: '1px solid rgba(255,255,255,0.1)', fontWeight: 600, fontSize: '1rem', background: 'rgba(255,255,255,0.03)' }}>
                                 <Instagram size={20} /> Instagram Professional
                             </a>
                         </div>
@@ -106,9 +106,9 @@ export default function Developer() {
                 <section className="container" style={{ padding: '60px 20px', maxWidth: '1100px' }}>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }}>
                         {[
-                            { icon: <Code size={28} />, title: "Desenvolvimento Web", desc: "Sistemas modernos, rápidos e focados em conversão, utilizando as melhores tecnologias do mercado." },
-                            { icon: <Cpu size={28} />, title: "Backend & APIs", desc: "Arquiteturas escaláveis e APIs seguras para integrar seu negócio a qualquer plataforma." },
-                            { icon: <Shield size={28} />, title: "Segurança & Cloud", desc: "Deploy profissional em nuvem (Railway/AWS) com as melhores práticas de proteção de dados." }
+                            { icon: <Cpu size={28} />, title: "Soluções em T.I. & Suporte", desc: "Suporte especializado, manutenção preventiva e corretiva, e gestão de sistemas para sua empresa." },
+                            { icon: <Network size={28} />, title: "Redes & Infraestrutura", desc: "Projetos de cabeamento, Wi-Fi corporativo de alta performance e configuração de Firewall." },
+                            { icon: <Shield size={28} />, title: "Segurança & CFTV", desc: "Projetos completos de monitoramento por câmeras, controle de acesso e segurança eletrônica." }
                         ].map((item, i) => (
                             <div key={i} className="dev-glass-card" style={{
                                 padding: '40px',
@@ -124,6 +124,8 @@ export default function Developer() {
                         ))}
                     </div>
                 </section>
+
+
 
                 {/* Status Section */}
                 <section style={{ padding: '60px 20px', background: 'rgba(212, 165, 72, 0.02)' }}>
