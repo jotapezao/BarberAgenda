@@ -194,6 +194,8 @@ const dbWrapper = {
         status TEXT NOT NULL DEFAULT 'confirmed',
         notes TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        payment_method TEXT,
+        payment_status TEXT DEFAULT 'pending',
         FOREIGN KEY (service_id) REFERENCES services(id),
         FOREIGN KEY (client_id) REFERENCES clients(id),
         FOREIGN KEY (barber_id) REFERENCES users(id)
@@ -334,6 +336,12 @@ const dbWrapper = {
             IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='appointments' AND COLUMN_NAME='is_birthday_reward') THEN
               ALTER TABLE appointments ADD COLUMN is_birthday_reward INTEGER DEFAULT 0;
             END IF;
+            IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='appointments' AND COLUMN_NAME='payment_method') THEN
+              ALTER TABLE appointments ADD COLUMN payment_method TEXT;
+            END IF;
+            IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='appointments' AND COLUMN_NAME='payment_status') THEN
+              ALTER TABLE appointments ADD COLUMN payment_status TEXT DEFAULT 'pending';
+            END IF;
           END $$;
         `);
       } else {
@@ -346,6 +354,8 @@ const dbWrapper = {
         if (!saleCols.find(c => c.name === 'appointment_id')) await this.run("ALTER TABLE product_sales ADD COLUMN appointment_id INTEGER");
         if (!appCols.find(c => c.name === 'discount_amount')) await this.run("ALTER TABLE appointments ADD COLUMN discount_amount REAL DEFAULT 0");
         if (!appCols.find(c => c.name === 'is_birthday_reward')) await this.run("ALTER TABLE appointments ADD COLUMN is_birthday_reward INTEGER DEFAULT 0");
+        if (!appCols.find(c => c.name === 'payment_method')) await this.run("ALTER TABLE appointments ADD COLUMN payment_method TEXT");
+        if (!appCols.find(c => c.name === 'payment_status')) await this.run("ALTER TABLE appointments ADD COLUMN payment_status TEXT DEFAULT 'pending'");
       }
     } catch (e) {
       console.warn('Migration warning:', e.message);

@@ -15,6 +15,8 @@ import Barbers from './pages/Barbers';
 import Security from './pages/Security';
 import Developer from './pages/Developer';
 import Reviews from './pages/Reviews';
+import Booking from './pages/Booking';
+
 
 function ProtectedRoute({ children }) {
   const token = localStorage.getItem('token');
@@ -65,7 +67,9 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/booking" element={<Booking />} />
           <Route path="/developer" element={<Developer />} />
+
           <Route path="/admin" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/admin/services" element={<ProtectedRoute><Services /></ProtectedRoute>} />
           <Route path="/admin/schedule" element={<ProtectedRoute><Schedule /></ProtectedRoute>} />

@@ -404,6 +404,8 @@ app.patch('/api/admin/appointments/:id', authenticateToken, async (req, res) => 
     if (barber_id !== undefined) { updates.push('barber_id = ?'); params.push(barber_id); }
     if (discount_amount !== undefined) { updates.push('discount_amount = ?'); params.push(discount_amount); }
     if (is_birthday_reward !== undefined) { updates.push('is_birthday_reward = ?'); params.push(is_birthday_reward ? 1 : 0); }
+    if (payment_method !== undefined) { updates.push('payment_method = ?'); params.push(payment_method); }
+    if (payment_status !== undefined) { updates.push('payment_status = ?'); params.push(payment_status); }
 
     if (updates.length === 0) return res.status(400).json({ error: 'Nenhum campo para atualizar' });
     params.push(id);
@@ -901,6 +903,36 @@ app.get('/api/admin/financial', authenticateToken, async (req, res) => {
     GROUP BY u.id, u.name
   `, [queryStart, queryEnd, ...(barberId ? [barberId] : [])]);
 
+    const productStats = await db.get(`
+        SELECT COALESCE(SUM(total_price), 0) as total_revenue,
+               COALESCE(SUM(quantity * cost_price), 0) as total_cost
+        FROM product_sales ps JOIN products p ON ps.product_id = p.id
+        WHERE ps.date >= ? AND ps.date <= ?
+    `, [queryStart, queryEnd]);
+
+    const paymentMethods = await db.all(`
+        SELECT COALESCE(payment_method, 'Não Definido') as method, COUNT(*) as count, SUM(s.price - COALESCE(a.discount_amount, 0)) as revenue
+        FROM appointments a JOIN services s ON a.service_id = s.id 
+        WHERE a.status = 'completed' AND a.date >= ? AND a.date <= ?${whereBarber}
+        GROUP BY method
+    `, paramsPeriod);
+
+    const transactions = await db.all(`
+        SELECT a.id, a.date, a.time, a.client_name, s.name as service_name, (s.price - COALESCE(a.discount_amount, 0)) as amount, 
+               a.payment_method, u.name as barber_name
+        FROM appointments a 
+        JOIN services s ON a.service_id = s.id 
+        LEFT JOIN users u ON a.barber_id = u.id
+        WHERE a.status = 'completed' AND a.date >= ? AND a.date <= ?${whereBarber}
+        ORDER BY a.date DESC, a.time DESC LIMIT 50
+    `, paramsPeriod);
+
+    const totalCommissions = individualCommissions.reduce((acc, curr) => acc + (curr.period_commission || 0), 0);
+    const serviceRevenue = periodStats.total_revenue;
+    const totalRevenue = serviceRevenue + productStats.total_revenue;
+    const totalCost = productStats.total_cost + totalCommissions;
+    const estimatedNetProfit = totalRevenue - totalCost;
+
     res.json({
         today: {
             appointments: todayStats.total_appointments,
@@ -912,9 +944,13 @@ app.get('/api/admin/financial', authenticateToken, async (req, res) => {
             revenue: periodStats.total_revenue,
             total_discounts: periodStats.total_discounts,
             avgTicket: parseFloat(avgTicket),
-            productSales: productSalesPeriod.total
+            productSales: productStats.total_revenue,
+            productProfit: productStats.total_revenue - productStats.total_cost,
+            totalRevenue,
+            totalCommissions,
+            estimatedNetProfit
         },
-        dailyRevenue, monthlyRevenue, topServices, individualCommissions
+        dailyRevenue, monthlyRevenue, topServices, individualCommissions, paymentMethods, transactions
     });
 });
 

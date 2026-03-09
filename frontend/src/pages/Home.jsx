@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+
 import { publicApi, BASE_URL } from '../api';
 import { useToast } from '../components/Toast';
 import { Calendar, Clock, User, Phone, CheckCircle, Instagram, MapPin, ChevronRight, Menu, X, Scissors, Star, Trash2 } from 'lucide-react';
@@ -190,7 +192,8 @@ export default function Home() {
                         <div className={`navbar-overlay ${isMenuOpen ? 'active' : ''}`} onClick={() => setIsMenuOpen(false)} />
                         <ul className={`navbar-links ${isMenuOpen ? 'open' : ''}`}>
                             <li><a href="#services" onClick={() => setIsMenuOpen(false)}>Serviços</a></li>
-                            <li><a href="#booking" onClick={() => setIsMenuOpen(false)}>Agendar</a></li>
+                            <li><Link to="/booking" onClick={() => setIsMenuOpen(false)}>Agendar</Link></li>
+
                             <li><a href="#about" onClick={() => setIsMenuOpen(false)}>Nossa História</a></li>
                             <li><a href="#location" onClick={() => setIsMenuOpen(false)}>Onde Estamos</a></li>
                             <li className="mobile-only"><button className="btn btn-outline btn-sm" onClick={() => { setShowCancelModal(true); setIsMenuOpen(false); }} style={{ width: '100%', marginTop: 10 }}>Cancelar Agendamento</button></li>
@@ -214,7 +217,8 @@ export default function Home() {
                     const btnText = siteConfig[`banner_btn_text_${i + 1}`] || 'Agendar Agora';
                     const btnAction = siteConfig[`banner_action_${i + 1}`] || 'booking';
 
-                    let actionHref = "#booking";
+                    let actionHref = "/booking";
+
                     let target = "_self";
                     if (btnAction === 'whatsapp') {
                         const cleanPhone = (siteConfig.phone || '').replace(/\D/g, '');
@@ -232,7 +236,12 @@ export default function Home() {
                                 <h1>{banner.title}</h1>
                                 <p>{banner.subtitle}</p>
                                 <div className="hero-buttons">
-                                    <a href={actionHref} target={target} className="btn btn-primary btn-lg" style={{ fontSize: '1.25rem', padding: '18px 42px', transform: 'scale(1.15)', transition: 'all 0.3s ease' }}>{btnText}</a>
+                                    {btnAction === 'booking' ? (
+                                        <Link to="/booking" className="btn btn-primary btn-lg" style={{ fontSize: '1.25rem', padding: '18px 42px', transform: 'scale(1.15)', transition: 'all 0.3s ease' }}>{btnText}</Link>
+                                    ) : (
+                                        <a href={actionHref} target={target} className="btn btn-primary btn-lg" style={{ fontSize: '1.25rem', padding: '18px 42px', transform: 'scale(1.15)', transition: 'all 0.3s ease' }}>{btnText}</a>
+                                    )}
+
                                 </div>
                             </div>
                         </div>
@@ -286,221 +295,18 @@ export default function Home() {
                 </div>
             </section>
 
-            <section id="booking" className="section bg-secondary">
-                <div className="container">
-                    <div className="section-header">
-                        <h2>Agende seu <span>Horário</span></h2>
-                        <p>Selecione os dados abaixo para reservar sua vaga</p>
-                    </div>
-
-                    <div className="booking-form-container card card-glass">
-                        {!bookingSuccess ? (
-                            <>
-                                <div className="booking-steps">
-                                    <div className={`step ${bookingStep >= 1 ? 'active' : ''} ${bookingStep > 1 ? 'done' : ''}`}><div className="step-number">1</div><span>WhatsApp</span></div>
-                                    <div className="step-line"></div>
-                                    <div className={`step ${bookingStep >= 2 ? 'active' : ''} ${bookingStep > 2 ? 'done' : ''}`}><div className="step-number">2</div><span>Dados</span></div>
-                                    <div className="step-line"></div>
-                                    <div className={`step ${bookingStep >= 3 ? 'active' : ''} ${bookingStep > 3 ? 'done' : ''}`}><div className="step-number">3</div><span>Serviço</span></div>
-                                    {siteConfig.use_barbers === '1' && (
-                                        <>
-                                            <div className="step-line"></div>
-                                            <div className={`step ${bookingStep >= 4 ? 'active' : ''} ${bookingStep > 4 ? 'done' : ''}`}><div className="step-number">4</div><span>Barbeiro</span></div>
-                                        </>
-                                    )}
-                                    <div className="step-line"></div>
-                                    <div className={`step ${bookingStep >= (siteConfig.use_barbers === '1' ? 5 : 4) ? 'active' : ''}`}><div className="step-number">{siteConfig.use_barbers === '1' ? 5 : 4}</div><span>Escolher</span></div>
-                                </div>
-
-                                {bookingStep === 1 && (
-                                    <form onSubmit={handleWhatsAppSubmit} className="animate-fade">
-                                        <div className="form-group">
-                                            <label className="form-label">📱 Seu WhatsApp</label>
-                                            <input type="text" className="form-input" placeholder="(00) 00000-0000" value={maskPhone(formData.client_whatsapp)} onChange={e => setFormData({ ...formData, client_whatsapp: e.target.value })} maxLength={15} required inputMode="numeric" />
-                                        </div>
-                                        <button type="submit" className="btn btn-primary w-full" style={{ width: '100%' }}>Próximo Passo <ChevronRight size={18} /></button>
-                                    </form>
-                                )}
-
-                                {bookingStep === 2 && (
-                                    <form onSubmit={(e) => { e.preventDefault(); setBookingStep(3); }} className="animate-fade">
-                                        <div className="form-group">
-                                            <label className="form-label">👤 Seu Nome Completo</label>
-                                            <input type="text" className="form-input" placeholder="Como podemos te chamar?" value={formData.client_name} onChange={e => setFormData({ ...formData, client_name: e.target.value })} required autoFocus />
-                                        </div>
-                                        <div className="form-group">
-                                            <label className="form-label">🎂 Data de Nascimento (Opcional)</label>
-                                            <input type="date" className="form-input" value={formData.client_birth_date} onChange={e => setFormData({ ...formData, client_birth_date: e.target.value })} />
-                                        </div>
-                                        <div style={{ display: 'flex', gap: 12 }}>
-                                            <button type="button" className="btn btn-secondary" onClick={() => setBookingStep(1)} style={{ flex: 1 }}>Voltar</button>
-                                            <button type="submit" className="btn btn-primary" style={{ flex: 1 }}>Confirmar</button>
-                                        </div>
-                                    </form>
-                                )}
-
-                                {bookingStep === 3 && (
-                                    <form onSubmit={(e) => { e.preventDefault(); setBookingStep(siteConfig.use_barbers === '1' ? 4 : 5); }} className="animate-fade">
-                                        {isReturning && (
-                                            <div className="welcome-back-msg" style={{ background: 'var(--color-accent-subtle)', color: 'var(--color-accent)', padding: '12px 16px', borderRadius: 8, marginBottom: 20, fontSize: '0.9rem', border: '1px solid var(--color-accent-glow)' }}>
-                                                <strong>Olá, {formData.client_name.split(' ')[0]}!</strong> Seja bem-vindo(a) de volta.
-                                            </div>
-                                        )}
-                                        <div className="form-group">
-                                            <label className="form-label">✂️ Selecione o Serviço</label>
-                                            <div className="services-selection-grid" style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '10px' }}>
-                                                {services.map(s => (
-                                                    <div key={s.id}
-                                                        onClick={() => setFormData({ ...formData, service_id: s.id })}
-                                                        className={`service-option-card ${formData.service_id === s.id ? 'selected' : ''}`}
-                                                        style={{
-                                                            padding: '16px',
-                                                            borderRadius: '12px',
-                                                            background: formData.service_id === s.id ? 'var(--color-accent)' : 'rgba(255,255,255,0.03)',
-                                                            color: formData.service_id === s.id ? '#000' : '#fff',
-                                                            cursor: 'pointer',
-                                                            display: 'flex',
-                                                            justifyContent: 'space-between',
-                                                            alignItems: 'center',
-                                                            border: '1px solid rgba(255,255,255,0.1)',
-                                                            transition: 'all 0.2s ease'
-                                                        }}>
-                                                        <div>
-                                                            <div style={{ fontWeight: 700 }}>{s.name}</div>
-                                                            <div style={{ fontSize: '0.8rem', opacity: 0.8 }}>{s.duration} min</div>
-                                                        </div>
-                                                        <div style={{ fontWeight: 800 }}>{formatPrice(s.price)}</div>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                        <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
-                                            <button type="button" className="btn btn-secondary" onClick={() => setBookingStep(2)} style={{ flex: 1 }}>Voltar</button>
-                                            <button type="button" className="btn btn-primary" onClick={() => setBookingStep(siteConfig.use_barbers === '1' ? 4 : 5)} style={{ flex: 2 }} disabled={!formData.service_id}>Continuar</button>
-                                        </div>
-                                    </form>
-                                )}
-
-                                {bookingStep === 4 && siteConfig.use_barbers === '1' && (
-                                    <form onSubmit={(e) => { e.preventDefault(); setBookingStep(5); }} className="animate-fade">
-                                        <div className="form-group">
-                                            <label className="form-label">💈 Escolha o Barbeiro</label>
-                                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '12px' }}>
-                                                {barbers.map(b => (
-                                                    <div key={b.id}
-                                                        onClick={() => setFormData({ ...formData, barber_id: b.id })}
-                                                        style={{
-                                                            padding: '20px 10px',
-                                                            borderRadius: '16px',
-                                                            background: formData.barber_id === b.id ? 'var(--color-accent)' : 'rgba(255,255,255,0.03)',
-                                                            color: formData.barber_id === b.id ? '#000' : '#fff',
-                                                            cursor: 'pointer',
-                                                            textAlign: 'center',
-                                                            border: '1px solid rgba(255,255,255,0.1)',
-                                                            transition: 'all 0.2s ease',
-                                                            display: 'flex',
-                                                            flexDirection: 'column',
-                                                            alignItems: 'center',
-                                                            gap: '8px'
-                                                        }}>
-                                                        <div style={{
-                                                            width: 60,
-                                                            height: 60,
-                                                            borderRadius: '50%',
-                                                            background: formData.barber_id === b.id ? 'rgba(0,0,0,0.1)' : 'var(--color-bg-secondary)',
-                                                            margin: '0 auto',
-                                                            display: 'flex',
-                                                            alignItems: 'center',
-                                                            justifyContent: 'center',
-                                                            overflow: 'hidden',
-                                                            border: `2px solid ${formData.barber_id === b.id ? 'rgba(0,0,0,0.2)' : 'var(--color-accent-subtle)'}`
-                                                        }}>
-                                                            {b.photo_url ? (
-                                                                <img src={`${BASE_URL}${b.photo_url}`} alt={b.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                                            ) : (
-                                                                <User size={28} />
-                                                            )}
-                                                        </div>
-                                                        <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>{b.name}</div>
-                                                    </div>
-                                                ))}
-                                                <div onClick={() => setFormData({ ...formData, barber_id: '' })}
-                                                    style={{
-                                                        padding: '20px 10px',
-                                                        borderRadius: '16px',
-                                                        background: formData.barber_id === '' ? 'var(--color-accent)' : 'rgba(255,255,255,0.03)',
-                                                        color: formData.barber_id === '' ? '#000' : '#fff',
-                                                        cursor: 'pointer',
-                                                        textAlign: 'center',
-                                                        border: '1px solid rgba(255,255,255,0.1)'
-                                                    }}>
-                                                    <div style={{ width: 50, height: 50, borderRadius: '50%', background: 'rgba(255,255,255,0.1)', margin: '0 auto 10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                                        <Scissors size={24} />
-                                                    </div>
-                                                    <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>Qualquer um</div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
-                                            <button type="button" className="btn btn-secondary" onClick={() => setBookingStep(3)} style={{ flex: 1 }}>Voltar</button>
-                                            <button type="button" className="btn btn-primary" onClick={() => setBookingStep(5)} style={{ flex: 2 }}>Próximo Passo</button>
-                                        </div>
-                                    </form>
-                                )}
-
-                                {bookingStep === 5 && (
-                                    <form onSubmit={handleBookingSubmit} className="animate-fade">
-                                        <div className="form-group">
-                                            <label className="form-label">📅 Data do Agendamento</label>
-                                            <input type="date" className="form-input" min={new Date().toISOString().split('T')[0]} value={formData.date} onChange={e => { setFormData({ ...formData, date: e.target.value, time: '' }); loadSlots(e.target.value, formData.service_id, formData.barber_id); }} required />
-                                        </div>
-                                        {formData.date && (
-                                            <div className="form-group">
-                                                <label className="form-label">⏰ Horários Disponíveis</label>
-                                                <div className="time-slots">
-                                                    {slots.length > 0 ? slots.map(h => (
-                                                        <div key={h} className={`time-slot ${formData.time === h ? 'selected' : ''}`} onClick={() => setFormData({ ...formData, time: h })}>{h}</div>
-                                                    )) : <p className="text-secondary" style={{ gridColumn: '1/-1', textAlign: 'center' }}>Nenhum horário disponível para esta data</p>}
-                                                </div>
-                                            </div>
-                                        )}
-                                        <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
-                                            <button type="button" className="btn btn-secondary" onClick={() => setBookingStep(siteConfig.use_barbers === '1' ? 4 : 3)} style={{ flex: 1 }}>Voltar</button>
-                                            <button type="submit" className="btn btn-primary" style={{ flex: 2 }} disabled={!formData.time}>Finalizar Agendamento</button>
-                                        </div>
-                                    </form>
-                                )}
-                            </>
-                        ) : (
-                            <div className="booking-success animate-scale">
-                                <div className="booking-success-icon"><CheckCircle size={48} /></div>
-                                <h3>Agendamento Confirmado!</h3>
-                                <p className="text-secondary" style={{ marginBottom: 12 }}>Tudo certo! Recebemos seu pedido.</p>
-                                <div className="card" style={{ textAlign: 'left', marginBottom: 20, background: 'var(--color-bg-secondary)', padding: '18px 20px' }}>
-                                    <p style={{ marginBottom: 6 }}><strong>🎫 Protocolo:</strong> #{bookingSuccess.id}</p>
-                                    <p style={{ marginBottom: 6 }}><strong>📅 Data:</strong> {bookingSuccess.date.split('-').reverse().join('/')}</p>
-                                    <p style={{ marginBottom: 6 }}><strong>⏰ Horário:</strong> {bookingSuccess.time}</p>
-                                    <p style={{ marginBottom: 0 }}><strong>✂️ Serviço:</strong> {bookingSuccess.service_name}</p>
-                                </div>
-                                <p className="text-secondary" style={{ fontSize: '0.82rem', marginBottom: 20 }}>Anote o protocolo caso precise cancelar depois.</p>
-                                <div style={{ display: 'flex', gap: 10, flexDirection: 'column' }}>
-                                    {siteConfig.phone && (
-                                        <a
-                                            href={`https://wa.me/55${siteConfig.phone.replace(/\D/g, '')}?text=Olá! Acabei de agendar. Protocolo %23${bookingSuccess.id} - ${bookingSuccess.date.split('-').reverse().join('/')} às ${bookingSuccess.time}`}
-                                            target="_blank" rel="noreferrer"
-                                            className="btn btn-success"
-                                            style={{ width: '100%', justifyContent: 'center' }}
-                                        >
-                                            📲 Confirmar pelo WhatsApp
-                                        </a>
-                                    )}
-                                    <button className="btn btn-secondary" onClick={() => { setBookingSuccess(null); setBookingStep(1); setFormData({ client_name: '', client_whatsapp: '', service_id: '', barber_id: '', date: '', time: '' }); }} style={{ width: '100%' }}>Fazer Outro Agendamento</button>
-                                </div>
-                            </div>
-                        )}
+            <section id="booking-cta" className="section bg-secondary">
+                <div className="container" style={{ textAlign: 'center' }}>
+                    <div className="card card-glass" style={{ padding: '60px 40px', maxWidth: 800, margin: '0 auto', border: '1px solid var(--color-accent-glow)' }}>
+                        <h2 style={{ fontSize: '2.5rem', marginBottom: 20 }}>Pronto para seu <span>Novo Visual?</span></h2>
+                        <p className="text-secondary" style={{ fontSize: '1.2rem', marginBottom: 40 }}>Agende agora mesmo seu horário de forma rápida e prática.</p>
+                        <Link to="/booking" className="btn btn-primary btn-lg" style={{ padding: '20px 50px', fontSize: '1.3rem' }}>
+                            Agendar Agora <ChevronRight size={24} style={{ marginLeft: 10 }} />
+                        </Link>
                     </div>
                 </div>
             </section>
+
 
             <section id="about" className="section container" style={{ paddingBottom: 80 }}>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 40, alignItems: 'center' }}>

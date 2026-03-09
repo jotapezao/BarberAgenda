@@ -12,7 +12,7 @@ export default function Dashboard() {
     const [loading, setLoading] = useState(true);
     const [selectedBarber, setSelectedBarber] = useState('all');
     const [transferData, setTransferData] = useState({ id: null, barberId: '' });
-    const [finishModal, setFinishModal] = useState({ id: null, discount_amount: '', is_birthday_reward: false });
+    const [finishModal, setFinishModal] = useState({ id: null, discount_amount: '', is_birthday_reward: false, payment_method: 'PIX' });
     const [showNewApt, setShowNewApt] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [newApt, setNewApt] = useState({ client_name: '', client_whatsapp: '', service_id: '', barber_id: '', date: '', time: '', notes: '' });
@@ -57,10 +57,11 @@ export default function Dashboard() {
             await adminApi.updateAppointment(finishModal.id, {
                 status: 'completed',
                 discount_amount: parseFloat(finishModal.discount_amount) || 0,
-                is_birthday_reward: finishModal.is_birthday_reward
+                is_birthday_reward: finishModal.is_birthday_reward,
+                payment_method: finishModal.payment_method
             });
             toast.success('Atendimento finalizado!');
-            setFinishModal({ id: null, discount_amount: '', is_birthday_reward: false });
+            setFinishModal({ id: null, discount_amount: '', is_birthday_reward: false, payment_method: 'PIX' });
             loadDashboard();
         } catch (err) { toast.error('Erro ao finalizar atendimento'); }
     };
@@ -317,6 +318,19 @@ export default function Dashboard() {
                                     placeholder="0,00"
                                     inputMode="numeric"
                                 />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Forma de Pagamento</label>
+                                <select
+                                    className="form-select"
+                                    value={finishModal.payment_method}
+                                    onChange={e => setFinishModal({ ...finishModal, payment_method: e.target.value })}
+                                >
+                                    <option value="PIX">PIX</option>
+                                    <option value="Dinheiro">Dinheiro</option>
+                                    <option value="Cartão de Crédito">Cartão de Crédito</option>
+                                    <option value="Cartão de Débito">Cartão de Débito</option>
+                                </select>
                             </div>
                             <label className="flex-center" style={{ gap: 10, cursor: 'pointer', justifyContent: 'flex-start', marginTop: 15 }}>
                                 <input

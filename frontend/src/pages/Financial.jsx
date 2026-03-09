@@ -203,6 +203,17 @@ export default function Financial() {
         ],
     };
 
+    const paymentMethodsChartData = {
+        labels: (data?.paymentMethods || []).map(p => p.method),
+        datasets: [
+            {
+                data: (data?.paymentMethods || []).map(p => p.revenue),
+                backgroundColor: serviceColors.slice(0, (data?.paymentMethods || []).length),
+                borderWidth: 0,
+            }
+        ]
+    };
+
     const doughnutOptions = {
         responsive: true,
         maintainAspectRatio: false,
@@ -221,9 +232,25 @@ export default function Financial() {
         },
     };
 
-    const totalCommissions = (data?.individualCommissions || []).reduce((acc, curr) => acc + (curr.period_commission || 0), 0);
-    const netRevenue = (data?.month?.revenue || 0) - totalCommissions;
+    const exportToCSV = () => {
+        if (!data?.transactions) return;
+        const headers = ["Data", "Hora", "Cliente", "Serviço", "Valor", "Pagamento", "Barbeiro"];
+        const rows = data.transactions.map(t => [
+            t.date, t.time, t.client_name, t.service_name, t.amount, t.payment_method || 'N/A', t.barber_name
+        ]);
 
+        let csvContent = "data:text/csv;charset=utf-8,"
+            + headers.join(",") + "\n"
+            + rows.map(e => e.join(",")).join("\n");
+
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `financeiro_${filters.startDate}_ate_${filters.endDate}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
     return (
         <AdminLayout>
             <div className="section-header-admin" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '20px' }}>
@@ -234,16 +261,16 @@ export default function Financial() {
 
                 {/* Filter Bar */}
                 <div className="card" style={{ padding: '12px 20px', display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--color-border)' }}>
-                    <div style={{ display: 'flex', flexCol: 'column', gap: '4px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                         <label style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>Início</label>
                         <input type="date" className="btn btn-sm" style={{ background: 'var(--color-bg-secondary)', border: '1px solid var(--color-border)', color: '#fff' }} value={filters.startDate} onChange={e => setFilters({ ...filters, startDate: e.target.value })} />
                     </div>
-                    <div style={{ display: 'flex', flexCol: 'column', gap: '4px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                         <label style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>Fim</label>
                         <input type="date" className="btn btn-sm" style={{ background: 'var(--color-bg-secondary)', border: '1px solid var(--color-border)', color: '#fff' }} value={filters.endDate} onChange={e => setFilters({ ...filters, endDate: e.target.value })} />
                     </div>
                     {isAdmin && (
-                        <div style={{ display: 'flex', flexCol: 'column', gap: '4px' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                             <label style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>Barbeiro</label>
                             <select className="btn btn-sm" style={{ background: 'var(--color-bg-secondary)', border: '1px solid var(--color-border)', color: '#fff', minWidth: '140px' }} value={filters.barberId} onChange={e => setFilters({ ...filters, barberId: e.target.value })}>
                                 <option value="">Todos Barbeiros</option>
@@ -251,44 +278,50 @@ export default function Financial() {
                             </select>
                         </div>
                     )}
+                    <button className="btn btn-sm" onClick={exportToCSV} style={{ marginTop: 'auto', marginBottom: '4px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--color-border)', height: '36px' }}>
+                        Exportar CSV
+                    </button>
                 </div>
             </div>
 
             {/* Summary Cards */}
             <div className="financial-cards">
                 <div className="card financial-card">
-                    <h3>💰 Faturamento Hoje</h3>
-                    <div className="value">{formatPrice(data?.today?.revenue)}</div>
+                    <h3>💰 Faturamento Bruto</h3>
+                    <div className="value gold">{formatPrice(data?.month?.totalRevenue || data?.month?.revenue)}</div>
                     <p className="text-secondary" style={{ marginTop: '8px', fontSize: '0.85rem' }}>
-                        {data?.today?.appointments || 0} atendimentos
+                        Serviços + Produtos
                     </p>
                 </div>
 
                 <div className="card financial-card">
-                    <h3>📅 Receita Bruta (Período)</h3>
-                    <div className="value gold">{formatPrice(data?.month?.revenue)}</div>
+                    <h3>📦 Venda de Produtos</h3>
+                    <div className="value">{formatPrice(data?.month?.productSales || 0)}</div>
                     <p className="text-secondary" style={{ marginTop: '8px', fontSize: '0.85rem' }}>
-                        Baseado nos fitros aplicados
+                        Lucro Prod: {formatPrice(data?.month?.productProfit || 0)}
                     </p>
                 </div>
 
                 <div className="card financial-card">
-                    <h3>🎁 Cortesias / Descontos</h3>
+                    <h3>🎁 Descontos Aplicados</h3>
                     <div className="value" style={{ color: 'var(--color-info)' }}>{formatPrice(data?.month?.total_discounts)}</div>
                     <p className="text-secondary" style={{ marginTop: '8px', fontSize: '0.85rem' }}>
-                        Total de descontos no período
+                        Cortesias e bonificações
                     </p>
                 </div>
 
                 {isAdmin ? (
                     <>
                         <div className="card financial-card">
-                            <h3>💸 Comissões (Período)</h3>
-                            <div className="value" style={{ color: '#ef4444' }}>{formatPrice(totalCommissions)}</div>
+                            <h3>💸 Comissões Totais</h3>
+                            <div className="value" style={{ color: '#ef4444' }}>{formatPrice(data?.month?.totalCommissions)}</div>
                         </div>
                         <div className="card financial-card">
-                            <h3>📈 Receita Líquida</h3>
-                            <div className="value green">{formatPrice(netRevenue)}</div>
+                            <h3>📈 Lucro Líquido Est.</h3>
+                            <div className="value green">{formatPrice(data?.month?.estimatedNetProfit)}</div>
+                            <p className="text-secondary" style={{ marginTop: '8px', fontSize: '0.85rem' }}>
+                                Bruto - Comissões - Custos
+                            </p>
                         </div>
                     </>
                 ) : (
@@ -307,10 +340,10 @@ export default function Financial() {
 
             {/* Charts */}
             <div className="charts-grid">
-                <div className="card chart-card">
+                <div className="card chart-card" style={{ gridColumn: 'span 2' }}>
                     <h3>
                         <TrendingUp size={18} style={{ marginRight: '8px', verticalAlign: 'middle' }} />
-                        Faturamento por Dia (últimos 30 dias)
+                        Evolução do Faturamento (Período)
                     </h3>
                     <div style={{ height: '300px' }}>
                         {(data?.dailyRevenue || []).length > 0 ? (
@@ -325,24 +358,8 @@ export default function Financial() {
 
                 <div className="card chart-card">
                     <h3>
-                        <Activity size={18} style={{ marginRight: '8px', verticalAlign: 'middle' }} />
-                        Faturamento por Mês
-                    </h3>
-                    <div style={{ height: '300px' }}>
-                        {(data?.monthlyRevenue || []).length > 0 ? (
-                            <Bar data={monthlyChartData} options={chartDefaults} />
-                        ) : (
-                            <div className="empty-state">
-                                <p>Sem dados para exibir</p>
-                            </div>
-                        )}
-                    </div>
-                </div>
-
-                <div className="card chart-card">
-                    <h3>
                         <DollarSign size={18} style={{ marginRight: '8px', verticalAlign: 'middle' }} />
-                        Serviços Mais Vendidos
+                        Serviços Mais Procurados
                     </h3>
                     <div style={{ height: '300px' }}>
                         {(data?.topServices || []).length > 0 ? (
@@ -355,31 +372,56 @@ export default function Financial() {
                     </div>
                 </div>
 
-                {/* Revenue table */}
                 <div className="card chart-card">
                     <h3>
-                        <Users size={18} style={{ marginRight: '8px', verticalAlign: 'middle' }} />
-                        Ranking de Serviços
+                        <Activity size={18} style={{ marginRight: '8px', verticalAlign: 'middle' }} />
+                        Métodos de Pagamento
                     </h3>
-                    {(data?.topServices || []).length > 0 ? (
+                    <div style={{ height: '300px' }}>
+                        {(data?.paymentMethods || []).length > 0 ? (
+                            <Doughnut data={paymentMethodsChartData} options={doughnutOptions} />
+                        ) : (
+                            <div className="empty-state">
+                                <p>Sem dados para exibir</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* Transaction list */}
+                <div className="card chart-card" style={{ gridColumn: 'span 2' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                        <h3>
+                            <Activity size={18} style={{ marginRight: '8px', verticalAlign: 'middle' }} />
+                            Últimas Transações
+                        </h3>
+                    </div>
+                    {(data?.transactions || []).length > 0 ? (
                         <div style={{ overflowX: 'auto' }}>
                             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                                 <thead>
                                     <tr style={{ borderBottom: '1px solid var(--color-border)' }}>
+                                        <th style={{ textAlign: 'left', padding: '12px 8px', color: 'var(--color-text-muted)', fontSize: '0.8rem', fontWeight: 600 }}>Data/Hora</th>
+                                        <th style={{ textAlign: 'left', padding: '12px 8px', color: 'var(--color-text-muted)', fontSize: '0.8rem', fontWeight: 600 }}>Cliente</th>
                                         <th style={{ textAlign: 'left', padding: '12px 8px', color: 'var(--color-text-muted)', fontSize: '0.8rem', fontWeight: 600 }}>Serviço</th>
-                                        <th style={{ textAlign: 'center', padding: '12px 8px', color: 'var(--color-text-muted)', fontSize: '0.8rem', fontWeight: 600 }}>Qtd</th>
-                                        <th style={{ textAlign: 'right', padding: '12px 8px', color: 'var(--color-text-muted)', fontSize: '0.8rem', fontWeight: 600 }}>Receita</th>
+                                        <th style={{ textAlign: 'center', padding: '12px 8px', color: 'var(--color-text-muted)', fontSize: '0.8rem', fontWeight: 600 }}>Método</th>
+                                        <th style={{ textAlign: 'right', padding: '12px 8px', color: 'var(--color-text-muted)', fontSize: '0.8rem', fontWeight: 600 }}>Valor</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {data.topServices.map((s, i) => (
+                                    {data.transactions.map((t, i) => (
                                         <tr key={i} style={{ borderBottom: '1px solid var(--color-border)' }}>
-                                            <td style={{ padding: '12px 8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                <span style={{ width: 10, height: 10, borderRadius: '50%', background: serviceColors[i], display: 'inline-block' }}></span>
-                                                {s.name}
+                                            <td style={{ padding: '12px 8px', fontSize: '0.85rem' }}>
+                                                {t.date.split('-').reverse().join('/')} <span style={{ color: 'var(--color-text-muted)' }}>{t.time}</span>
                                             </td>
-                                            <td style={{ textAlign: 'center', padding: '12px 8px', color: 'var(--color-text-secondary)' }}>{s.count}</td>
-                                            <td style={{ textAlign: 'right', padding: '12px 8px', fontWeight: 700, color: 'var(--color-accent)' }}>{formatPrice(s.revenue)}</td>
+                                            <td style={{ padding: '12px 8px', fontWeight: 500 }}>{t.client_name}</td>
+                                            <td style={{ padding: '12px 8px', color: 'var(--color-text-secondary)' }}>{t.service_name}</td>
+                                            <td style={{ textAlign: 'center', padding: '12px 8px' }}>
+                                                <span style={{ padding: '2px 8px', background: 'rgba(255,255,255,0.05)', borderRadius: '4px', fontSize: '0.75rem' }}>
+                                                    {t.payment_method || 'PIX'}
+                                                </span>
+                                            </td>
+                                            <td style={{ textAlign: 'right', padding: '12px 8px', fontWeight: 700, color: 'var(--color-accent)' }}>{formatPrice(t.amount)}</td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -387,10 +429,11 @@ export default function Financial() {
                         </div>
                     ) : (
                         <div className="empty-state">
-                            <p>Sem dados para exibir</p>
+                            <p>Sem transações no período</p>
                         </div>
                     )}
                 </div>
+
                 {/* Commission Ranking */}
                 <div className="card chart-card" style={{ gridColumn: 'span 2' }}>
                     <h3>
