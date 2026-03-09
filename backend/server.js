@@ -615,8 +615,8 @@ app.post('/api/admin/clients/import', authenticateToken, async (req, res) => {
     let errors = 0;
     for (const c of clients) {
         try {
-            await db.run('INSERT INTO clients (name, whatsapp, email, birth_date, notes) VALUES (?, ?, ?, ?, ?)',
-                [c.name, c.whatsapp, c.email || '', c.birth_date || '', c.notes || '']);
+            await db.run('INSERT INTO clients (name, whatsapp, email, birth_date, notes, total_visits, total_spent, last_visit) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+                [c.name, c.whatsapp, c.email || '', c.birth_date || '', c.notes || '', c.total_visits || 0, c.total_spent || 0, c.last_visit || null]);
             imported++;
         } catch (e) { errors++; }
     }

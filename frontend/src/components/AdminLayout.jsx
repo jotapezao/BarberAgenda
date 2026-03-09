@@ -51,12 +51,21 @@ export default function AdminLayout({ children }) {
             </button>
             <div className={`sidebar-overlay ${isSidebarOpen ? 'active' : ''}`} onClick={closeSidebar}></div>
             <aside className={`admin-sidebar ${isSidebarOpen ? 'open' : ''}`}>
-                <div className="admin-logo">
-                    {siteConfig.site_logo ? (
+                <div className="admin-logo" style={{ display: 'flex', alignItems: 'center', gap: 15, padding: '20px' }}>
+                    <style>
+                        {`@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Montserrat:wght@900&display=swap');`}
+                    </style>
+                    {siteConfig.site_logo && (
                         <img src={`${BASE_URL}${siteConfig.site_logo}`} alt="Logo" style={{ maxHeight: 50, width: 'auto', display: 'block' }} />
-                    ) : (
-                        <>{siteConfig.site_name || 'Admin'}</>
                     )}
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', lineHeight: 1 }}>
+                        <span style={{ fontFamily: "'Dancing Script', cursive", fontSize: '1.4rem', color: '#fff', transform: 'rotate(-5deg)', marginBottom: '-8px', position: 'relative', zIndex: 2 }}>
+                            Painel do Barbeiro
+                        </span>
+                        <span style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 900, fontSize: '1.4rem', color: 'var(--color-accent)', textTransform: 'uppercase', letterSpacing: '-0.5px' }}>
+                            {siteConfig.site_name || 'ADMIN'}
+                        </span>
+                    </div>
                 </div>
                 <nav className="admin-nav">
                     <NavLink to="/admin" end className={({ isActive }) => isActive ? 'active' : ''} onClick={closeSidebar}><Calendar size={20} /> Agenda</NavLink>

@@ -94,7 +94,11 @@ export default function SiteConfig() {
             ]);
 
             // Auto-refresh theme variables and background globally
-            const validThemes = ['theme-dark-gold', 'theme-dark-purple', 'theme-dark-grey', 'theme-light-clean', 'theme-sophisticated-blue', 'theme-ruby-red', 'theme-emerald-green', 'theme-neon-cyberpunk'];
+            const validThemes = [
+                'theme-dark-gold', 'theme-dark-purple', 'theme-dark-grey', 'theme-light-clean',
+                'theme-sophisticated-blue', 'theme-ruby-red', 'theme-emerald-green', 'theme-neon-cyberpunk',
+                'theme-wine-elegance', 'theme-emerald-luxury', 'theme-coffee-classic', 'theme-midnight-ocean'
+            ];
             document.body.classList.remove(...validThemes);
             if (config.site_theme) document.body.classList.add(config.site_theme);
 
@@ -183,9 +187,10 @@ export default function SiteConfig() {
                                             <option value="theme-dark-grey">Dark (Sóbrio)</option>
                                             <option value="theme-light-clean">Claro (Clean)</option>
                                             <option value="theme-sophisticated-blue">Azul (Sofisticado)</option>
-                                            <option value="theme-ruby-red">Vermelho Ruby (Agressivo)</option>
-                                            <option value="theme-emerald-green">Verde Esmeralda (Natural)</option>
-                                            <option value="theme-neon-cyberpunk">Neon Cyberpunk (Futurista)</option>
+                                            <option value="theme-wine-elegance">Vinho / Bordeaux (Elegante)</option>
+                                            <option value="theme-emerald-luxury">Esmeralda (Luxuoso)</option>
+                                            <option value="theme-coffee-classic">Café (Clássico)</option>
+                                            <option value="theme-midnight-ocean">Oceano (Meia Noite)</option>
                                         </select>
                                     </div>
                                 </div>

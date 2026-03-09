@@ -2497,3 +2497,80 @@ body.theme-neon-cyberpunk {
     border: 1px solid var(--color-border);
   }
 }
+
+/* NOVO: 4 THEMES ADICIONAIS SOFISTICADOS */
+body.theme-wine-elegance {
+  --color-bg-primary: #15080c;
+  --color-bg-secondary: #220e15;
+  --color-bg-card: #2e141c;
+  --color-bg-card-hover: #3d1a25;
+  --color-bg-input: #2e141c;
+  --color-accent: #e5a4a4;
+  --color-accent-light: #f7d4d4;
+  --color-accent-dark: #b87c7c;
+  --color-accent-glow: rgba(229, 164, 164, 0.2);
+  --color-accent-subtle: rgba(229, 164, 164, 0.08);
+  --color-bg-glass: rgba(21, 8, 12, 0.98);
+  --color-text-primary: #fdf5f5;
+  --color-text-secondary: #d6b8c0;
+  --color-text-muted: #8c6a74;
+  --color-border: #47212e;
+  --btn-text: #15080c;
+}
+
+body.theme-emerald-luxury {
+  --color-bg-primary: #02140e;
+  --color-bg-secondary: #052219;
+  --color-bg-card: #083325;
+  --color-bg-card-hover: #0a4231;
+  --color-bg-input: #083325;
+  --color-accent: #50c878;
+  --color-accent-light: #8ef0ae;
+  --color-accent-dark: #2c8c4c;
+  --color-accent-glow: rgba(80, 200, 120, 0.2);
+  --color-accent-subtle: rgba(80, 200, 120, 0.08);
+  --color-bg-glass: rgba(2, 20, 14, 0.98);
+  --color-text-primary: #f2fdf5;
+  --color-text-secondary: #b5e4cf;
+  --color-text-muted: #6b9e84;
+  --color-border: #13523c;
+  --btn-text: #02140e;
+}
+
+body.theme-coffee-classic {
+  --color-bg-primary: #14100c;
+  --color-bg-secondary: #1f1813;
+  --color-bg-card: #2e241c;
+  --color-bg-card-hover: #403227;
+  --color-bg-input: #2e241c;
+  --color-accent: #d4a373;
+  --color-accent-light: #ebd0b3;
+  --color-accent-dark: #a17042;
+  --color-accent-glow: rgba(212, 163, 115, 0.2);
+  --color-accent-subtle: rgba(212, 163, 115, 0.08);
+  --color-bg-glass: rgba(20, 16, 12, 0.98);
+  --color-text-primary: #fcf8f2;
+  --color-text-secondary: #d1c0b1;
+  --color-text-muted: #918173;
+  --color-border: #47382c;
+  --btn-text: #14100c;
+}
+
+body.theme-midnight-ocean {
+  --color-bg-primary: #030b14;
+  --color-bg-secondary: #061322;
+  --color-bg-card: #0b1e36;
+  --color-bg-card-hover: #102a4a;
+  --color-bg-input: #0b1e36;
+  --color-accent: #00e0ff;
+  --color-accent-light: #8aefff;
+  --color-accent-dark: #0090a8;
+  --color-accent-glow: rgba(0, 224, 255, 0.2);
+  --color-accent-subtle: rgba(0, 224, 255, 0.08);
+  --color-bg-glass: rgba(3, 11, 20, 0.98);
+  --color-text-primary: #f2fbff;
+  --color-text-secondary: #b1d4ea;
+  --color-text-muted: #628da8;
+  --color-border: #133357;
+  --btn-text: #030b14;
+}

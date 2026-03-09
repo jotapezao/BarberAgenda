@@ -91,6 +91,14 @@ export default function Clients() {
         catch (err) { toast.error(err.message); }
     };
 
+    const handleOpenDetail = async (client) => {
+        try {
+            const fullClient = await adminApi.getClient(client.id);
+            setSelectedClient(fullClient);
+            setShowDetail(true);
+        } catch (err) { toast.error('Erro ao carregar histórico'); }
+    };
+
     const exportToCSV = () => {
         if (clients.length === 0) return toast.error('Nenhum cliente para exportar');
 
@@ -128,7 +136,7 @@ export default function Clients() {
             const lines = text.split('\n');
             const importedClients = [];
 
-            // Simple CSV parser (assuming name;whatsapp;email;birth_date;notes)
+            // Simple CSV parser (assuming name;whatsapp;email;birth_date;total_visits;total_spent;last_visit;notes)
             for (let i = 1; i < lines.length; i++) {
                 const parts = lines[i].split(';');
                 if (parts.length >= 2 && parts[0] && parts[1]) {
@@ -137,7 +145,10 @@ export default function Clients() {
                         whatsapp: parts[1].trim(),
                         email: parts[2]?.trim() || '',
                         birth_date: parts[3]?.trim() || '',
-                        notes: parts[4]?.trim() || ''
+                        total_visits: parseInt(parts[4]?.trim() || '0', 10),
+                        total_spent: parseFloat(parts[5]?.trim() || '0'),
+                        last_visit: parts[6]?.trim() || '',
+                        notes: parts[7]?.trim() || ''
                     });
                 }
             }
@@ -273,7 +284,7 @@ export default function Clients() {
                                         <Gift size={14} />
                                     </button>
                                 )}
-                                <button className="btn btn-secondary btn-sm" style={{ padding: '6px 10px' }} onClick={() => setSelectedClient(client) || setShowDetail(true)} title="Detalhes"><Eye size={14} /></button>
+                                <button className="btn btn-secondary btn-sm" style={{ padding: '6px 10px' }} onClick={() => handleOpenDetail(client)} title="Detalhes"><Eye size={14} /></button>
                                 <button className="btn btn-secondary btn-sm" style={{ padding: '6px 10px' }} onClick={() => handleOpenModal(client)} title="Editar"><Edit3 size={14} /></button>
                                 <button className="btn btn-danger btn-sm" style={{ padding: '6px 10px' }} onClick={() => deleteClient(client.id)} title="Remover"><Trash2 size={14} /></button>
                             </div>
