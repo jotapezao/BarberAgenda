@@ -657,6 +657,43 @@ app.delete('/api/admin/products/:id', authenticateToken, async (req, res) => {
     res.json({ message: 'Removido' });
 });
 
+// -- PAYMENT METHODS --
+app.get('/api/admin/payment-methods', authenticateToken, async (req, res) => {
+    res.json(await db.all('SELECT * FROM payment_methods ORDER BY name'));
+});
+
+app.get('/api/payment-methods', async (req, res) => {
+    res.json(await db.all('SELECT * FROM payment_methods WHERE active = 1 ORDER BY name'));
+});
+
+app.post('/api/admin/payment-methods', authenticateToken, async (req, res) => {
+    const { name, fee_percentage, fee_fixed, active } = req.body;
+    if (!name) return res.status(400).json({ error: 'Nome é obrigatório' });
+    try {
+        const result = await db.run(
+            'INSERT INTO payment_methods (name, fee_percentage, fee_fixed, active) VALUES (?, ?, ?, ?)',
+            [name, fee_percentage || 0, fee_fixed || 0, active !== undefined ? active : 1]
+        );
+        res.status(201).json(await db.get('SELECT * FROM payment_methods WHERE id = ?', [result.lastInsertRowid]));
+    } catch (e) {
+        res.status(400).json({ error: 'Método já cadastrado ou inválido' });
+    }
+});
+
+app.put('/api/admin/payment-methods/:id', authenticateToken, async (req, res) => {
+    const { name, fee_percentage, fee_fixed, active } = req.body;
+    await db.run(
+        'UPDATE payment_methods SET name=?, fee_percentage=?, fee_fixed=?, active=? WHERE id=?',
+        [name, fee_percentage || 0, fee_fixed || 0, active !== undefined ? active : 1, req.params.id]
+    );
+    res.json(await db.get('SELECT * FROM payment_methods WHERE id = ?', [req.params.id]));
+});
+
+app.delete('/api/admin/payment-methods/:id', authenticateToken, async (req, res) => {
+    await db.run('DELETE FROM payment_methods WHERE id = ?', [req.params.id]);
+    res.json({ message: 'Removido' });
+});
+
 // Sell product
 app.post('/api/admin/products/:id/sell', authenticateToken, async (req, res) => {
     const { quantity, client_name, client_id, appointment_id } = req.body;
@@ -912,8 +949,12 @@ app.get('/api/admin/financial', authenticateToken, async (req, res) => {
     `, [queryStart, queryEnd]);
 
     const paymentMethods = await db.all(`
-        SELECT COALESCE(payment_method, 'Não Definido') as method, COUNT(*) as count, SUM(s.price - COALESCE(a.discount_amount, 0)) as revenue
-        FROM appointments a JOIN services s ON a.service_id = s.id 
+        SELECT COALESCE(a.payment_method, 'Não Definido') as method, COUNT(*) as count, 
+               SUM(s.price - COALESCE(a.discount_amount, 0)) as revenue,
+               COALESCE(SUM((s.price - COALESCE(a.discount_amount, 0)) * (pm.fee_percentage / 100.0) + pm.fee_fixed), 0) as total_fees
+        FROM appointments a 
+        JOIN services s ON a.service_id = s.id 
+        LEFT JOIN payment_methods pm ON a.payment_method = pm.name
         WHERE a.status = 'completed' AND a.date >= ? AND a.date <= ?${whereBarber}
         GROUP BY method
     `, paramsPeriod);
@@ -929,9 +970,10 @@ app.get('/api/admin/financial', authenticateToken, async (req, res) => {
     `, paramsPeriod);
 
     const totalCommissions = individualCommissions.reduce((acc, curr) => acc + (curr.period_commission || 0), 0);
+    const totalPaymentFees = paymentMethods.reduce((acc, curr) => acc + (curr.total_fees || 0), 0);
     const serviceRevenue = periodStats.total_revenue;
     const totalRevenue = serviceRevenue + productStats.total_revenue;
-    const totalCost = productStats.total_cost + totalCommissions;
+    const totalCost = productStats.total_cost + totalCommissions + totalPaymentFees;
     const estimatedNetProfit = totalRevenue - totalCost;
 
     res.json({
@@ -949,6 +991,7 @@ app.get('/api/admin/financial', authenticateToken, async (req, res) => {
             productProfit: productStats.total_revenue - productStats.total_cost,
             totalRevenue,
             totalCommissions,
+            totalPaymentFees,
             estimatedNetProfit
         },
         dailyRevenue, monthlyRevenue, topServices, individualCommissions, paymentMethods, transactions

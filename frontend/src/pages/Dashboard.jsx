@@ -9,6 +9,7 @@ export default function Dashboard() {
     const [data, setData] = useState(null);
     const [barbers, setBarbers] = useState([]);
     const [services, setServices] = useState([]);
+    const [paymentMethods, setPaymentMethods] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
     const [selectedBarber, setSelectedBarber] = useState('all');
@@ -30,17 +31,19 @@ export default function Dashboard() {
 
     const loadDashboard = async () => {
         try {
-            const [dashboardData, svcData, barbersList] = await Promise.all([
+            const [dashboardData, svcData, barbersList, methodsList] = await Promise.all([
                 adminApi.getDashboard({
                     barberId: selectedBarber !== 'all' ? selectedBarber : undefined,
                     date: selectedDate
                 }),
                 adminApi.getServices(),
-                publicApi.getBarbers()
+                publicApi.getBarbers(),
+                adminApi.getPaymentMethods()
             ]);
             setData(dashboardData);
             setServices(svcData);
             setBarbers(barbersList);
+            setPaymentMethods(methodsList.filter(pm => pm.active === 1));
         }
         catch (err) {
             console.error('Erro no Dashboard:', err);
@@ -286,7 +289,7 @@ export default function Dashboard() {
                                         <button className="btn btn-sm btn-danger" onClick={() => updateStatus(apt.id, 'cancelled')} style={{ padding: '6px 12px' }}>
                                             <XCircle size={14} /> <span className="desk-only">Zelar</span>
                                         </button>
-                                        <button className="btn btn-sm btn-success" onClick={() => setFinishModal({ id: apt.id, discount_amount: '', is_birthday_reward: false })} style={{ padding: '6px 12px' }}>
+                                        <button className="btn btn-sm btn-success" onClick={() => setFinishModal({ id: apt.id, discount_amount: '', is_birthday_reward: false, payment_method: paymentMethods[0]?.name || 'PIX' })} style={{ padding: '6px 12px' }}>
                                             <CheckCircle size={14} /> Concluir
                                         </button>
                                     </div>
@@ -485,10 +488,9 @@ export default function Dashboard() {
                                         value={finishModal.payment_method}
                                         onChange={e => setFinishModal({ ...finishModal, payment_method: e.target.value })}
                                     >
-                                        <option value="PIX">PIX</option>
-                                        <option value="Dinheiro">Dinheiro</option>
-                                        <option value="Cartão de Crédito">Cartão de Crédito</option>
-                                        <option value="Cartão de Débito">Cartão de Débito</option>
+                                        {paymentMethods.map(pm => (
+                                            <option key={pm.id} value={pm.name}>{pm.name}</option>
+                                        ))}
                                     </select>
                                 </div>
                                 <label className="flex-center" style={{ gap: 10, cursor: 'pointer', justifyContent: 'flex-start', marginTop: 15 }}>

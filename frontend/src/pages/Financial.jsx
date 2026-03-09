@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { adminApi } from '../api';
 import { useToast } from '../components/Toast';
 import AdminLayout from '../components/AdminLayout';
-import { DollarSign, TrendingUp, Users, Activity } from 'lucide-react';
+import { DollarSign, TrendingUp, Users, Activity, Settings, Plus, XCircle, Trash2 } from 'lucide-react';
 import {
     Chart as ChartJS,
     CategoryScale,
@@ -83,6 +83,10 @@ export default function Financial() {
     const monthStart = new Date(); monthStart.setDate(1);
     const monthStartStr = monthStart.toISOString().split('T')[0];
 
+    const [showPaymentSettings, setShowPaymentSettings] = useState(false);
+    const [paymentMethods, setPaymentMethods] = useState([]);
+    const [newMethod, setNewMethod] = useState({ name: '', fee_percentage: '', fee_fixed: '', active: 1 });
+
     const [filters, setFilters] = useState({
         startDate: monthStartStr,
         endDate: today,
@@ -116,6 +120,39 @@ export default function Financial() {
             const list = await adminApi.getBarbers();
             setBarbers(list);
         } catch (err) { console.error(err); }
+    };
+
+    const loadPaymentMethods = async () => {
+        try {
+            const list = await adminApi.getPaymentMethods();
+            setPaymentMethods(list);
+        } catch (err) { console.error(err); }
+    };
+
+    const handleSavePaymentMethod = async (e) => {
+        e.preventDefault();
+        try {
+            await adminApi.createPaymentMethod(newMethod);
+            toast.success('Método adicionado');
+            setNewMethod({ name: '', fee_percentage: '', fee_fixed: '', active: 1 });
+            loadPaymentMethods();
+        } catch (err) { toast.error(err.message || 'Erro ao adicionar método'); }
+    };
+
+    const togglePaymentMethodStatus = async (pm) => {
+        try {
+            await adminApi.updatePaymentMethod(pm.id, { ...pm, active: pm.active === 1 ? 0 : 1 });
+            loadPaymentMethods();
+        } catch (err) { toast.error('Erro ao atualizar'); }
+    };
+
+    const handleDeletePaymentMethod = async (id) => {
+        if (!window.confirm('Excluir este método?')) return;
+        try {
+            await adminApi.deletePaymentMethod(id);
+            toast.success('Método excluído');
+            loadPaymentMethods();
+        } catch (err) { toast.error('Erro ao excluir'); }
     };
 
     const loadFinancial = async () => {
@@ -281,6 +318,11 @@ export default function Financial() {
                     <button className="btn btn-sm" onClick={exportToCSV} style={{ marginTop: 'auto', marginBottom: '4px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--color-border)', height: '36px' }}>
                         Exportar CSV
                     </button>
+                    {isAdmin && (
+                        <button className="btn btn-sm btn-primary" onClick={() => { setShowPaymentSettings(true); loadPaymentMethods(); }} style={{ marginTop: 'auto', marginBottom: '4px', height: '36px', display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <Settings size={14} /> Taxas
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -320,7 +362,7 @@ export default function Financial() {
                             <h3>📈 Lucro Líquido Est.</h3>
                             <div className="value green">{formatPrice(data?.month?.estimatedNetProfit)}</div>
                             <p className="text-secondary" style={{ marginTop: '8px', fontSize: '0.85rem' }}>
-                                Bruto - Comissões - Custos
+                                Bruto - Comissões - Taxas ({formatPrice(data?.month?.totalPaymentFees)})
                             </p>
                         </div>
                     </>
@@ -487,6 +529,67 @@ export default function Financial() {
                     )}
                 </div>
             </div>
+
+            {/* Modal: Métodos de Pagamento e Taxas */}
+            {showPaymentSettings && (
+                <div className="modal-overlay" onClick={() => setShowPaymentSettings(false)}>
+                    <div className="modal animate-scale" onClick={e => e.stopPropagation()} style={{ maxWidth: 650, borderRadius: 24 }}>
+                        <div className="modal-header">
+                            <h2 style={{ fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: 10 }}>
+                                <Settings size={20} className="text-accent" /> Taxas e Pagamentos
+                            </h2>
+                            <button className="btn-icon" onClick={() => setShowPaymentSettings(false)}><XCircle size={20} /></button>
+                        </div>
+                        <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+                            <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>
+                                Defina quais métodos de pagamento sua barbearia aceita e configure as taxas de máquina (%), para o sistema calcular o Lucro Líquido Real.
+                            </p>
+
+                            <form onSubmit={handleSavePaymentMethod} style={{ display: 'flex', gap: 10, alignItems: 'flex-end', background: 'rgba(255,255,255,0.03)', padding: 15, borderRadius: 12, border: '1px solid var(--color-border)' }}>
+                                <div style={{ flex: 2 }}>
+                                    <label className="form-label">Método</label>
+                                    <input type="text" className="form-input btn-sm" placeholder="Ex: Cartão de Crédito" value={newMethod.name} onChange={e => setNewMethod({ ...newMethod, name: e.target.value })} required />
+                                </div>
+                                <div style={{ flex: 1 }}>
+                                    <label className="form-label">Taxa (%)</label>
+                                    <input type="number" step="0.01" className="form-input btn-sm" placeholder="3.5" value={newMethod.fee_percentage} onChange={e => setNewMethod({ ...newMethod, fee_percentage: e.target.value })} />
+                                </div>
+                                <div style={{ flex: 1 }}>
+                                    <label className="form-label">Taxa (R$)</label>
+                                    <input type="number" step="0.01" className="form-input btn-sm" placeholder="0.00" value={newMethod.fee_fixed} onChange={e => setNewMethod({ ...newMethod, fee_fixed: e.target.value })} />
+                                </div>
+                                <button type="submit" className="btn btn-sm btn-primary" style={{ padding: '0 15px' }} title="Adicionar">
+                                    <Plus size={18} />
+                                </button>
+                            </form>
+
+                            <div style={{ maxHeight: '350px', overflowY: 'auto', paddingRight: '10px' }}>
+                                {paymentMethods.map(pm => (
+                                    <div key={pm.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 15px', background: 'var(--color-bg-secondary)', border: '1px solid var(--color-border)', borderRadius: 12, marginBottom: 10 }}>
+                                        <div>
+                                            <div style={{ fontWeight: 700, fontSize: '1rem', color: pm.active ? '#fff' : 'var(--color-text-muted)', textDecoration: pm.active ? 'none' : 'line-through' }}>
+                                                {pm.name}
+                                            </div>
+                                            <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
+                                                {parseFloat(pm.fee_percentage) > 0 ? `Desconto: ${pm.fee_percentage}% ` : 'Sem taxa (%) '}
+                                                {parseFloat(pm.fee_fixed) > 0 && `| Fixo: R$ ${pm.fee_fixed}`}
+                                            </div>
+                                        </div>
+                                        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                                            <button className={`btn btn-sm ${pm.active ? 'btn-danger' : 'btn-success'}`} onClick={() => togglePaymentMethodStatus(pm)} style={{ padding: '4px 12px' }}>
+                                                {pm.active ? 'Desativar' : 'Ativar'}
+                                            </button>
+                                            <button className="btn-icon text-danger" onClick={() => handleDeletePaymentMethod(pm.id)}>
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </AdminLayout>
     );
 }

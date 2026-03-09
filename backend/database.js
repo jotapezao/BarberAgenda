@@ -241,9 +241,19 @@ const dbWrapper = {
         date TEXT NOT NULL,
         appointment_id INTEGER,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        payment_method TEXT,
         FOREIGN KEY (product_id) REFERENCES products(id),
         FOREIGN KEY (client_id) REFERENCES clients(id),
         FOREIGN KEY (appointment_id) REFERENCES appointments(id)
+      );
+
+      CREATE TABLE IF NOT EXISTS payment_methods (
+        id SERIAL PRIMARY KEY,
+        name TEXT UNIQUE NOT NULL,
+        fee_percentage DECIMAL(5,2) DEFAULT 0,
+        fee_fixed DECIMAL(10,2) DEFAULT 0,
+        active INTEGER DEFAULT 1,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
 
       CREATE TABLE IF NOT EXISTS site_config (
@@ -339,6 +349,9 @@ const dbWrapper = {
             IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='appointments' AND COLUMN_NAME='payment_method') THEN
               ALTER TABLE appointments ADD COLUMN payment_method TEXT;
             END IF;
+            IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='product_sales' AND COLUMN_NAME='payment_method') THEN
+              ALTER TABLE product_sales ADD COLUMN payment_method TEXT;
+            END IF;
             IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='appointments' AND COLUMN_NAME='payment_status') THEN
               ALTER TABLE appointments ADD COLUMN payment_status TEXT DEFAULT 'pending';
             END IF;
@@ -355,6 +368,7 @@ const dbWrapper = {
         if (!appCols.find(c => c.name === 'discount_amount')) await this.run("ALTER TABLE appointments ADD COLUMN discount_amount REAL DEFAULT 0");
         if (!appCols.find(c => c.name === 'is_birthday_reward')) await this.run("ALTER TABLE appointments ADD COLUMN is_birthday_reward INTEGER DEFAULT 0");
         if (!appCols.find(c => c.name === 'payment_method')) await this.run("ALTER TABLE appointments ADD COLUMN payment_method TEXT");
+        if (!saleCols.find(c => c.name === 'payment_method')) await this.run("ALTER TABLE product_sales ADD COLUMN payment_method TEXT");
         if (!appCols.find(c => c.name === 'payment_status')) await this.run("ALTER TABLE appointments ADD COLUMN payment_status TEXT DEFAULT 'pending'");
       }
     } catch (e) {
@@ -386,6 +400,15 @@ const dbWrapper = {
     if (parseInt(servicesExist.count) === 0) {
       await this.run('INSERT INTO services (name, price, duration) VALUES (?, ?, ?)', ['Corte', 50, 30]);
       await this.run('INSERT INTO services (name, price, duration) VALUES (?, ?, ?)', ['Barba', 30, 30]);
+    }
+
+    const pmExist = await this.get('SELECT COUNT(*) as count FROM payment_methods');
+    if (parseInt(pmExist.count) === 0) {
+      await this.run('INSERT INTO payment_methods (name, fee_percentage, fee_fixed) VALUES (?, ?, ?)', ['PIX', 0, 0]);
+      await this.run('INSERT INTO payment_methods (name, fee_percentage, fee_fixed) VALUES (?, ?, ?)', ['Dinheiro', 0, 0]);
+      await this.run('INSERT INTO payment_methods (name, fee_percentage, fee_fixed) VALUES (?, ?, ?)', ['Cartão de Crédito', 3.0, 0]);
+      await this.run('INSERT INTO payment_methods (name, fee_percentage, fee_fixed) VALUES (?, ?, ?)', ['Cartão de Débito', 1.5, 0]);
+      console.log('✅ Formas de pagamento padrão criadas');
     }
 
     const settingsExist = await this.get('SELECT COUNT(*) as count FROM settings');

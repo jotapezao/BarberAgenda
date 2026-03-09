@@ -61,6 +61,7 @@ export const publicApi = {
     getLastVisit: (whatsapp) => request(`/reviews/last-visit/${encodeURIComponent(whatsapp)}`),
     submitReview: (data) => request('/reviews', { method: 'POST', body: JSON.stringify(data) }),
     getPublicReviews: () => request('/public-reviews'),
+    getPaymentMethods: () => request('/payment-methods'),
 };
 
 export const authApi = {
@@ -99,6 +100,12 @@ export const adminApi = {
 
     getSettings: () => request('/admin/settings'),
     updateSettings: (data) => request('/admin/settings', { method: 'PUT', body: JSON.stringify(data) }),
+
+    // Payment Methods
+    getPaymentMethods: () => request('/admin/payment-methods'),
+    createPaymentMethod: (data) => request('/admin/payment-methods', { method: 'POST', body: JSON.stringify(data) }),
+    updatePaymentMethod: (id, data) => request(`/admin/payment-methods/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    deletePaymentMethod: (id) => request(`/admin/payment-methods/${id}`, { method: 'DELETE' }),
 
     // Barbers
     getBarbers: () => request('/admin/barbers'),
