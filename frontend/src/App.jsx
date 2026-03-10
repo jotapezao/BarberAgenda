@@ -16,6 +16,7 @@ import Security from './pages/Security';
 import Developer from './pages/Developer';
 import Reviews from './pages/Reviews';
 import Booking from './pages/Booking';
+import Backup from './pages/Backup';
 
 
 function ProtectedRoute({ children }) {
@@ -84,6 +85,7 @@ function App() {
           <Route path="/admin/barbers" element={<ProtectedRoute><Barbers /></ProtectedRoute>} />
           <Route path="/admin/reviews" element={<ProtectedRoute><Reviews /></ProtectedRoute>} />
           <Route path="/admin/security" element={<ProtectedRoute><Security /></ProtectedRoute>} />
+          <Route path="/admin/backup" element={<ProtectedRoute><Backup /></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>

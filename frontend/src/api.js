@@ -134,4 +134,14 @@ export const adminApi = {
     getUnreadReviewsCount: () => request('/admin/reviews/unread-count'),
     updateReview: (id, data) => request(`/admin/reviews/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
     deleteReview: (id) => request(`/admin/reviews/${id}`, { method: 'DELETE' }),
+
+    // Backup & Restore
+    getBackupInfo: () => request('/admin/backup/info'),
+    exportBackup: () => {
+        const token = localStorage.getItem('token');
+        return fetch(`${API_URL}/admin/backup/export`, {
+            headers: { Authorization: `Bearer ${token}` }
+        }).then(res => res.json());
+    },
+    restoreBackup: (data) => request('/admin/backup/restore', { method: 'POST', body: JSON.stringify(data) }),
 };

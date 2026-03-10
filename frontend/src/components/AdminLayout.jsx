@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Calendar, Scissors, Settings, LogOut, Users, Package, Palette, Menu, DollarSign, Star, Bell, X } from 'lucide-react';
+import { LayoutDashboard, Calendar, Scissors, Settings, LogOut, Users, Package, Palette, Menu, DollarSign, Star, Bell, X, HardDrive } from 'lucide-react';
 import { publicApi, adminApi, BASE_URL } from '../api';
 
 // Toca um beep suave de notificação via Web Audio API
@@ -159,6 +159,7 @@ export default function AdminLayout({ children }) {
                             </NavLink>
                             <NavLink to="/admin/site-config" className={({ isActive }) => isActive ? 'active' : ''} onClick={closeSidebar}><Palette size={20} /> Personalizar Site</NavLink>
                             <NavLink to="/admin/security" className={({ isActive }) => isActive ? 'active' : ''} onClick={closeSidebar}><Settings size={20} /> Segurança</NavLink>
+                            <NavLink to="/admin/backup" className={({ isActive }) => isActive ? 'active' : ''} onClick={closeSidebar}><HardDrive size={20} /> Backup & Restore</NavLink>
                         </>
                     )}
                 </nav>

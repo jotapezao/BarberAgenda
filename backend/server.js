@@ -25,8 +25,10 @@ const storage = multer.diskStorage({
 const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 } });
 
 app.use(cors());
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use('/uploads', express.static(uploadsDir));
+
 
 // ============================
 // HELPER: Calculate end time
@@ -1049,7 +1051,150 @@ app.put('/api/admin/change-password', authenticateToken, async (req, res) => {
     res.json({ message: 'Senha alterada' });
 });
 
+// ── BACKUP & RESTORE ────────────────────────────────────────────────────────
+
+// Lista todas as tabelas exportáveis
+const BACKUP_TABLES = [
+    'users', 'roles', 'role_permissions', 'services', 'clients',
+    'appointments', 'settings', 'site_config', 'blocked_times',
+    'products', 'product_sales', 'payment_methods', 'reviews',
+    'barber_off_days'
+];
+
+// GET /api/admin/backup/export — Exporta todo o banco como JSON
+app.get('/api/admin/backup/export', authenticateToken, async (req, res) => {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Acesso negado' });
+    try {
+        const backup = {
+            version: '1.0',
+            app: 'BarberAgenda',
+            exported_at: new Date().toISOString(),
+            tables: {}
+        };
+
+        for (const table of BACKUP_TABLES) {
+            try {
+                backup.tables[table] = await db.all(`SELECT * FROM ${table}`);
+            } catch (e) {
+                backup.tables[table] = []; // tabela pode não existir em versões antigas
+            }
+        }
+
+        const dateStr = new Date().toISOString().split('T')[0];
+        const filename = `barber_backup_${dateStr}.json`;
+
+        res.setHeader('Content-Type', 'application/json');
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+        res.json(backup);
+    } catch (err) {
+        console.error('Erro ao gerar backup:', err);
+        res.status(500).json({ error: 'Erro ao gerar backup' });
+    }
+});
+
+// GET /api/admin/backup/info — Resumo do banco atual (sem exportar tudo)
+app.get('/api/admin/backup/info', authenticateToken, async (req, res) => {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Acesso negado' });
+    try {
+        const info = {};
+        for (const table of BACKUP_TABLES) {
+            try {
+                const count = await db.get(`SELECT COUNT(*) as count FROM ${table}`);
+                info[table] = parseInt(count.count) || 0;
+            } catch (e) { info[table] = 0; }
+        }
+        res.json({ tables: info, checked_at: new Date().toISOString() });
+    } catch (err) {
+        res.status(500).json({ error: 'Erro ao obter informações' });
+    }
+});
+
+// POST /api/admin/backup/restore — Restaura dados de um JSON de backup
+app.post('/api/admin/backup/restore', authenticateToken, async (req, res) => {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Acesso negado' });
+    const { backup, mode = 'merge' } = req.body; // mode: 'merge' | 'full'
+
+    if (!backup || !backup.tables || backup.app !== 'BarberAgenda') {
+        return res.status(400).json({ error: 'Arquivo de backup inválido ou corrompido' });
+    }
+
+    const results = { success: [], failed: [], skipped: [] };
+
+    try {
+        // Tabelas que NÃO devem ser apagadas em modo full (segurança)
+        const PROTECTED = ['users'];
+
+        for (const table of BACKUP_TABLES) {
+            const rows = backup.tables[table];
+            if (!rows || !Array.isArray(rows) || rows.length === 0) {
+                results.skipped.push(`${table} (vazio)`);
+                continue;
+            }
+
+            try {
+                if (mode === 'full' && !PROTECTED.includes(table)) {
+                    await db.run(`DELETE FROM ${table}`);
+                }
+
+                let inserted = 0;
+                for (const row of rows) {
+                    const cols = Object.keys(row).filter(k => k !== 'id');
+                    if (cols.length === 0) continue;
+
+                    const placeholders = cols.map(() => '?').join(', ');
+                    const values = cols.map(k => row[k]);
+                    const onConflict = mode === 'full' ? '' : ' ON CONFLICT DO NOTHING';
+
+                    try {
+                        if (db.isPostgres) {
+                            const pgCols = cols.join(', ');
+                            const pgPlaceholders = cols.map((_, i) => `$${i + 1}`).join(', ');
+                            const conflictClause = mode === 'full' ? '' : ' ON CONFLICT DO NOTHING';
+                            await db.query(
+                                `INSERT INTO ${table} (${pgCols}) VALUES (${pgPlaceholders})${conflictClause}`,
+                                values
+                            );
+                        } else {
+                            const conflict = mode === 'full' ? '' : ' OR IGNORE';
+                            await db.run(
+                                `INSERT${conflict} INTO ${table} (${cols.join(', ')}) VALUES (${placeholders})`,
+                                values
+                            );
+                        }
+                        inserted++;
+                    } catch (rowErr) {
+                        // Ignora conflitos individuais
+                    }
+                }
+
+                // Reinserção de sequências no Postgres
+                if (db.isPostgres && rows.length > 0) {
+                    const maxId = Math.max(...rows.map(r => r.id || 0));
+                    if (maxId > 0) {
+                        try { await db.query(`SELECT setval(pg_get_serial_sequence('${table}', 'id'), $1, true)`, [maxId]); } catch (_) { }
+                    }
+                }
+
+                results.success.push(`${table} (${inserted} registros)`);
+            } catch (tableErr) {
+                results.failed.push(`${table}: ${tableErr.message}`);
+            }
+        }
+
+        res.json({
+            message: 'Restore concluído',
+            mode,
+            results,
+            restored_at: new Date().toISOString()
+        });
+    } catch (err) {
+        console.error('Erro no restore:', err);
+        res.status(500).json({ error: 'Erro durante o restore: ' + err.message });
+    }
+});
+
 // Initialize DB and Start Server
+
 db.init().then(() => {
     app.listen(PORT, () => console.log(`🚀 Server: http://localhost:${PORT}`));
 }).catch(err => {
