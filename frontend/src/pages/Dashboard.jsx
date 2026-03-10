@@ -149,12 +149,22 @@ export default function Dashboard() {
 
     if (loading) return <AdminLayout><div className="loading-spinner"><div className="spinner"></div></div></AdminLayout>;
 
+    const now = new Date();
+
+    const isOverdue = (apt) => {
+        if (apt.status !== 'confirmed') return false;
+        const aptDateTime = new Date(`${apt.date}T${apt.time}:00`);
+        return aptDateTime < now;
+    };
+
+    const overdueCount = (data?.todayAppointments || []).filter(isOverdue).length;
+
     return (
         <AdminLayout>
             <div className="dashboard-container-v2" style={{ paddingBottom: 40 }}>
                 {/* Header Simplificado */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-                    <h1 style={{ fontSize: '1.4rem', fontWeight: 900, margin: 0 }}>Portal Barbeiro</h1>
+                    <h1 style={{ fontSize: '1.4rem', fontWeight: 900, margin: 0 }}>Agenda</h1>
                     <div style={{ display: 'flex', gap: 10 }}>
                         <button className="btn btn-primary btn-circle" onClick={() => {
                             setNewApt({ ...newApt, date: selectedDate });
@@ -235,6 +245,16 @@ export default function Dashboard() {
                     </div>
                 </div>
 
+                {overdueCount > 0 && (
+                    <div style={{ background: 'rgba(255, 152, 0, 0.15)', border: '1px solid #ff9800', borderRadius: 12, padding: '12px 15px', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <Clock size={24} color="#ff9800" />
+                        <div>
+                            <h4 style={{ margin: 0, color: '#ff9800', fontSize: '1rem' }}>Atenção!</h4>
+                            <p style={{ margin: 0, fontSize: '0.85rem', opacity: 0.9 }}>Há {overdueCount} agendamento(s) com horário atrasado aguardando conclusão.</p>
+                        </div>
+                    </div>
+                )}
+
                 {/* Busca Mobile */}
                 <div style={{ marginBottom: 20, position: 'relative' }}>
                     <Search size={18} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }} />
@@ -254,49 +274,53 @@ export default function Dashboard() {
                 </h2>
 
                 <div className="agenda-list-compact" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                    {filteredToday.length > 0 ? filteredToday.map(apt => (
-                        <div key={apt.id} className={`card apt-card-v2 ${apt.status}`} style={{ padding: '12px 16px', position: 'relative', borderLeft: '4px solid', borderLeftColor: apt.status === 'completed' ? 'var(--color-success)' : (apt.status === 'cancelled' ? 'var(--color-danger)' : 'var(--color-accent)') }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                                <div style={{ display: 'flex', gap: 12 }}>
-                                    <div style={{ fontSize: '1.1rem', fontWeight: 900, color: 'var(--color-accent)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                                        {apt.time}
-                                        {apt.status === 'confirmed' && <div style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--color-accent)', marginTop: 4 }}></div>}
-                                    </div>
-                                    <div>
-                                        <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 700 }}>{apt.client_name}</h4>
-                                        <div style={{ fontSize: '0.8rem', opacity: 0.7, marginTop: 2, display: 'flex', alignItems: 'center', gap: 5 }}>
-                                            <Scissors size={12} /> {apt.service_name} • {formatDuration(apt.service_duration)}
+                    {filteredToday.length > 0 ? filteredToday.map(apt => {
+                        const overdue = isOverdue(apt);
+                        return (
+                            <div key={apt.id} className={`card apt-card-v2 ${apt.status}`} style={{ padding: '12px 16px', position: 'relative', borderLeft: '4px solid', borderLeftColor: apt.status === 'completed' ? 'var(--color-success)' : (apt.status === 'cancelled' ? 'var(--color-danger)' : (overdue ? '#ff9800' : 'var(--color-accent)')) }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                    <div style={{ display: 'flex', gap: 12 }}>
+                                        <div style={{ fontSize: '1.1rem', fontWeight: 900, color: overdue ? '#ff9800' : 'var(--color-accent)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                            {apt.time}
+                                            {apt.status === 'confirmed' && <div style={{ width: 4, height: 4, borderRadius: '50%', background: overdue ? '#ff9800' : 'var(--color-accent)', marginTop: 4 }}></div>}
+                                        </div>
+                                        <div>
+                                            <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 700 }}>{apt.client_name}</h4>
+                                            <div style={{ fontSize: '0.8rem', opacity: 0.7, marginTop: 2, display: 'flex', alignItems: 'center', gap: 5 }}>
+                                                <Scissors size={12} /> {apt.service_name} • {formatDuration(apt.service_duration)}
+                                            </div>
                                         </div>
                                     </div>
+                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 5 }}>
+                                        {statusBadge(apt.status)}
+                                        {overdue && <span style={{ fontSize: '0.65rem', color: '#ff9800', fontWeight: 'bold' }}>ATRASADO</span>}
+                                        {apt.barber_name && <span style={{ fontSize: '0.7rem', opacity: 0.5 }}>{apt.barber_name}</span>}
+                                    </div>
                                 </div>
-                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 5 }}>
-                                    {statusBadge(apt.status)}
-                                    {apt.barber_name && <span style={{ fontSize: '0.7rem', opacity: 0.5 }}>{apt.barber_name}</span>}
-                                </div>
-                            </div>
 
-                            {apt.status === 'confirmed' && (
-                                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 15, paddingTop: 12, borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-                                    <div style={{ display: 'flex', gap: 12 }}>
-                                        <button className="btn-icon circle" onClick={() => openWhatsApp(apt.client_whatsapp, apt.client_name)} title="WhatsApp">
-                                            <Phone size={16} />
-                                        </button>
-                                        <button className="btn-icon circle" onClick={() => setTransferData({ id: apt.id, barberId: apt.barber_id || '' })} title="Transferir Barbeiro">
-                                            <Users size={16} />
-                                        </button>
+                                {apt.status === 'confirmed' && (
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 15, paddingTop: 12, borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                                        <div style={{ display: 'flex', gap: 12 }}>
+                                            <button className="btn-icon circle" onClick={() => openWhatsApp(apt.client_whatsapp, apt.client_name)} title="WhatsApp">
+                                                <Phone size={16} />
+                                            </button>
+                                            <button className="btn-icon circle" onClick={() => setTransferData({ id: apt.id, barberId: apt.barber_id || '' })} title="Transferir Barbeiro">
+                                                <Users size={16} />
+                                            </button>
+                                        </div>
+                                        <div style={{ display: 'flex', gap: 8 }}>
+                                            <button className="btn btn-sm btn-danger" onClick={() => updateStatus(apt.id, 'cancelled')} style={{ padding: '6px 12px' }}>
+                                                <XCircle size={14} /> <span className="desk-only">Zelar</span>
+                                            </button>
+                                            <button className="btn btn-sm btn-success" onClick={() => setFinishModal({ id: apt.id, discount_amount: '', is_birthday_reward: false, payment_method: paymentMethods[0]?.name || 'PIX' })} style={{ padding: '6px 12px' }}>
+                                                <CheckCircle size={14} /> Concluir
+                                            </button>
+                                        </div>
                                     </div>
-                                    <div style={{ display: 'flex', gap: 8 }}>
-                                        <button className="btn btn-sm btn-danger" onClick={() => updateStatus(apt.id, 'cancelled')} style={{ padding: '6px 12px' }}>
-                                            <XCircle size={14} /> <span className="desk-only">Zelar</span>
-                                        </button>
-                                        <button className="btn btn-sm btn-success" onClick={() => setFinishModal({ id: apt.id, discount_amount: '', is_birthday_reward: false, payment_method: paymentMethods[0]?.name || 'PIX' })} style={{ padding: '6px 12px' }}>
-                                            <CheckCircle size={14} /> Concluir
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    )) : (
+                                )}
+                            </div>
+                        )
+                    }) : (
                         <div className="card glass-card" style={{ padding: '40px 20px', textAlign: 'center', opacity: 0.6 }}>
                             <Calendar size={40} style={{ marginBottom: 15, opacity: 0.2 }} />
                             <p>Nenhum agendamento para este filtro hoje.</p>

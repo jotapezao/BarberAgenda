@@ -398,7 +398,7 @@ app.get('/api/admin/appointments', authenticateToken, async (req, res) => {
 
 app.patch('/api/admin/appointments/:id', authenticateToken, async (req, res) => {
     const { id } = req.params;
-    const { status, notes, barber_id, discount_amount, is_birthday_reward } = req.body;
+    const { status, notes, barber_id, discount_amount, is_birthday_reward, payment_method, payment_status } = req.body;
     const updates = []; const params = [];
     if (status) { updates.push('status = ?'); params.push(status); }
     if (notes !== undefined) { updates.push('notes = ?'); params.push(notes); }

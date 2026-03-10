@@ -59,9 +59,6 @@ export default function AdminLayout({ children }) {
                         <img src={`${BASE_URL}${siteConfig.site_logo}`} alt="Logo" style={{ maxHeight: 50, width: 'auto', display: 'block' }} />
                     )}
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', lineHeight: 1 }}>
-                        <span style={{ fontFamily: "'Dancing Script', cursive", fontSize: '1.4rem', color: '#fff', transform: 'rotate(-5deg)', marginBottom: '-8px', position: 'relative', zIndex: 2 }}>
-                            Painel do Barbeiro
-                        </span>
                         <span style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 900, fontSize: '1.4rem', color: 'var(--color-accent)', textTransform: 'uppercase', letterSpacing: '-0.5px' }}>
                             {siteConfig.site_name || 'ADMIN'}
                         </span>
