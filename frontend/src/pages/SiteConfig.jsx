@@ -71,7 +71,7 @@ export default function SiteConfig() {
                 'banner_title_3', 'banner_subtitle_3', 'banner_image_3',
                 'promotion_active', 'promotion_title', 'promotion_text', 'promotion_badge',
                 'about_title', 'about_text', 'address', 'city', 'cep', 'map_embed_url',
-                'birthday_reward_active', 'birthday_reward_value'
+                'birthday_reward_active', 'birthday_reward_value', 'appointment_notifications'
             ];
 
             const sitePayload = {};
@@ -398,6 +398,26 @@ export default function SiteConfig() {
                                     onChange={v => updateField('max_booking_advance', v)}
                                     info="Limite para agendar no futuro. (Ex: 30 dias)"
                                 />
+                            </div>
+
+                            {/* Notificações de Novos Agendamentos */}
+                            <div className="card" style={{ background: 'rgba(59, 130, 246, 0.05)', border: '1px solid rgba(59, 130, 246, 0.2)', marginBottom: 24, marginTop: 24 }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+                                    <span style={{ fontSize: '1.2rem' }}>🔔</span>
+                                    <h4 style={{ margin: 0 }}>Notificações de Novos Agendamentos</h4>
+                                </div>
+                                <p style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', marginBottom: 12, marginLeft: 34 }}>Quando ativado, o sistema emite um alerta sonoro e visual sempre que um cliente fizer um novo agendamento.</p>
+                                <div className="form-group" style={{ marginBottom: 0, marginLeft: 34 }}>
+                                    <label className="flex-center" style={{ gap: 12, cursor: 'pointer', justifyContent: 'flex-start' }}>
+                                        <input
+                                            type="checkbox"
+                                            checked={config.appointment_notifications !== 'false' && config.appointment_notifications !== '0'}
+                                            onChange={e => updateField('appointment_notifications', e.target.checked ? 'true' : 'false')}
+                                            style={{ width: 22, height: 22 }}
+                                        />
+                                        <span style={{ fontWeight: 700 }}>Ativar notificações de novos agendamentos</span>
+                                    </label>
+                                </div>
                             </div>
 
                             <div className="card" style={{ background: 'rgba(212, 165, 72, 0.05)', border: '1px solid rgba(212, 165, 72, 0.2)', marginBottom: 24, marginTop: 24 }}>

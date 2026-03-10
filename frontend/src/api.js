@@ -70,7 +70,7 @@ export const authApi = {
 };
 
 export const adminApi = {
-    getDashboard: () => request('/admin/dashboard'),
+    getDashboard: (params = {}) => { const q = new URLSearchParams(params).toString(); return request(`/admin/dashboard${q ? '?' + q : ''}`); },
     getAppointments: (params = {}) => { const q = new URLSearchParams(params).toString(); return request(`/admin/appointments${q ? '?' + q : ''}`); },
     updateAppointment: (id, data) => request(`/admin/appointments/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
     deleteAppointment: (id) => request(`/admin/appointments/${id}`, { method: 'DELETE' }),
