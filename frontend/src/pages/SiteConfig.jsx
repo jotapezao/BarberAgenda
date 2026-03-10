@@ -182,15 +182,15 @@ export default function SiteConfig() {
                                     <div className="form-group">
                                         <label className="form-label">Tema do Site</label>
                                         <select className="form-select" value={config.site_theme} onChange={e => updateField('site_theme', e.target.value)}>
-                                            <option value="theme-dark-gold">Laranja (Atual / Padrão)</option>
-                                            <option value="theme-dark-purple">Roxo (Paleta Charmosa)</option>
-                                            <option value="theme-dark-grey">Dark (Sóbrio)</option>
-                                            <option value="theme-light-clean">Claro (Clean)</option>
-                                            <option value="theme-sophisticated-blue">Azul (Sofisticado)</option>
-                                            <option value="theme-wine-elegance">Vinho / Bordeaux (Elegante)</option>
-                                            <option value="theme-emerald-luxury">Esmeralda (Luxuoso)</option>
-                                            <option value="theme-coffee-classic">Café (Clássico)</option>
-                                            <option value="theme-midnight-ocean">Oceano (Meia Noite)</option>
+                                            <option value="theme-dark-gold">🟡 Dark Gold — Laranja/Dourado (Padrão)</option>
+                                            <option value="theme-dark-grey">⚪ Carvão Refinado — Prata sutil</option>
+                                            <option value="theme-dark-purple">🟣 Púrpura Moderno — Lavanda Elegante</option>
+                                            <option value="theme-sophisticated-blue">🔵 Azul Aço — Ciano Refinado</option>
+                                            <option value="theme-coffee-classic">🟤 Café & Couro — Âmbar Vintage</option>
+                                            <option value="theme-midnight-ocean">🩵 Oceano Ardósia — Verde-Água</option>
+                                            <option value="theme-wine-elegance">🖤 Obsidian Platinum — Prata Gelada</option>
+                                            <option value="theme-emerald-luxury">🟢 Esmeralda — Verde Floresta</option>
+                                            <option value="theme-light-clean">☀️ Claro Clean — Branco</option>
                                         </select>
                                     </div>
                                 </div>

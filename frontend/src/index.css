@@ -70,7 +70,18 @@
   --transition-base: 300ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Theme Classes */
+/* ===========================
+   THEME CLASSES
+   =========================== */
+
+/* ── Tema Principal: Dark Gold (padrão) ── */
+body.theme-dark-gold {
+  --color-bg-primary: #0a0a0a;
+  --color-bg-glass: rgba(5, 5, 5, 0.98);
+  --btn-text: #0a0a0a;
+}
+
+/* ── Tema: Claro Clean ── */
 body.theme-light-clean {
   --color-bg-primary: #f3f4f6;
   --color-bg-secondary: #ffffff;
@@ -89,71 +100,204 @@ body.theme-light-clean {
   --color-text-muted: #9ca3af;
   --color-border: #e5e7eb;
   --color-border-hover: #d1d5db;
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 6px 20px rgba(0, 0, 0, 0.10);
+  --shadow-glow: 0 0 16px rgba(0, 0, 0, 0.15);
   --btn-text: #ffffff;
 }
 
+/* ── Tema: Dark Grey — MELHORADO ── 
+   Antes era cinza azulado monótono com accent branco.
+   Agora: carvão refinado com accent prata quente e bordas sutis. */
 body.theme-dark-grey {
-  --color-bg-primary: #111827;
-  --color-bg-secondary: #1f2937;
-  --color-bg-card: #374151;
-  --color-bg-card-hover: #4b5563;
-  --color-bg-input: #374151;
-  --color-accent: #f3f4f6;
-  --color-accent-light: #ffffff;
-  --color-accent-dark: #d1d5db;
-  --color-accent-glow: rgba(255, 255, 255, 0.08);
-  --color-accent-subtle: rgba(255, 255, 255, 0.05);
-  --color-bg-glass: rgba(15, 23, 35, 0.98);
-  --color-text-primary: #f9fafb;
-  --color-text-secondary: #d1d5db;
-  --color-text-muted: #9ca3af;
-  --color-border: #4b5563;
-  --btn-text: #111827;
+  --color-bg-primary: #131416;
+  --color-bg-secondary: #1c1e21;
+  --color-bg-card: #232629;
+  --color-bg-card-hover: #2c2f33;
+  --color-bg-input: #1e2023;
+  --color-bg-overlay: rgba(0, 0, 0, 0.75);
+  --color-accent: #c8cdd5;
+  --color-accent-light: #e4e7ec;
+  --color-accent-dark: #9ea5b0;
+  --color-accent-glow: rgba(200, 205, 213, 0.12);
+  --color-accent-subtle: rgba(200, 205, 213, 0.06);
+  --color-bg-glass: rgba(12, 13, 14, 0.97);
+  --color-text-primary: #eef0f3;
+  --color-text-secondary: #9ea5b0;
+  --color-text-muted: #5c6370;
+  --color-border: #2e3136;
+  --color-border-hover: #3c4049;
+  --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.6);
+  --shadow-md: 0 8px 28px rgba(0, 0, 0, 0.7);
+  --shadow-glow: 0 0 20px rgba(200, 205, 213, 0.08);
+  --btn-text: #131416;
 }
 
+/* ── Tema: Dark Purple — MELHORADO ──
+   Antes era roxo muito saturado / escuro demais (quase ilegível).
+   Agora: púrpura profundo suave, com accent lavanda vibrante mas não agressivo. */
 body.theme-dark-purple {
-  --color-bg-primary: #0a0514;
-  --color-bg-secondary: #130a27;
-  --color-bg-card: #1f113f;
-  --color-bg-card-hover: #2a1654;
-  --color-bg-input: #1a0e35;
-  --color-accent: #b266ff;
-  --color-accent-light: #d8b0ff;
-  --color-accent-dark: #8125e5;
-  --color-accent-glow: rgba(178, 102, 255, 0.2);
-  --color-accent-subtle: rgba(178, 102, 255, 0.08);
-  --color-bg-glass: rgba(10, 5, 25, 0.98);
-  --color-text-primary: #f8f5ff;
-  --color-text-secondary: #cbbdeb;
-  --color-text-muted: #8b7ca6;
-  --color-border: #311c63;
-  --btn-text: #0a0514;
+  --color-bg-primary: #0e0b18;
+  --color-bg-secondary: #16112a;
+  --color-bg-card: #1e1835;
+  --color-bg-card-hover: #261f43;
+  --color-bg-input: #19143a;
+  --color-bg-overlay: rgba(5, 3, 15, 0.8);
+  --color-accent: #a78bfa;
+  --color-accent-light: #c4b5fd;
+  --color-accent-dark: #7c5edf;
+  --color-accent-glow: rgba(167, 139, 250, 0.18);
+  --color-accent-subtle: rgba(167, 139, 250, 0.08);
+  --color-bg-glass: rgba(10, 7, 20, 0.97);
+  --color-text-primary: #f0eeff;
+  --color-text-secondary: #b8aee0;
+  --color-text-muted: #6b5fa5;
+  --color-border: #2a2048;
+  --color-border-hover: #392c60;
+  --shadow-sm: 0 4px 14px rgba(0, 0, 0, 0.6);
+  --shadow-md: 0 8px 32px rgba(0, 0, 0, 0.7);
+  --shadow-glow: 0 0 24px rgba(167, 139, 250, 0.2);
+  --btn-text: #0e0b18;
 }
 
+/* ── Tema: Azul Sofisticado — MELHORADO ──
+   Antes era azul vivo (#3b82f6) em fundo muito escuro — contraste agressivo.
+   Agora: azul aço refinado com fundo slate elegante e accent ciano suave. */
 body.theme-sophisticated-blue {
-  --color-bg-primary: #020617;
-  --color-bg-secondary: #0f172a;
-  --color-bg-card: #1e293b;
-  --color-bg-card-hover: #334155;
-  --color-bg-input: #1e293b;
-  --color-accent: #3b82f6;
-  --color-accent-light: #60a5fa;
-  --color-accent-dark: #2563eb;
-  --color-accent-glow: rgba(59, 130, 246, 0.2);
-  --color-accent-subtle: rgba(59, 130, 246, 0.08);
-  --color-bg-glass: rgba(2, 6, 23, 0.98);
-  --color-text-primary: #f8fafc;
-  --color-text-secondary: #cbd5e1;
-  --color-text-muted: #64748b;
-  --color-border: #334155;
-  --btn-text: #ffffff;
+  --color-bg-primary: #0c1118;
+  --color-bg-secondary: #131d28;
+  --color-bg-card: #1a2636;
+  --color-bg-card-hover: #213041;
+  --color-bg-input: #162030;
+  --color-bg-overlay: rgba(5, 9, 16, 0.8);
+  --color-accent: #60a5fa;
+  --color-accent-light: #93c5fd;
+  --color-accent-dark: #3b82f6;
+  --color-accent-glow: rgba(96, 165, 250, 0.16);
+  --color-accent-subtle: rgba(96, 165, 250, 0.07);
+  --color-bg-glass: rgba(8, 12, 20, 0.97);
+  --color-text-primary: #e8f0fc;
+  --color-text-secondary: #94b0cc;
+  --color-text-muted: #4a6580;
+  --color-border: #1e3048;
+  --color-border-hover: #2a4060;
+  --shadow-sm: 0 4px 14px rgba(0, 0, 0, 0.65);
+  --shadow-md: 0 8px 32px rgba(0, 0, 0, 0.75);
+  --shadow-glow: 0 0 24px rgba(96, 165, 250, 0.16);
+  --btn-text: #0c1118;
 }
 
-body.theme-dark-gold {
-  --color-bg-primary: #0a0a0a;
-  --color-bg-glass: rgba(5, 5, 5, 0.98);
-  --btn-text: #0a0a0a;
+/* ══════════════════════════════
+   NOVOS TEMAS SOFISTICADOS
+   ══════════════════════════════ */
+
+/* ── Novo Tema 1: Café Couro (Coffee & Leather) ──
+   Tons de couro escuro, mogno, âmbar terroso.
+   Luxo clássico de barbearia vintage premium. */
+body.theme-coffee-classic {
+  --color-bg-primary: #100d09;
+  --color-bg-secondary: #1a1410;
+  --color-bg-card: #231c16;
+  --color-bg-card-hover: #2c2419;
+  --color-bg-input: #1e1811;
+  --color-bg-overlay: rgba(6, 4, 2, 0.8);
+  --color-accent: #c8956a;
+  --color-accent-light: #e0b090;
+  --color-accent-dark: #a37050;
+  --color-accent-glow: rgba(200, 149, 106, 0.18);
+  --color-accent-subtle: rgba(200, 149, 106, 0.08);
+  --color-bg-glass: rgba(10, 8, 5, 0.97);
+  --color-text-primary: #f2ece4;
+  --color-text-secondary: #b8a898;
+  --color-text-muted: #6b5c4e;
+  --color-border: #2e241a;
+  --color-border-hover: #3d3025;
+  --shadow-sm: 0 4px 14px rgba(0, 0, 0, 0.65);
+  --shadow-md: 0 8px 32px rgba(0, 0, 0, 0.75);
+  --shadow-glow: 0 0 24px rgba(200, 149, 106, 0.18);
+  --btn-text: #100d09;
 }
+
+/* ── Novo Tema 2: Slate Ocean (Oceano Ardósia) ──
+   Cinza azulado naval profundo com accent verde-água tiffany.
+   Moderno, sereno e ultra-sofisticado. */
+body.theme-midnight-ocean {
+  --color-bg-primary: #0a0f14;
+  --color-bg-secondary: #111820;
+  --color-bg-card: #17212c;
+  --color-bg-card-hover: #1e2c39;
+  --color-bg-input: #141d27;
+  --color-bg-overlay: rgba(4, 7, 11, 0.8);
+  --color-accent: #4ecdc4;
+  --color-accent-light: #81e8e2;
+  --color-accent-dark: #2ab3aa;
+  --color-accent-glow: rgba(78, 205, 196, 0.18);
+  --color-accent-subtle: rgba(78, 205, 196, 0.07);
+  --color-bg-glass: rgba(7, 10, 16, 0.97);
+  --color-text-primary: #e6edf4;
+  --color-text-secondary: #8ba4bd;
+  --color-text-muted: #3e5a73;
+  --color-border: #1a2940;
+  --color-border-hover: #243650;
+  --shadow-sm: 0 4px 14px rgba(0, 0, 0, 0.65);
+  --shadow-md: 0 8px 32px rgba(0, 0, 0, 0.75);
+  --shadow-glow: 0 0 26px rgba(78, 205, 196, 0.18);
+  --btn-text: #0a0f14;
+}
+
+/* ── Novo Tema 3: Obsidian Platinum ──
+   Preto absoluto com acento platina/prata gelada.
+   O mais minimalista e premium — Apple-level. */
+body.theme-wine-elegance {
+  --color-bg-primary: #0d0d0d;
+  --color-bg-secondary: #161616;
+  --color-bg-card: #1f1f1f;
+  --color-bg-card-hover: #282828;
+  --color-bg-input: #1a1a1a;
+  --color-bg-overlay: rgba(0, 0, 0, 0.82);
+  --color-accent: #b8bfc8;
+  --color-accent-light: #d4d9e1;
+  --color-accent-dark: #8f96a0;
+  --color-accent-glow: rgba(184, 191, 200, 0.12);
+  --color-accent-subtle: rgba(184, 191, 200, 0.06);
+  --color-bg-glass: rgba(6, 6, 6, 0.98);
+  --color-text-primary: #f0f0f0;
+  --color-text-secondary: #8a8f98;
+  --color-text-muted: #494e57;
+  --color-border: #242424;
+  --color-border-hover: #303030;
+  --shadow-sm: 0 4px 16px rgba(0, 0, 0, 0.7);
+  --shadow-md: 0 10px 40px rgba(0, 0, 0, 0.8);
+  --shadow-glow: 0 0 20px rgba(184, 191, 200, 0.10);
+  --btn-text: #0d0d0d;
+}
+
+/* ── Novo Tema 4: Esmeralda Luxuosa (bonus) ──
+   Verde profundo floresta com accent dourado-esmeralda. */
+body.theme-emerald-luxury {
+  --color-bg-primary: #080f0d;
+  --color-bg-secondary: #0f1a16;
+  --color-bg-card: #162420;
+  --color-bg-card-hover: #1d2d28;
+  --color-bg-input: #121e1a;
+  --color-bg-overlay: rgba(3, 7, 5, 0.8);
+  --color-accent: #4ade80;
+  --color-accent-light: #86efac;
+  --color-accent-dark: #22c55e;
+  --color-accent-glow: rgba(74, 222, 128, 0.16);
+  --color-accent-subtle: rgba(74, 222, 128, 0.07);
+  --color-bg-glass: rgba(5, 10, 8, 0.97);
+  --color-text-primary: #e8f4ee;
+  --color-text-secondary: #7faa90;
+  --color-text-muted: #3a5e48;
+  --color-border: #1a3027;
+  --color-border-hover: #244035;
+  --shadow-sm: 0 4px 14px rgba(0, 0, 0, 0.65);
+  --shadow-md: 0 8px 32px rgba(0, 0, 0, 0.75);
+  --shadow-glow: 0 0 24px rgba(74, 222, 128, 0.16);
+  --btn-text: #080f0d;
+}
+
 
 /* Global Transitions */
 * {

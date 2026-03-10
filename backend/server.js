@@ -960,13 +960,15 @@ app.get('/api/admin/financial', authenticateToken, async (req, res) => {
     `, paramsPeriod);
 
     const transactions = await db.all(`
-        SELECT a.id, a.date, a.time, a.client_name, s.name as service_name, (s.price - COALESCE(a.discount_amount, 0)) as amount, 
+        SELECT a.id, a.date, a.time, a.client_name, s.name as service_name,
+               COALESCE(a.discount_amount, 0) as discount,
+               (s.price - COALESCE(a.discount_amount, 0)) as amount, 
                a.payment_method, u.name as barber_name
         FROM appointments a 
         JOIN services s ON a.service_id = s.id 
         LEFT JOIN users u ON a.barber_id = u.id
         WHERE a.status = 'completed' AND a.date >= ? AND a.date <= ?${whereBarber}
-        ORDER BY a.date DESC, a.time DESC LIMIT 50
+        ORDER BY a.date DESC, a.time DESC LIMIT 200
     `, paramsPeriod);
 
     const totalCommissions = individualCommissions.reduce((acc, curr) => acc + (curr.period_commission || 0), 0);
