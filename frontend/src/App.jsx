@@ -32,13 +32,23 @@ function App() {
       const validThemes = [
         'theme-dark-gold', 'theme-dark-purple', 'theme-dark-grey', 'theme-light-clean',
         'theme-sophisticated-blue', 'theme-wine-elegance', 'theme-emerald-luxury',
-        'theme-coffee-classic', 'theme-midnight-ocean'
+        'theme-coffee-classic', 'theme-midnight-ocean',
+        'theme-dark-ocean', 'theme-dark-emerald', 'theme-dark-purple-new',
+        'theme-light-ocean', 'theme-light-emerald', 'theme-light-purple', 'theme-light-gold'
       ];
       document.body.classList.remove(...validThemes);
       if (config.site_theme && validThemes.includes(config.site_theme)) {
         document.body.classList.add(config.site_theme);
       } else {
         document.body.classList.add('theme-dark-gold');
+      }
+
+      const validFonts = ['font-default', 'font-modern', 'font-classic', 'font-bold'];
+      document.body.classList.remove(...validFonts);
+      if (config.site_font && validFonts.includes(config.site_font)) {
+        document.body.classList.add(config.site_font);
+      } else {
+        document.body.classList.add('font-default');
       }
 
       const siteName = config.site_name || 'BarberPro';

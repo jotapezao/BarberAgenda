@@ -65,7 +65,7 @@ export default function SiteConfig() {
         try {
             // Split config into site_config and settings
             const siteConfigKeys = [
-                'site_name', 'site_slogan', 'site_theme', 'site_logo', 'site_background',
+                'site_name', 'site_slogan', 'site_theme', 'site_font', 'site_logo', 'site_background',
                 'banner_title_1', 'banner_subtitle_1', 'banner_image_1',
                 'banner_title_2', 'banner_subtitle_2', 'banner_image_2',
                 'banner_title_3', 'banner_subtitle_3', 'banner_image_3',
@@ -97,10 +97,16 @@ export default function SiteConfig() {
             const validThemes = [
                 'theme-dark-gold', 'theme-dark-purple', 'theme-dark-grey', 'theme-light-clean',
                 'theme-sophisticated-blue', 'theme-ruby-red', 'theme-emerald-green', 'theme-neon-cyberpunk',
-                'theme-wine-elegance', 'theme-emerald-luxury', 'theme-coffee-classic', 'theme-midnight-ocean'
+                'theme-wine-elegance', 'theme-emerald-luxury', 'theme-coffee-classic', 'theme-midnight-ocean',
+                'theme-dark-ocean', 'theme-dark-emerald', 'theme-dark-purple-new',
+                'theme-light-ocean', 'theme-light-emerald', 'theme-light-purple', 'theme-light-gold'
             ];
             document.body.classList.remove(...validThemes);
             if (config.site_theme) document.body.classList.add(config.site_theme);
+
+            const validFonts = ['font-default', 'font-modern', 'font-classic', 'font-bold'];
+            document.body.classList.remove(...validFonts);
+            if (config.site_font) document.body.classList.add(config.site_font);
 
             if (config.site_background) {
                 document.body.style.backgroundImage = `url(${BASE_URL}${config.site_background})`;
@@ -183,14 +189,31 @@ export default function SiteConfig() {
                                         <label className="form-label">Tema do Site</label>
                                         <select className="form-select" value={config.site_theme} onChange={e => updateField('site_theme', e.target.value)}>
                                             <option value="theme-dark-gold">🟡 Dark Gold — Laranja/Dourado (Padrão)</option>
+                                            <option value="theme-dark-ocean">🌊 Dark Oceano — Azul/Ciano</option>
+                                            <option value="theme-dark-emerald">🌲 Dark Esmeralda — Verde Vibrante</option>
+                                            <option value="theme-dark-purple-new">💜 Dark Púrpura — Lilás/Roxo</option>
+
                                             <option value="theme-dark-grey">⚪ Carvão Refinado — Prata sutil</option>
-                                            <option value="theme-dark-purple">🟣 Púrpura Moderno — Lavanda Elegante</option>
                                             <option value="theme-sophisticated-blue">🔵 Azul Aço — Ciano Refinado</option>
                                             <option value="theme-coffee-classic">🟤 Café & Couro — Âmbar Vintage</option>
                                             <option value="theme-midnight-ocean">🩵 Oceano Ardósia — Verde-Água</option>
                                             <option value="theme-wine-elegance">🖤 Obsidian Platinum — Prata Gelada</option>
-                                            <option value="theme-emerald-luxury">🟢 Esmeralda — Verde Floresta</option>
-                                            <option value="theme-light-clean">☀️ Claro Clean — Branco</option>
+                                            <option value="theme-emerald-luxury">🟢 Esmeralda Premium — Verde Floresta</option>
+
+                                            <option value="theme-light-clean">☀️ Claro Clean — Branco/Azul Fosco</option>
+                                            <option value="theme-light-ocean">🏖️ Claro Oceano — Azul Turquesa</option>
+                                            <option value="theme-light-emerald">🍃 Claro Esmeralda — Verde Suave</option>
+                                            <option value="theme-light-purple">🌸 Claro Púrpura — Lilás Pastel</option>
+                                            <option value="theme-light-gold">🌅 Claro Gold — Dourado Fino</option>
+                                        </select>
+                                    </div>
+                                    <div className="form-group">
+                                        <label className="form-label">Tipografia (Fontes do Site)</label>
+                                        <select className="form-select" value={config.site_font} onChange={e => updateField('site_font', e.target.value)}>
+                                            <option value="font-default">Inter & Playfair Display (Padrão - Equilibrada)</option>
+                                            <option value="font-modern">Montserrat & Outfit (Moderna - Limpa)</option>
+                                            <option value="font-classic">Lora & Cinzel (Clássica - Elegante)</option>
+                                            <option value="font-bold">Poppins & Oswald (Ousada - Marcante)</option>
                                         </select>
                                     </div>
                                 </div>
