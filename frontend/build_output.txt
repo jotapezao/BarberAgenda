@@ -1,0 +1,40 @@
+
+> frontend@0.0.0 build
+> vite build
+
+[36mvite v7.3.1 [32mbuilding client environment for production...[36m[39m
+transforming...
+[32mÔ£ô[39m 17 modules transformed.
+Ô£ù Build failed in 547ms
+error during build:
+[vite:esbuild] Transform failed with 2 errors:
+C:/Users/joaopaulo.f/Desktop/ProjBarb/frontend/src/pages/Dashboard.jsx:235:18: ERROR: Unexpected closing "AdminLayout" tag does not match opening "div" tag
+C:/Users/joaopaulo.f/Desktop/ProjBarb/frontend/src/pages/Dashboard.jsx:236:13: ERROR: Expected "}" but found ";"
+file: C:/Users/joaopaulo.f/Desktop/ProjBarb/frontend/src/pages/Dashboard.jsx:235:18
+
+Unexpected closing "AdminLayout" tag does not match opening "div" tag
+233 |                          </div>
+234 |                      )}
+235 |                  </AdminLayout>
+    |                    ^
+236 |              );
+237 |  }
+
+Expected "}" but found ";"
+234 |                      )}
+235 |                  </AdminLayout>
+236 |              );
+    |               ^
+237 |  }
+238 |  
+
+    at failureErrorWithLog (C:\Users\joaopaulo.f\Desktop\ProjBarb\frontend\node_modules\esbuild\lib\main.js:1467:15)
+    at C:\Users\joaopaulo.f\Desktop\ProjBarb\frontend\node_modules\esbuild\lib\main.js:736:50
+    at responseCallbacks.<computed> (C:\Users\joaopaulo.f\Desktop\ProjBarb\frontend\node_modules\esbuild\lib\main.js:603:9)
+    at handleIncomingPacket (C:\Users\joaopaulo.f\Desktop\ProjBarb\frontend\node_modules\esbuild\lib\main.js:658:12)
+    at Socket.readFromStdout (C:\Users\joaopaulo.f\Desktop\ProjBarb\frontend\node_modules\esbuild\lib\main.js:581:7)
+    at Socket.emit (node:events:518:28)
+    at addChunk (node:internal/streams/readable:561:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+    at Readable.push (node:internal/streams/readable:392:5)
+    at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)

@@ -313,7 +313,7 @@ export default function Home() {
                     <div className="card card-glass animate-fade" style={{ padding: '50px 40px', boxShadow: '0 10px 40px rgba(0,0,0,0.5)', borderRadius: '24px' }}>
                         <h2 style={{ fontSize: '2.5rem', marginBottom: 20, fontFamily: 'var(--font-display)', fontWeight: 800 }}>{siteConfig.about_title || 'Nossa História'}</h2>
                         <p className="text-secondary" style={{ fontSize: '1.1rem', lineHeight: 1.7, marginBottom: 25 }}>
-                            {siteConfig.about_text || 'Fundada com o propósito de elevar a autoestima masculina, nossa barbearia combina tradição e modernidade. Cada detalhe foi pensado para proporcionar conforto e resultados impecáveis.'}
+                            {siteConfig.about_text || 'Fundada com o propósito de elevating a autoestima masculina, nossa barbearia combina tradição e modernidade. Cada detalhe foi pensado para proporcionar conforto e resultados impecáveis.'}
                         </p>
                         <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 15 }}>
                             <li style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.9rem' }}><CheckCircle size={16} className="text-accent" /> Profissionais Elite</li>

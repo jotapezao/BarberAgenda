@@ -529,99 +529,85 @@ export default function Dashboard() {
                                     <input type="time" className="form-input" value={newApt.time} onChange={e => setNewApt({ ...newApt, time: e.target.value })} />
                                 </div>
                             </div>
-                            <div className="form-group">
-                                <label className="form-label">Barbeiro</label>
-                                <select className="form-select" value={newApt.barber_id} onChange={e => setNewApt({ ...newApt, barber_id: e.target.value })}>
-                                    <option value="">Selecione...</option>
-                                    {barbers.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
-                                </select>
-                            </div>
+                        ))}
                         </div>
-                        <div className="modal-footer" style={{ border: 'none' }}>
-                            <button className="btn btn-ghost" style={{ width: '100%' }} onClick={() => setShowNewApt(false)}>Cancelar</button>
-                            <button className="btn btn-primary" style={{ width: '100%' }} onClick={saveNewAppointment} disabled={savingApt}>
-                                {savingApt ? 'Salvando...' : 'Criar Agendamento'}
-                            </button>
-                        </div>
-                    </div>
-                </div>
             )}
 
-            {/* Modal: Transferir Barbeiro */}
-            {transferData.id && (
-                <div className="modal-overlay" onClick={() => setTransferData({ id: null, barberId: '' })}>
-                    <div className="modal animate-scale" onClick={e => e.stopPropagation()} style={{ borderRadius: 24, maxWidth: 400 }}>
-                        <div className="modal-header">
-                            <h2>Transferir Barbeiro</h2>
-                            <button className="btn-icon" onClick={() => setTransferData({ id: null, barberId: '' })}><XCircle size={20} /></button>
-                        </div>
-                        <div className="modal-body" style={{ padding: '20px 0' }}>
-                            <div style={{ display: 'grid', gap: 10 }}>
-                                {barbers.map(b => (
-                                    <button key={b.id} onClick={() => {
-                                        adminApi.updateAppointment(transferData.id, { barber_id: b.id })
-                                            .then(() => { toast.success('Transferido para ' + b.name); setTransferData({ id: null, barberId: '' }); loadDashboard(); })
-                                            .catch(() => toast.error('Erro ao transferir'));
-                                    }} style={{ padding: 14, borderRadius: 12, border: '1px solid var(--color-border)', background: 'rgba(255,255,255,0.03)', color: '#fff', textAlign: 'left', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10, transition: 'all 0.2s' }}
-                                        onMouseOver={e => e.currentTarget.style.background = 'var(--color-accent-subtle)'}
-                                        onMouseOut={e => e.currentTarget.style.background = 'rgba(255,255,255,0.03)'}>
-                                        <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'var(--color-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#000', fontWeight: 900, fontSize: '0.8rem' }}>
-                                            {b.name.charAt(0)}
+                        {/* Modal: Transferir Barbeiro */}
+                        {transferData.id && (
+                            <div className="modal-overlay" onClick={() => setTransferData({ id: null, barberId: '' })}>
+                                <div className="modal animate-scale" onClick={e => e.stopPropagation()} style={{ borderRadius: 24, maxWidth: 400 }}>
+                                    <div className="modal-header">
+                                        <h2>Transferir Barbeiro</h2>
+                                        <button className="btn-icon" onClick={() => setTransferData({ id: null, barberId: '' })}><XCircle size={20} /></button>
+                                    </div>
+                                    <div className="modal-body" style={{ padding: '20px 0' }}>
+                                        <div style={{ display: 'grid', gap: 10 }}>
+                                            {barbers.map(b => (
+                                                <button key={b.id} onClick={() => {
+                                                    adminApi.updateAppointment(transferData.id, { barber_id: b.id })
+                                                        .then(() => { toast.success('Transferido para ' + b.name); setTransferData({ id: null, barberId: '' }); loadDashboard(); })
+                                                        .catch(() => toast.error('Erro ao transferir'));
+                                                }} style={{ padding: 14, borderRadius: 12, border: '1px solid var(--color-border)', background: 'rgba(255,255,255,0.03)', color: '#fff', textAlign: 'left', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10, transition: 'all 0.2s' }}
+                                                    onMouseOver={e => e.currentTarget.style.background = 'var(--color-accent-subtle)'}
+                                                    onMouseOut={e => e.currentTarget.style.background = 'rgba(255,255,255,0.03)'}>
+                                                    <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'var(--color-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#000', fontWeight: 900, fontSize: '0.8rem' }}>
+                                                        {b.name.charAt(0)}
+                                                    </div>
+                                                    {b.name}
+                                                </button>
+                                            ))}
                                         </div>
-                                        {b.name}
-                                    </button>
-                                ))}
+                                    </div>
+                                    <div className="modal-footer" style={{ border: 'none' }}>
+                                        <button className="btn btn-ghost" style={{ width: '100%' }} onClick={() => setTransferData({ id: null, barberId: '' })}>Cancelar</button>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                        <div className="modal-footer" style={{ border: 'none' }}>
-                            <button className="btn btn-ghost" style={{ width: '100%' }} onClick={() => setTransferData({ id: null, barberId: '' })}>Cancelar</button>
-                        </div>
-                    </div>
-                </div>
-            )}
+                        )}
 
-            {/* Modal: Finalizar Atendimento */}
-            {finishModal.id && (
-                <div className="modal-overlay" onClick={() => setFinishModal({ id: null, discount_amount: '', is_birthday_reward: false })}>
-                    <div className="modal animate-scale" onClick={e => e.stopPropagation()} style={{ borderRadius: 24, maxWidth: 400 }}>
-                        <div className="modal-header">
-                            <h2>Finalizar Atendimento</h2>
-                            <button className="btn-icon" onClick={() => setFinishModal({ id: null, discount_amount: '', is_birthday_reward: false })}><XCircle size={20} /></button>
-                        </div>
-                        <div className="modal-body">
-                            <div className="form-group">
-                                <label className="form-label">Desconto aplicado (R$)</label>
-                                <input type="number" className="form-input" value={finishModal.discount_amount}
-                                    onChange={e => setFinishModal({ ...finishModal, discount_amount: e.target.value })} placeholder="0,00" inputMode="numeric" />
+                        {/* Modal: Finalizar Atendimento */}
+                        {finishModal.id && (
+                            <div className="modal-overlay" onClick={() => setFinishModal({ id: null, discount_amount: '', is_birthday_reward: false })}>
+                                <div className="modal animate-scale" onClick={e => e.stopPropagation()} style={{ borderRadius: 24, maxWidth: 400 }}>
+                                    <div className="modal-header">
+                                        <h2>Finalizar Atendimento</h2>
+                                        <button className="btn-icon" onClick={() => setFinishModal({ id: null, discount_amount: '', is_birthday_reward: false })}><XCircle size={20} /></button>
+                                    </div>
+                                    <div className="modal-body">
+                                        <div className="form-group">
+                                            <label className="form-label">Desconto aplicado (R$)</label>
+                                            <input type="number" className="form-input" value={finishModal.discount_amount}
+                                                onChange={e => setFinishModal({ ...finishModal, discount_amount: e.target.value })} placeholder="0,00" inputMode="numeric" />
+                                        </div>
+                                        <div className="form-group">
+                                            <label className="form-label">Forma de Pagamento</label>
+                                            <select className="form-select" value={finishModal.payment_method} onChange={e => setFinishModal({ ...finishModal, payment_method: e.target.value })}>
+                                                {paymentMethods.map(pm => <option key={pm.id} value={pm.name}>{pm.name}</option>)}
+                                            </select>
+                                        </div>
+                                        <label className="flex-center" style={{ gap: 10, cursor: 'pointer', justifyContent: 'flex-start', marginTop: 10 }}>
+                                            <input type="checkbox" checked={finishModal.is_birthday_reward} onChange={e => setFinishModal({ ...finishModal, is_birthday_reward: e.target.checked })} style={{ width: 18, height: 18 }} />
+                                            <span style={{ fontSize: '0.9rem' }}>🎂 Cortesia de Aniversário</span>
+                                        </label>
+                                    </div>
+                                    <div className="modal-footer" style={{ border: 'none' }}>
+                                        <button className="btn btn-primary" style={{ width: '100%' }} onClick={finishAppointment}>
+                                            <CheckCircle size={16} /> Confirmar e Finalizar
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
-                            <div className="form-group">
-                                <label className="form-label">Forma de Pagamento</label>
-                                <select className="form-select" value={finishModal.payment_method} onChange={e => setFinishModal({ ...finishModal, payment_method: e.target.value })}>
-                                    {paymentMethods.map(pm => <option key={pm.id} value={pm.name}>{pm.name}</option>)}
-                                </select>
-                            </div>
-                            <label className="flex-center" style={{ gap: 10, cursor: 'pointer', justifyContent: 'flex-start', marginTop: 10 }}>
-                                <input type="checkbox" checked={finishModal.is_birthday_reward} onChange={e => setFinishModal({ ...finishModal, is_birthday_reward: e.target.checked })} style={{ width: 18, height: 18 }} />
-                                <span style={{ fontSize: '0.9rem' }}>🎂 Cortesia de Aniversário</span>
-                            </label>
-                        </div>
-                        <div className="modal-footer" style={{ border: 'none' }}>
-                            <button className="btn btn-primary" style={{ width: '100%' }} onClick={finishAppointment}>
-                                <CheckCircle size={16} /> Confirmar e Finalizar
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+                        )}
 
-            {/* Modal: Recibo Térmico */}
-            {receiptApt && (
-                <ThermalReceipt
-                    apt={receiptApt}
-                    siteConfig={siteConfig}
-                    onClose={() => setReceiptApt(null)}
-                />
-            )}
-        </AdminLayout>
-    );
+                        {/* Modal: Recibo Térmico */}
+                        {receiptApt && (
+                            <ThermalReceipt
+                                apt={receiptApt}
+                                siteConfig={siteConfig}
+                                onClose={() => setReceiptApt(null)}
+                            />
+                        )}
+                    </AdminLayout>
+                    );
 }
