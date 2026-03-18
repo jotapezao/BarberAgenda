@@ -1,4 +1,6 @@
 const express = require('express');
+require('express-async-errors');
+const rateLimit = require('express-rate-limit');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const multer = require('multer');
@@ -28,6 +30,13 @@ app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use('/uploads', express.static(uploadsDir));
+
+const apiLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 200 });
+const loginLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 15, message: { error: 'Muitas tentativas. Tente mais tarde.' } });
+const appointmentLimiter = rateLimit({ windowMs: 60 * 60 * 1000, max: 10, message: { error: 'Limite alcançado.' } });
+const cancelLimiter = rateLimit({ windowMs: 60 * 60 * 1000, max: 10, message: { error: 'Muitas tentativas.' } });
+
+app.use('/api/', apiLimiter);
 
 
 // ============================
@@ -195,7 +204,7 @@ app.get('/api/available-slots/:date', async (req, res) => {
 });
 
 // Create appointment (auto-registers client)
-app.post('/api/appointments', async (req, res) => {
+app.post('/api/appointments', appointmentLimiter, async (req, res) => {
     const { client_name, client_whatsapp, client_birth_date, service_id, barber_id, date, time, notes } = req.body;
     if (!client_name || !client_whatsapp || !service_id || !date || !time) return res.status(400).json({ error: 'Dados incompletos' });
 
@@ -240,7 +249,7 @@ app.post('/api/appointments', async (req, res) => {
 });
 
 // Client cancel appointment (at least 1 hour before)
-app.post('/api/appointments/:id/cancel', async (req, res) => {
+app.post('/api/appointments/:id/cancel', cancelLimiter, async (req, res) => {
     const { id } = req.params;
     const { whatsapp } = req.body; // To verify it's the right person
 
@@ -335,7 +344,7 @@ app.get('/api/public-reviews', async (req, res) => {
 // ============================
 // AUTH
 // ============================
-app.post('/api/auth/login', async (req, res) => {
+app.post('/api/auth/login', loginLimiter, async (req, res) => {
     const { username, password } = req.body;
     if (!username || !password) return res.status(400).json({ error: 'Usuário e senha são obrigatórios' });
     const user = await db.get('SELECT * FROM users WHERE username = ?', [username]);
@@ -386,7 +395,8 @@ app.get('/api/admin/dashboard', authenticateToken, async (req, res) => {
 
 // -- APPOINTMENTS --
 app.get('/api/admin/appointments', authenticateToken, async (req, res) => {
-    const { date, status, startDate, endDate, barberId } = req.query;
+    let { date, status, startDate, endDate, barberId } = req.query;
+    if (req.user.role === 'barber') barberId = req.user.id;
     let query = `SELECT a.*, s.name as service_name, s.price as service_price, s.duration as service_duration, u.name as barber_name FROM appointments a JOIN services s ON a.service_id = s.id LEFT JOIN users u ON a.barber_id = u.id`;
     const conditions = []; const params = [];
     if (date) { conditions.push('a.date = ?'); params.push(date); }
@@ -1191,6 +1201,12 @@ app.post('/api/admin/backup/restore', authenticateToken, async (req, res) => {
         console.error('Erro no restore:', err);
         res.status(500).json({ error: 'Erro durante o restore: ' + err.message });
     }
+});
+
+// Global error handler
+app.use((err, req, res, next) => {
+    console.error('Erro global capturado:', err);
+    res.status(500).json({ error: 'Erro interno do servidor. Tente novamente mais tarde.' });
 });
 
 // Initialize DB and Start Server

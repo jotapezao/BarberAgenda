@@ -1,6 +1,9 @@
 const jwt = require('jsonwebtoken');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'barbearia-secret-key-2024';
+if (!process.env.JWT_SECRET) {
+    console.warn('⚠️ AVISO: JWT_SECRET não definido. Usando chave padrão. Não use isso em produção!');
+}
 
 function generateToken(user) {
     return jwt.sign(

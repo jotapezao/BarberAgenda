@@ -37,7 +37,17 @@ const dbWrapper = {
   convertParams(sql) {
     if (!this.isPostgres) return sql;
     let index = 1;
-    return sql.replace(/\?/g, () => `$${index++}`);
+    let out = '';
+    let inString = false;
+    for (let i = 0; i < sql.length; i++) {
+        if (sql[i] === "'") inString = !inString;
+        if (sql[i] === '?' && !inString) {
+            out += '$' + index++;
+        } else {
+            out += sql[i];
+        }
+    }
+    return out;
   },
 
   async query(sql, params = []) {
