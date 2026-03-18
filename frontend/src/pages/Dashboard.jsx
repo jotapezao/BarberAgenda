@@ -529,8 +529,14 @@ export default function Dashboard() {
                                     <input type="time" className="form-input" value={newApt.time} onChange={e => setNewApt({ ...newApt, time: e.target.value })} />
                                 </div>
                             </div>
-                        ))}
                         </div>
+                        <div className="modal-footer" style={{ border: 'none' }}>
+                            <button className="btn btn-primary" style={{ width: '100%' }} disabled={savingApt} onClick={saveNewAppointment}>
+                                {savingApt ? 'Salvando...' : 'Salvar Novo Agendamento'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
 
                         {/* Modal: Transferir Barbeiro */}
